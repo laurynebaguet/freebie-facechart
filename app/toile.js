@@ -11,8 +11,12 @@ var Toile = (function () {
 
   var POIGNEE_MM = 9;      // rayon des boutons autour d'une forme choisie
   var PAS_MM = 0.35;       // distance minimale entre deux points d'un trait
-  var ZOOM_MIN = 0.35;     // un pochoir réduit reste reconnaissable
-  var ZOOM_MAX = 3;
+  /* Marge d'adaptation d'un pochoir au visage qu'on maquille. Volontairement
+     étroite : un pochoir a une taille physique, on l'ajuste d'un enfant à
+     l'autre — entre 3 et 10 ans l'écart réel est d'environ 20 % — mais on ne
+     le triple pas, ce serait irréalisable au tampon. */
+  var ZOOM_MIN = 0.7;
+  var ZOOM_MAX = 1.5;
 
   function couleurDe(id) {
     for (var i = 0; i < COULEURS.length; i++) {
