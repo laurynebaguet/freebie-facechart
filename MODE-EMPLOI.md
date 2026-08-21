@@ -135,15 +135,38 @@ d'accueil, la phrase d'explication, le bouton, l'adresse du site.
 
 ---
 
-## 7. Mettre en ligne
+## 7. Publier une mise à jour
 
-L'application est un simple dossier de fichiers, sans étape de compilation.
-Pour publier une mise à jour, on renvoie le dossier sur l'hébergement (GitHub
-Pages), et la page systeme.io se met à jour toute seule puisqu'elle ne fait que
-l'afficher dans un cadre.
+L'application est en ligne à cette adresse :
 
-Les dossiers `outils/` et le fichier `Voir mon appli.bat` ne servent qu'à toi ;
-ils peuvent rester, ils ne gênent pas.
+**https://laurynebaguet.github.io/freebie-facechart/**
+
+Il n'y a pas d'étape de compilation : les fichiers sont publiés tels quels.
+Une fois tes modifications faites et vérifiées en local, ouvre **PowerShell**
+dans le dossier du projet et lance ces trois lignes, l'une après l'autre :
+
+```
+git add -A
+git commit -m "Décris ici ce que tu as changé"
+git push
+```
+
+Compte **une à deux minutes** avant que le site public reflète le changement,
+le temps que GitHub le republie. Recharge la page avec `Ctrl+F5` pour être sûre
+de ne pas voir une version gardée en mémoire par ton navigateur.
+
+Ta page systeme.io, elle, n'a rien à faire : elle se contente d'afficher
+l'application dans un cadre, donc elle suit automatiquement.
+
+### Ce qui n'est pas publié
+
+Le fichier `.gitignore` écarte volontairement tes photos personnelles
+(`swatch*.jpg` et le dossier `images/references/`) : le dépôt est public, et
+l'application n'en a pas besoin. Si tu ajoutes d'autres photos de travail,
+range-les dans `images/references/` et elles resteront chez toi.
+
+Les dossiers `outils/` et le fichier `Voir mon appli.bat` ne servent qu'à toi,
+mais ils ne gênent personne et restent publiés.
 
 ---
 
