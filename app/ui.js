@@ -173,14 +173,6 @@ var UI = (function () {
       </div>`;
   }
 
-  /* Taille réelle d'une forme posée, telle qu'on la reproduira sur la peau. */
-  function tailleLisible(el) {
-    var f = Formes.get(el.setId, el.formeId);
-    if (!f) return '—';
-    var d = Rendu.dimensions(el, f);
-    return Math.round(d.l) + ' × ' + Math.round(d.h) + ' mm';
-  }
-
   function Tiroir(p) {
     if (p.outil === 'pochoir') {
       return html`
@@ -230,13 +222,10 @@ var UI = (function () {
       <div class="tiroir">
         ${sel
           ? html`
-            <p class="aide">
+            <p class="aide" style=${{ marginBottom: 0 }}>
               Fais glisser la forme pour la placer. Autour d'elle : le rond du
               haut la fait pivoter, la pastille du coin bas droit l'agrandit ou
               la réduit, celle du bas la retourne en miroir, la rose la retire.
-            </p>
-            <p class="aide" style=${{ marginBottom: 0 }}>
-              Taille actuelle : <strong>${tailleLisible(sel)}</strong>
             </p>`
           : html`
             <p class="aide">

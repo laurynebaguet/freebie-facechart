@@ -97,29 +97,6 @@ var Toile = (function () {
       ctx.restore();
     }
 
-    /* Taille réelle du motif, affichée au-dessus de lui pendant qu'on le
-       redimensionne : c'est la mesure qui compte pour maquiller pour de vrai. */
-    function etiquetteTaille(ctx, el, echelle) {
-      var f = Formes.get(el.setId, el.formeId);
-      if (!f) return;
-      var d = Rendu.dimensions(el, f);
-      var texte = Math.round(d.l) + ' × ' + Math.round(d.h) + ' mm';
-      var x = el.x * echelle;
-      var y = (el.y - d.h / 2 - Rendu.MARGE_MM) * echelle - 26;
-      ctx.save();
-      ctx.font = '600 13px Nunito, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      var l = ctx.measureText(texte).width + 16;
-      ctx.fillStyle = 'rgba(58,52,64,.92)';
-      ctx.beginPath();
-      ctx.roundRect(x - l / 2, y - 11, l, 22, 11);
-      ctx.fill();
-      ctx.fillStyle = '#fff';
-      ctx.fillText(texte, x, y);
-      ctx.restore();
-    }
-
     function redessiner() {
       var q = propsRef.current;
       var c = canvasRef.current;
@@ -183,12 +160,7 @@ var Toile = (function () {
         for (var i = 0; i < elements.length; i++) {
           if (elements[i].id === q.selectionId) { sel = elements[i]; break; }
         }
-        if (sel && sel.type === 'forme') {
-          Rendu.selection(ctx, sel, v.echelle, POIGNEE_MM);
-          // pendant qu'on tire, on annonce la taille réelle obtenue
-          var g = gesteRef.current;
-          if (g && g.mode === 'redim') etiquetteTaille(ctx, sel, v.echelle);
-        }
+        if (sel && sel.type === 'forme') Rendu.selection(ctx, sel, v.echelle, POIGNEE_MM);
       }
 
       apercuRond(ctx, v.echelle);
