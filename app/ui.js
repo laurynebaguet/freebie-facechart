@@ -134,17 +134,62 @@ var UI = (function () {
     { id: 'modifier', nom: 'Modifier', icone: 'modifier' }
   ];
 
+  /* Un fard nacré reçoit un reflet oblique, pour qu'on le distingue au premier
+     coup d'œil d'un fard mat de teinte voisine. */
+  function fondPastille(c) {
+    if (!c.nacre) return c.hex;
+    return 'linear-gradient(135deg,'
+      + ' rgba(255,255,255,.75) 0%, rgba(255,255,255,.15) 30%,'
+      + ' rgba(0,0,0,.10) 55%, rgba(255,255,255,.45) 78%, rgba(0,0,0,.08) 100%),'
+      + c.hex;
+  }
+
+  function Pastille(p) {
+    var c = p.couleur;
+    return html`
+      <button title=${c.nom + (c.nacre ? ' (nacré)' : '')} aria-label=${c.nom}
+        class=${'pastille' + (c.id === p.couleurId ? ' actif' : '') + (c.nacre ? ' nacre' : '')}
+        style=${{ background: fondPastille(c) }}
+        onClick=${function () { p.onCouleur(c.id); }}></button>`;
+  }
+
   function Palette(p) {
+    var groupes = FAMILLES.map(function (f) {
+      return {
+        titre: f.titre,
+        couleurs: COULEURS.filter(function (c) { return c.famille === f.id; })
+      };
+    }).filter(function (g) { return g.couleurs.length; });
+
+    var courants = groupes.filter(function (g) { return !g.titre; });
+    var apart = groupes.filter(function (g) { return g.titre; });
+
     return html`
       <div class="palette">
         <p class="tiroir-titre">Couleur${p.surSelection ? ' de la forme choisie' : ''}</p>
-        <div class="pastilles">
-          ${COULEURS.map(function (c) {
+        <div class="rangs">
+          <div class="pastilles">
+            ${courants.map(function (g, i) {
+              return html`
+                <div class="groupe" key=${i}>
+                  ${g.couleurs.map(function (c) {
+                    return html`<${Pastille} key=${c.id} couleur=${c}
+                                  couleurId=${p.couleurId} onCouleur=${p.onCouleur}/>`;
+                  })}
+                </div>`;
+            })}
+          </div>
+          ${apart.map(function (g, i) {
             return html`
-              <button key=${c.id} title=${c.nom} aria-label=${c.nom}
-                class=${'pastille' + (c.id === p.couleurId ? ' actif' : '')}
-                style=${{ background: c.hex }}
-                onClick=${function () { p.onCouleur(c.id); }}></button>`;
+              <div class="groupe-apart" key=${'a' + i}>
+                <span class="etiquette-groupe">${g.titre}</span>
+                <div class="groupe">
+                  ${g.couleurs.map(function (c) {
+                    return html`<${Pastille} key=${c.id} couleur=${c}
+                                  couleurId=${p.couleurId} onCouleur=${p.onCouleur}/>`;
+                  })}
+                </div>
+              </div>`;
           })}
         </div>
       </div>`;
@@ -165,9 +210,9 @@ var UI = (function () {
                  onInput=${function (e) { p.onChange(parseFloat(e.target.value)); }}/>
         </div>
         <div class="apercu-taille" style=${{ height: (place + 10) + 'px' }}>
-          <span style=${{
+          <span class=${p.creux ? 'creux' : ''} style=${{
             width: diametre + 'px', height: diametre + 'px',
-            background: p.couleur || 'var(--encre)'
+            background: p.creux ? 'transparent' : p.couleur
           }}></span>
         </div>
       </div>`;
@@ -213,7 +258,7 @@ var UI = (function () {
             seulement quelques bulles.
           </p>
           <${Curseur} libelle="Taille de la gomme" min="2" max="30" valeur=${p.tailleGomme}
-                      echelle=${p.echelle} onChange=${p.onTailleGomme}/>
+                      echelle=${p.echelle} creux=${true} onChange=${p.onTailleGomme}/>
         </div>`;
     }
 

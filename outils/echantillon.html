@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Echantillonner les swatchs</title>
+<style>
+  body { font: 14px Nunito, sans-serif; background: #FFF8F0; margin: 12px; color: #3A3440; }
+  canvas { max-width: 100%; height: auto; border: 1px solid #ccc; background: #fff; }
+  #infos { margin-top: 10px; font-family: Consolas, monospace; font-size: 12px; white-space: pre; }
+</style>
+</head>
+<body>
+<h3>Repérage des swatchs</h3>
+<canvas id="c"></canvas>
+<div id="infos">chargement…</div>
+
+<script>
+var FICHIER = '/images/references/20260821_143128.jpg';
+var img = new Image();
+img.onload = function () {
+  var c = document.getElementById('c');
+  // on travaille sur une version réduite : même repérage, dix fois plus léger
+  var L = 1000, k = L / img.naturalWidth, H = Math.round(img.naturalHeight * k);
+  c.width = L; c.height = H;
+  var ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, L, H);
+  window.__ctx = ctx; window.__k = k; window.__L = L; window.__H = H;
+
+  // grille tous les 100 px de l'image réduite
+  ctx.font = 'bold 13px monospace';
+  ctx.lineWidth = 1;
+  for (var x = 0; x <= L; x += 100) {
+    ctx.strokeStyle = 'rgba(255,0,128,.65)';
+    ctx.beginPath(); ctx.moveTo(x + .5, 0); ctx.lineTo(x + .5, H); ctx.stroke();
+    ctx.fillStyle = '#ff0080';
+    ctx.fillText(x, x + 3, 14);
+  }
+  for (var y = 0; y <= H; y += 100) {
+    ctx.strokeStyle = 'rgba(255,0,128,.65)';
+    ctx.beginPath(); ctx.moveTo(0, y + .5); ctx.lineTo(L, y + .5); ctx.stroke();
+    ctx.fillStyle = '#ff0080';
+    ctx.fillText(y, 3, y + 14);
+  }
+  document.getElementById('infos').textContent =
+    'origine ' + img.naturalWidth + ' x ' + img.naturalHeight +
+    '  |  reduite ' + L + ' x ' + H + '  (facteur ' + k.toFixed(4) + ')';
+};
+img.onerror = function () { document.getElementById('infos').textContent = 'image introuvable'; };
+img.src = FICHIER;
+</script>
+</body>
+</html>

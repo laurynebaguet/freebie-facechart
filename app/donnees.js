@@ -15,19 +15,39 @@ var KITS = [
 ];
 
 /* -------------------------------------------------------------- COULEURS */
-/* hex  : la teinte telle qu'elle rend UNE FOIS APPLIQUÉE sur la peau.
-   kits : les kits dans lesquels on trouve cette couleur.
-   ref  : usage interne, jamais affiché à l'utilisateur. */
+/* hex     : la teinte telle qu'elle rend UNE FOIS APPLIQUÉE sur la peau.
+   famille : ordre d'affichage dans la palette — 'base', 'primaire', 'autre',
+             puis 'nacre' qui est montré à part.
+   nacre   : true pour les fards légèrement pailletés, qui reçoivent un reflet.
+   kits    : les kits dans lesquels on trouve cette couleur.
+   ref     : usage interne, jamais affiché à l'utilisateur.
+
+   Les teintes viennent des swatchs photographiés sur peau le 21/08/2026, à la
+   lumière du jour, avec une feuille blanche dans le cadre : seule la dominante
+   de lumière a été corrigée, pas la luminosité, pour ne rien saturer.
+   Deux exceptions, posées à la main :
+     - le blanc, dont le swatch a été fait après le noir et ressortait grisé ;
+     - le noir, que la lumière du jour surexpose et éclaircit à tort ;
+     - le doré, dont le flacon n'était pas encore livré : valeur estimée. */
 var COULEURS = [
-  { id: 'violet',  nom: 'Violet lavande',   hex: '#8B5FC0', ref: '27',   kits: ['A'] },
-  { id: 'vert',    nom: 'Vert grenouille',  hex: '#1E7A3D', ref: '49',   kits: ['A'] },
-  { id: 'bronze',  nom: 'Bronze ancien',    hex: '#8C7A3F', ref: '8008', kits: ['A'] },
-  { id: 'noir',    nom: "Noir d'encre",     hex: '#1A1A1A', ref: '10',   kits: ['B'] },
-  { id: 'blanc',   nom: 'Blanc de lune',    hex: '#F7F4EF', ref: '21',   kits: ['B'] },
-  { id: 'or',      nom: "Paille d'or",      hex: '#E3C170', ref: '09',   kits: ['B'] },
-  { id: 'bleu',    nom: 'Bleu océan',       hex: '#1D56A8', ref: '28',   kits: ['C'] },
-  { id: 'jaune',   nom: 'Jaune soleil',     hex: '#F0C40E', ref: '58',   kits: ['C'] },
-  { id: 'rouge',   nom: 'Rouge coquelicot', hex: '#E8471A', ref: '159',  kits: ['C'] }
+  { id: 'noir',    nom: "Noir d'encre",     hex: '#2B2A2C', ref: '10',   kits: ['B'], famille: 'base' },
+  { id: 'blanc',   nom: 'Blanc de lune',    hex: '#F2EFE8', ref: '21',   kits: ['B'], famille: 'base' },
+
+  { id: 'rouge',   nom: 'Rouge coquelicot', hex: '#E9401D', ref: '159',  kits: ['C'], famille: 'primaire' },
+  { id: 'jaune',   nom: 'Jaune soleil',     hex: '#EAAE01', ref: '58',   kits: ['C'], famille: 'primaire' },
+  { id: 'bleu',    nom: 'Bleu océan',       hex: '#11439B', ref: '28',   kits: ['C'], famille: 'primaire' },
+
+  { id: 'violet',  nom: 'Violet lavande',   hex: '#BA6C97', ref: '27',   kits: ['A'], famille: 'autre' },
+  { id: 'vert',    nom: 'Vert grenouille',  hex: '#769469', ref: '49',   kits: ['A'], famille: 'autre' },
+
+  { id: 'bronze',  nom: 'Bronze ancien',    hex: '#9E7D5A', ref: '8008', kits: ['A'], famille: 'nacre', nacre: true },
+  { id: 'or',      nom: "Paille d'or",      hex: '#D9B463', ref: '09',   kits: ['B'], famille: 'nacre', nacre: true }
+];
+
+/* Ordre des familles dans la palette, et intitulé du groupe mis à part. */
+var FAMILLES = [
+  { id: 'base' }, { id: 'primaire' }, { id: 'autre' },
+  { id: 'nacre', titre: 'Nacrées' }
 ];
 
 /* --------------------------------------------------------------- VISAGES */
