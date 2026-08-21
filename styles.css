@@ -1,0 +1,243 @@
+/* ------------------------------------------------------------------ base */
+:root {
+  --violet:   #7B3FD3;
+  --violet-c: #9B5DE5;
+  --rose:     #D9487E;
+  --jaune:    #FFD166;
+  --fond:     #FFF8F0;
+  --encre:    #3A3440;
+  --encre-d:  #6B6474;
+  --blanc:    #FFFFFF;
+  --trait:    #E8DFD4;
+  --ombre:    0 2px 8px rgba(58, 52, 64, .10);
+  --ombre-f:  0 6px 24px rgba(58, 52, 64, .16);
+  --r:        14px;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0; padding: 0; height: 100%;
+  background: var(--fond);
+  color: var(--encre);
+  font-family: Nunito, "Segoe UI", system-ui, sans-serif;
+  overscroll-behavior: none;
+}
+
+h1, h2, h3, .titre {
+  font-family: "Luckiest Guy", Nunito, sans-serif;
+  font-weight: 400;
+  letter-spacing: .4px;
+  line-height: 1.15;
+  margin: 0;
+}
+
+button { font-family: inherit; font-size: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+button:disabled { cursor: default; }
+
+#racine { height: 100%; }
+
+/* --------------------------------------------------------------- boutons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5em;
+  padding: .75em 1.35em; border-radius: 999px;
+  font-weight: 800; font-size: 1rem;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.btn:active { transform: translateY(1px) scale(.985); }
+.btn-primaire { background: var(--violet); color: #fff; box-shadow: var(--ombre); }
+.btn-primaire:hover { background: var(--violet-c); }
+.btn-secondaire { background: var(--blanc); color: var(--violet); box-shadow: var(--ombre); }
+.btn-secondaire:hover { background: #F6F0FF; }
+.btn-rose { background: var(--rose); color: #fff; box-shadow: var(--ombre); }
+.btn-fantome { color: var(--encre-d); }
+.btn-fantome:hover { color: var(--violet); }
+.btn:disabled { opacity: .35; }
+
+/* --------------------------------------------------------------- ecran 1 */
+.accueil {
+  min-height: 100%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 1.4rem;
+  text-align: center; padding: 2rem 1.4rem;
+  background: radial-gradient(1200px 600px at 50% -10%, #fff 0%, var(--fond) 60%);
+}
+.accueil img.logo { width: min(440px, 82vw); height: auto; }
+.accueil h1 { font-size: clamp(1.7rem, 5.5vw, 2.9rem); color: var(--violet); max-width: 16em; }
+.accueil p { font-size: clamp(1rem, 2.6vw, 1.15rem); color: var(--encre-d); max-width: 34em; line-height: 1.6; margin: 0; }
+.accueil .btn { font-size: 1.15rem; padding: .9em 2em; }
+
+/* ------------------------------------------------------- galerie visages */
+.galerie { padding: 1.4rem 1.2rem 3rem; max-width: 1100px; margin: 0 auto; }
+.galerie h2 { font-size: clamp(1.4rem, 4vw, 2rem); color: var(--violet); text-align: center; margin-bottom: .4rem; }
+.galerie .sous { text-align: center; color: var(--encre-d); margin: 0 0 1.6rem; }
+/* en flex plutôt qu'en grille : les cartes restent centrées, même à deux */
+.grille-visages { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+.grille-visages .carte-visage { flex: 0 1 180px; }
+.carte-visage {
+  background: var(--blanc); border-radius: var(--r); overflow: hidden;
+  box-shadow: var(--ombre);
+  transition: transform .14s ease, box-shadow .14s ease;
+  display: flex; flex-direction: column; padding: 0;
+}
+.carte-visage:hover { transform: translateY(-3px); box-shadow: var(--ombre-f); }
+.carte-visage .vignette { width: 100%; aspect-ratio: 4/5; display: block; background: #fff; }
+.carte-visage .pied { padding: .55rem .7rem .7rem; font-weight: 700; text-align: center; }
+
+/* --------------------------------------------------------------- atelier */
+.atelier { height: 100%; display: flex; flex-direction: column; }
+
+.entete {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .5rem .7rem; background: var(--blanc);
+  border-bottom: 1px solid var(--trait); flex: 0 0 auto;
+}
+.entete .titre-mini { font-family: "Luckiest Guy", sans-serif; color: var(--violet); font-size: 1rem; }
+.entete .espace { flex: 1; }
+
+.icone-btn {
+  width: 42px; height: 42px; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--encre); background: transparent;
+}
+.icone-btn:hover:not(:disabled) { background: #F3EDFB; color: var(--violet); }
+.icone-btn:disabled { opacity: .3; }
+.icone-btn svg { width: 22px; height: 22px; }
+
+.corps { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+
+/* Le dessin passe avant les outils : il prend 45 % de la zone disponible,
+   les outils au plus 55 %. En proportions et non en « vh », pour que la
+   hauteur de l'en-tête soit déjà déduite. */
+.scene {
+  flex: 1 1 45%; position: relative; min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: .6rem; touch-action: none;
+}
+.scene canvas {
+  max-width: 100%; max-height: 100%;
+  border-radius: var(--r); box-shadow: var(--ombre-f); background: #fff;
+  touch-action: none; display: block;
+}
+
+/* -------------------------------------------------------- barre outils */
+.outils {
+  flex: 0 1 auto; min-height: 0; max-height: 55%;
+  display: flex; flex-direction: column;
+  background: var(--blanc); border-top: 1px solid var(--trait);
+}
+
+/* La palette coiffe la barre : toujours visible, et surtout elle ne
+   s'intercale plus entre l'icône Pochoirs et la planche de formes. */
+.palette { padding: .55rem .7rem .5rem; border-bottom: 1px solid var(--trait); }
+
+.rangee-outils { display: flex; gap: .35rem; padding: .5rem .6rem; justify-content: center; }
+.outil {
+  flex: 1 1 0; max-width: 96px; border-radius: 12px; padding: .45rem .2rem;
+  display: flex; flex-direction: column; align-items: center; gap: .18rem;
+  font-size: .7rem; font-weight: 700; color: var(--encre-d);
+}
+.outil svg { width: 24px; height: 24px; }
+.outil.actif { background: #F3EDFB; color: var(--violet); }
+.outil:hover:not(.actif):not(:disabled) { background: #FAF7F2; }
+.outil-danger { color: var(--rose); }
+.outil-danger:hover:not(:disabled) { background: #FDF0F5; }
+.outil:disabled { opacity: .35; }
+
+.aide { margin: 0 0 .6rem; font-size: .82rem; line-height: 1.45; color: var(--encre-d); }
+.btn-petit { padding: .5em 1em; font-size: .88rem; }
+
+/* aperçu du diamètre réel du pinceau ou de la gomme */
+.reglage-bloc { margin-top: .2rem; }
+.apercu-taille {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 46px; margin-top: .3rem;
+  background: #FAF7F2; border-radius: 10px;
+}
+.apercu-taille span {
+  display: block; border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(58, 52, 64, .18);
+}
+
+.tiroir {
+  border-top: 1px solid var(--trait); padding: .6rem .7rem .8rem;
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+}
+.palette, .rangee-outils { flex: 0 0 auto; }
+.tiroir-titre { font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--encre-d); margin: 0 0 .5rem; }
+
+.pastilles { display: flex; flex-wrap: wrap; gap: .5rem; }
+.pastille {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 3px solid var(--blanc); box-shadow: 0 0 0 1px var(--trait), var(--ombre);
+  transition: transform .12s ease;
+}
+.pastille:hover { transform: scale(1.08); }
+.pastille.actif { box-shadow: 0 0 0 3px var(--violet), var(--ombre); transform: scale(1.08); }
+
+.set-titre { font-weight: 800; font-size: .8rem; color: var(--violet); margin: .6rem 0 .4rem; }
+.grille-formes { display: grid; gap: .45rem; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
+.case-forme {
+  background: #FAF7F2; border-radius: 10px; padding: .35rem .2rem .3rem;
+  display: flex; flex-direction: column; align-items: center; gap: .15rem;
+  border: 2px solid transparent; font-size: .62rem; font-weight: 700; color: var(--encre-d);
+}
+.case-forme svg { width: 100%; height: 40px; }
+.case-forme.actif { border-color: var(--violet); background: #F3EDFB; color: var(--violet); }
+.case-forme .nom { text-align: center; line-height: 1.15; }
+
+.reglage { display: flex; align-items: center; gap: .7rem; margin-top: .6rem; }
+.reglage label { font-size: .74rem; font-weight: 800; color: var(--encre-d); white-space: nowrap; }
+.reglage input[type=range] { flex: 1; accent-color: var(--violet); }
+
+/* --------------------------------------------------------------- messages */
+.rappel {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: .45rem; z-index: 5;
+  background: var(--encre); color: #fff; border-radius: 999px;
+  padding: .38em .9em; font-size: .74rem; font-weight: 700;
+  box-shadow: var(--ombre-f); display: flex; align-items: center; gap: .5rem;
+  max-width: calc(100% - 1rem); white-space: nowrap;
+}
+.rappel button { color: var(--jaune); font-weight: 800; text-decoration: underline; }
+
+.voile {
+  position: fixed; inset: 0; background: rgba(58, 52, 64, .45);
+  display: flex; align-items: center; justify-content: center; padding: 1.2rem; z-index: 50;
+}
+.boite {
+  background: var(--blanc); border-radius: var(--r); padding: 1.5rem;
+  max-width: 460px; width: 100%; box-shadow: var(--ombre-f);
+}
+.boite h3 { font-size: 1.3rem; color: var(--violet); margin-bottom: .6rem; }
+.boite p { color: var(--encre-d); line-height: 1.55; margin: 0 0 1.2rem; }
+.boite .actions { display: flex; gap: .6rem; justify-content: flex-end; flex-wrap: wrap; }
+
+/* ---------------------------------------------------- récapitulatif */
+.recap { display: flex; gap: 1.2rem; flex-wrap: wrap; margin: 0 0 1.2rem; }
+.recap-bloc { flex: 1 1 160px; min-width: 0; }
+.recap ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .45rem; }
+.recap li { display: flex; align-items: flex-start; gap: .5rem; font-size: .88rem; font-weight: 700; line-height: 1.25; }
+.recap .puce {
+  width: 18px; height: 18px; border-radius: 50%; flex: 0 0 18px; margin-top: .1rem;
+  box-shadow: 0 0 0 1px var(--trait);
+}
+.recap .puce-forme { width: 22px; height: 22px; flex: 0 0 22px; color: var(--encre); }
+.recap .puce-forme svg { width: 100%; height: 100%; }
+.recap .ou { display: block; font-size: .74rem; font-weight: 700; color: var(--violet); text-decoration: none; }
+.recap .ou:hover { text-decoration: underline; }
+.recap-vide { font-style: italic; }
+
+/* ----------------------------------------------------------- grand ecran */
+@media (min-width: 900px) {
+  .corps { flex-direction: row; }
+  .scene { flex: 1 1 auto; }
+  .outils {
+    width: 330px; flex: 0 0 330px; max-height: none;
+    border-top: 0; border-left: 1px solid var(--trait);
+    order: 2; overflow-y: auto;
+  }
+  .rangee-outils { flex-wrap: wrap; }
+  .outil { flex: 1 1 28%; max-width: none; }
+  .tiroir { max-height: none; flex: 1; }
+  .scene { order: 1; padding: 1.2rem; }
+}

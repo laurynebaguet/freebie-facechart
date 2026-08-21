@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 380" width="1120" height="760">
+  <defs>
+    <path id="chapeau" d="M 86.917885,173.42834 c 4.262206 -3.61171 10.700316 -12.46754 13.952195 -19.19171 c 3.54535 -7.33098 6.35352 -17.68761 6.34371 -23.39575 c -0.006 -3.59186 -0.84707 -4.45686 -2.96812 -3.05322 c -1.19424 0.79031 -5.454819 4.94687 -7.561609 7.37701 l -1.35724 1.56554 l -1.03057 -0.30877 c -0.56682 -0.16982 -1.96927 -0.31292 -3.11655 -0.318 c -1.14728 -0.005 -3.03847 -0.18132 -4.202637 -0.39167 c -1.164167 -0.21034 -2.600407 -0.38478 -3.191645 -0.38764 c -0.832821 -0.004 -1.237949 -0.17531 -1.798437 -0.76034 l -0.72346 -0.75513 l 0.733575 -0.48065 c 1.435664 -0.94069 3.345091 -2.92 3.822296 -3.96221 c 1.051973 -2.29748 0.342826 -5.52739 -1.628161 -7.41572 c -0.64447 -0.61744 -0.895332 -0.71472 -1.256152 -0.48712 c -0.369951 0.23336 -0.435433 0.61834 -0.364892 2.14529 c 0.142941 3.09414 -0.626386 3.95064 -4.706158 5.23944 c -1.891114 0.5974 -2.41704 0.90117 -3.588596 2.07273 c -1.880485 1.88048 -2.385196 3.38569 -2.36203 7.04434 c 0.03405 5.37831 2.443688 11.11455 7.113219 16.93333 c 0.759066 0.94589 1.465548 2.06244 1.569958 2.48122 c 0.10441 0.41879 0.860086 1.46412 1.679279 2.32296 l 1.489443 1.56153 l -0.77537 3.76246 c -0.897189 4.35358 -1.009401 7.87574 -0.303204 9.51714 c 0.658312 1.53012 1.313249 1.35752 4.231156 -1.11506 z"/>
+    <path id="crane" d="M 125.59335,150.59483 c 0.25459 -0.34818 0.36451 -0.35293 0.7999 -0.0346 c 0.73734 0.53916 2.16439 0.46038 2.77813 -0.15335 c 0.67642 -0.67643 0.9186 -1.67289 0.56649 -2.33082 c -0.25004 -0.46719 -0.17527 -0.53787 0.72043 -0.6811 c 1.59204 -0.25458 2.25698 -1.17667 2.37365 -3.29156 c 0.1336 -2.42206 -0.64425 -4.4772 -2.33425 -6.16719 c -1.3286 -1.32861 -2.06578 -1.63291 -5.12869 -2.11708 c -2.05108 -0.32422 -4.92098 -0.0203 -6.76137 0.71611 c -1.38084 0.55251 -3.28491 2.67127 -3.82498 4.25628 c -0.49002 1.43814 -0.55498 4.26308 -0.11998 5.2178 c 0.29752 0.65298 1.6532 1.48041 2.42555 1.48041 c 0.30688 0 0.3676 0.22688 0.26555 0.99219 c -0.26733 2.00471 1.74752 3.16787 3.49926 2.02009 c 0.41864 -0.27431 0.65215 -0.31862 0.65215 -0.12377 c 0 0.83984 3.49695 1.02509 4.08816 0.21656 z"/>
+    <path id="oeilA" d="M 80.761107,51.648086 c 1.330251 -0.830755 1.749629 -3.290186 0.772795 -4.53203 c -0.420195 -0.534191 -0.782915 -0.69714 -1.551818 -0.69714 c -2.966961 0 -4.496917 4.61925 -1.868562 5.641568 c 0.513855 0.199868 2.050444 -0.03948 2.647585 -0.412398 z"/>
+    <path id="oeilB" d="M 81.281791,59.919398 c 1.155716 -1.155716 1.030819 -3.413591 -0.252838 -4.570794 c -1.025705 -0.924663 -2.883562 -1.024056 -3.709181 -0.198437 c -1.137079 1.137078 -0.369859 3.891608 1.339231 4.808201 c 1.163944 0.624232 1.971588 0.61223 2.622788 -0.03897 z"/>
+    <path id="nez" d="M 83.010626,53.336332 c 0.01585 -0.655709 -0.104711 -1.203249 -0.279725 -1.270408 c -0.350861 -0.134638 -2.236129 0.907616 -2.236129 1.236226 c 0 0.396555 1.447795 1.314521 1.971604 1.250085 c 0.418306 -0.05146 0.521687 -0.282422 0.54425 -1.215903 z"/>
+  </defs>
+
+  <rect width="560" height="380" fill="#FFF8F0"/>
+  <g font-family="Verdana, sans-serif">
+
+    <text x="16" y="24" font-size="14" font-weight="bold" fill="#3A3440">1. Le chapeau &#8212; quel angle ?</text>
+    <text x="16" y="40" font-size="9.5" fill="#7B3FD3">Le trait rose marque l&#8217;horizontale. Actuellement : 50&#176;.</text>
+
+    <g>
+      <!-- 50 -->
+      <svg x="16" y="48" width="100" height="110" viewBox="57 116 66 62">
+        <g transform="rotate(50,89.56,148.44)"><use href="#chapeau" fill="#3A3440"/></g>
+      </svg>
+      <line x1="16" y1="158" x2="116" y2="158" stroke="#D9487E" stroke-width="1.2"/>
+      <text x="66" y="172" font-size="11" font-weight="bold" fill="#D9487E" text-anchor="middle">50&#176;</text>
+
+      <!-- 58 -->
+      <svg x="126" y="48" width="100" height="110" viewBox="57 116 66 62">
+        <g transform="rotate(58,89.56,148.44)"><use href="#chapeau" fill="#3A3440"/></g>
+      </svg>
+      <line x1="126" y1="158" x2="226" y2="158" stroke="#D9487E" stroke-width="1.2"/>
+      <text x="176" y="172" font-size="11" font-weight="bold" fill="#D9487E" text-anchor="middle">58&#176;</text>
+
+      <!-- 66 -->
+      <svg x="236" y="48" width="100" height="110" viewBox="57 116 66 62">
+        <g transform="rotate(66,89.56,148.44)"><use href="#chapeau" fill="#3A3440"/></g>
+      </svg>
+      <line x1="236" y1="158" x2="336" y2="158" stroke="#D9487E" stroke-width="1.2"/>
+      <text x="286" y="172" font-size="11" font-weight="bold" fill="#D9487E" text-anchor="middle">66&#176;</text>
+
+      <!-- 74 -->
+      <svg x="346" y="48" width="100" height="110" viewBox="57 116 66 62">
+        <g transform="rotate(74,89.56,148.44)"><use href="#chapeau" fill="#3A3440"/></g>
+      </svg>
+      <line x1="346" y1="158" x2="446" y2="158" stroke="#D9487E" stroke-width="1.2"/>
+      <text x="396" y="172" font-size="11" font-weight="bold" fill="#D9487E" text-anchor="middle">74&#176;</text>
+
+      <!-- 82 -->
+      <svg x="456" y="48" width="100" height="110" viewBox="57 116 66 62">
+        <g transform="rotate(82,89.56,148.44)"><use href="#chapeau" fill="#3A3440"/></g>
+      </svg>
+      <line x1="456" y1="158" x2="556" y2="158" stroke="#D9487E" stroke-width="1.2"/>
+      <text x="506" y="172" font-size="11" font-weight="bold" fill="#D9487E" text-anchor="middle">82&#176;</text>
+    </g>
+
+    <text x="16" y="212" font-size="14" font-weight="bold" fill="#3A3440">2. Le nez du cr&#226;ne &#8212; quel sens ?</text>
+    <text x="16" y="228" font-size="9.5" fill="#7B3FD3">Version D (yeux resserr&#233;s), seul le nez tourne.</text>
+
+    <g>
+      <svg x="16" y="236" width="110" height="100" viewBox="112 133 23 20">
+        <use href="#crane" fill="#CFC6D8"/>
+        <g fill="#3A3440">
+          <use href="#oeilA" transform="translate(40.79,93.18)"/>
+          <use href="#oeilB" transform="translate(47.59,85.08)"/>
+          <use href="#nez"   transform="translate(41.66,93.26)"/>
+        </g>
+      </svg>
+      <text x="71" y="352" font-size="11" font-weight="bold" fill="#D9487E" text-anchor="middle">0&#176;</text>
+      <text x="71" y="366" font-size="9" fill="#6B6474" text-anchor="middle">actuel</text>
+
+      <svg x="146" y="236" width="110" height="100" viewBox="112 133 23 20">
+        <use href="#crane" fill="#CFC6D8"/>
+        <g fill="#3A3440">
+          <use href="#oeilA" transform="translate(40.79,93.18)"/>
+          <use href="#oeilB" transform="translate(47.59,85.08)"/>
+          <use href="#nez"   transform="translate(41.66,93.26) rotate(90,81.99,53.34)"/>
+        </g>
+      </svg>
+      <text x="201" y="352" font-size="11" font-weight="bold" fill="#D9487E" text-anchor="middle">90&#176;</text>
+
+      <svg x="276" y="236" width="110" height="100" viewBox="112 133 23 20">
+        <use href="#crane" fill="#CFC6D8"/>
+        <g fill="#3A3440">
+          <use href="#oeilA" transform="translate(40.79,93.18)"/>
+          <use href="#oeilB" transform="translate(47.59,85.08)"/>
+          <use href="#nez"   transform="translate(41.66,93.26) rotate(180,81.99,53.34)"/>
+        </g>
+      </svg>
+      <text x="331" y="352" font-size="11" font-weight="bold" fill="#D9487E" text-anchor="middle">180&#176;</text>
+
+      <svg x="406" y="236" width="110" height="100" viewBox="112 133 23 20">
+        <use href="#crane" fill="#CFC6D8"/>
+        <g fill="#3A3440">
+          <use href="#oeilA" transform="translate(40.79,93.18)"/>
+          <use href="#oeilB" transform="translate(47.59,85.08)"/>
+          <use href="#nez"   transform="translate(41.66,93.26) rotate(270,81.99,53.34)"/>
+        </g>
+      </svg>
+      <text x="461" y="352" font-size="11" font-weight="bold" fill="#D9487E" text-anchor="middle">270&#176;</text>
+    </g>
+  </g>
+</svg>

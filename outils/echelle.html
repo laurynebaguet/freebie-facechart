@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Regler la taille des pochoirs</title>
+<style>
+  body { font: 15px/1.5 Nunito, Segoe UI, sans-serif; background: #FFF8F0; color: #3A3440;
+         margin: 0; padding: 18px; }
+  h1 { font-size: 20px; margin: 0 0 4px; color: #7B3FD3; }
+  p  { margin: 0 0 14px; color: #6B6474; max-width: 60ch; }
+  .zone { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+  canvas { background: #fff; border-radius: 12px; box-shadow: 0 4px 16px rgba(58,52,64,.15); }
+  .reglages { min-width: 280px; }
+  label { font-weight: 800; display: block; margin-bottom: 6px; }
+  input[type=range] { width: 100%; accent-color: #7B3FD3; }
+  .valeur { font-size: 30px; font-weight: 800; color: #7B3FD3; }
+  .mesures { margin-top: 16px; font-size: 14px; }
+  .mesures td { padding: 2px 10px 2px 0; }
+  .mesures td:last-child { font-weight: 700; text-align: right; }
+  .note { background: #fff; border-radius: 12px; padding: 12px 14px; margin-top: 16px;
+          font-size: 13.5px; box-shadow: 0 2px 8px rgba(58,52,64,.1); }
+</style>
+</head>
+<body>
+
+<h1>Régler la taille des pochoirs</h1>
+<p>
+  Le quadrillage rouge fait <strong>1 cm de côté</strong>, à l'échelle où
+  l'application dessine. Fais glisser le curseur jusqu'à ce que la tête te
+  paraisse à la bonne taille, puis donne-moi le nombre affiché.
+</p>
+
+<div class="zone">
+  <canvas id="toile" width="380" height="500"></canvas>
+
+  <div class="reglages">
+    <label for="curseur">Largeur du visage, d'une tempe à l'autre</label>
+    <div class="valeur"><span id="mm">145</span> mm</div>
+    <input id="curseur" type="range" min="90" max="200" step="1" value="145">
+
+    <table class="mesures">
+      <tr><td>Araignée</td><td id="m-araignee"></td></tr>
+      <tr><td>Crâne</td><td id="m-crane"></td></tr>
+      <tr><td>Chapeau de sorcière</td><td id="m-chapeau"></td></tr>
+      <tr><td>Coulures</td><td id="m-coulures"></td></tr>
+      <tr><td>Dents de scie</td><td id="m-dents"></td></tr>
+    </table>
+
+    <div class="note">
+      Ces tailles ne changent jamais : elles sont mesurées sur ton fichier
+      <em>Pochoir Av1.svg</em>, où une unité vaut un millimètre. Le curseur ne
+      règle que la taille du <strong>visage</strong> ; c'est lui qui décide si
+      les motifs paraissent grands ou petits.
+    </div>
+  </div>
+</div>
+
+<script src="../vendor/react.production.min.js"></script>
+<script src="../app/subpaths.js"></script>
+<script src="../app/planches.js"></script>
+<script src="../app/donnees.js"></script>
+<script src="../app/formes.js"></script>
+<script src="../app/rendu.js"></script>
+<script>
+(function () {
+  var toile = document.getElementById('toile');
+  var ctx = toile.getContext('2d');
+  var curseur = document.getElementById('curseur');
+  var visage = VISAGES[0];
+  var image = new Image();
+  image.src = '../' + visage.image;
+
+  function couleurDe(id) {
+    for (var i = 0; i < COULEURS.length; i++) if (COULEURS[i].id === id) return COULEURS[i].hex;
+    return '#000';
+  }
+
+  function mesure(id) {
+    var f = Formes.get('av1', id);
+    return f.largeurMm.toFixed(0) + ' × ' + f.hauteurMm.toFixed(0) + ' mm';
+  }
+
+  function dessiner() {
+    LARGEUR_VISAGE_MM = parseFloat(curseur.value);
+    document.getElementById('mm').textContent = curseur.value;
+
+    var rep = Rendu.repere(visage);
+    var e = toile.width / rep.largeurMm;
+    var hauteur = rep.hauteurMm * e;
+    // le cadre suit les proportions du visage, plus la place de la règle
+    if (toile.height !== Math.round(hauteur) + 46) toile.height = Math.round(hauteur) + 46;
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, toile.width, toile.height);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, toile.width, toile.height);
+    Rendu.fond(ctx, image, rep, toile.width);
+
+    // quelques motifs, posés sur le visage
+    var dessin = { elements: [
+      { id: 1, type: 'forme', setId: 'av1', formeId: 'coulures', couleurId: 'violet',
+        x: rep.largeurMm * 0.5, y: rep.hauteurMm * 0.30, rot: 0 },
+      { id: 2, type: 'forme', setId: 'av1', formeId: 'araignee', couleurId: 'noir',
+        x: rep.largeurMm * 0.30, y: rep.hauteurMm * 0.52, rot: 0 },
+      { id: 3, type: 'forme', setId: 'av1', formeId: 'crane', couleurId: 'blanc',
+        x: rep.largeurMm * 0.70, y: rep.hauteurMm * 0.55, rot: 0 },
+      { id: 4, type: 'forme', setId: 'av1', formeId: 'dents', couleurId: 'rouge',
+        x: rep.largeurMm * 0.5, y: rep.hauteurMm * 0.74, rot: 0 }
+    ] };
+    var tampon = document.createElement('canvas');
+    tampon.width = toile.width; tampon.height = toile.height;
+    Rendu.maquillage(ctx, dessin, e, couleurDe, null, tampon);
+
+    // quadrillage centimétrique
+    ctx.save();
+    ctx.strokeStyle = 'rgba(217,72,126,.55)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (var x = 0; x <= rep.largeurMm; x += 10) {
+      ctx.moveTo(Math.round(x * e) + .5, 0);
+      ctx.lineTo(Math.round(x * e) + .5, hauteur);
+    }
+    for (var y = 0; y <= rep.hauteurMm; y += 10) {
+      ctx.moveTo(0, Math.round(y * e) + .5);
+      ctx.lineTo(toile.width, Math.round(y * e) + .5);
+    }
+    ctx.stroke();
+
+    // repères des tempes
+    var v = visage.visage;
+    var mmParPx = LARGEUR_VISAGE_MM / (v.droite - v.gauche);
+    ctx.strokeStyle = '#7B3FD3';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 4]);
+    [v.gauche, v.droite].forEach(function (px) {
+      ctx.beginPath();
+      ctx.moveTo(px * mmParPx * e, 0);
+      ctx.lineTo(px * mmParPx * e, hauteur);
+      ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    // règle de 10 cm
+    var y0 = hauteur + 22;
+    ctx.strokeStyle = '#3A3440';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(14, y0); ctx.lineTo(14 + 100 * e, y0);
+    ctx.moveTo(14, y0 - 6); ctx.lineTo(14, y0 + 6);
+    ctx.moveTo(14 + 100 * e, y0 - 6); ctx.lineTo(14 + 100 * e, y0 + 6);
+    ctx.stroke();
+    ctx.fillStyle = '#3A3440';
+    ctx.font = 'bold 13px Nunito, sans-serif';
+    ctx.fillText('10 cm', 20 + 100 * e, y0 + 5);
+    ctx.restore();
+
+    ['araignee', 'crane', 'chapeau', 'coulures', 'dents'].forEach(function (id) {
+      document.getElementById('m-' + id).textContent = mesure(id);
+    });
+  }
+
+  image.onload = function () { Formes.init(); dessiner(); };
+  curseur.addEventListener('input', dessiner);
+})();
+</script>
+</body>
+</html>

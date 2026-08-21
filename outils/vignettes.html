@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Vignettes en grand</title>
+<style>
+  body { font: 15px Nunito, sans-serif; background: #FFF8F0; margin: 18px; color: #3A3440; }
+  .g { display: flex; gap: 18px; flex-wrap: wrap; }
+  .c { background: #fff; border-radius: 12px; padding: 10px; box-shadow: 0 2px 10px rgba(58,52,64,.12); }
+  .c svg { width: 260px; height: 260px; display: block; color: #3A3440; }
+  .c b { display: block; text-align: center; margin-top: 6px; color: #7B3FD3; }
+  .cadre .c svg { outline: 1px dashed #D9487E; }
+</style>
+</head>
+<body>
+<h2>Vignettes telles que l'application les dessine</h2>
+<p>Le pointillé rose marque le bord du cadre de l'image, pas le motif.</p>
+<div class="g cadre" id="g"></div>
+
+<script src="../vendor/react.production.min.js"></script>
+<script src="../vendor/react-dom.production.min.js"></script>
+<script src="../vendor/htm.umd.js"></script>
+<script src="../app/subpaths.js"></script>
+<script src="../app/planches.js"></script>
+<script src="../app/donnees.js"></script>
+<script src="../app/formes.js"></script>
+<script src="../app/rendu.js"></script>
+<script src="../app/fiche.js"></script>
+<script src="../app/ui.js"></script>
+<script>
+(function () {
+  Formes.init();
+  var html = htm.bind(React.createElement);
+  var g = document.getElementById('g');
+  Formes.sets()[0].formes.forEach(function (f) {
+    if (!f.bande) return;
+    var d = document.createElement('div');
+    d.className = 'c';
+    g.appendChild(d);
+    var hote = document.createElement('div');
+    d.appendChild(hote);
+    var nom = document.createElement('b');
+    nom.textContent = f.nom + ' — ' + f.largeurMm.toFixed(0) + '×' + f.hauteurMm.toFixed(0) + ' mm';
+    d.appendChild(nom);
+    ReactDOM.createRoot(hote).render(React.createElement(UI.VignetteForme, { forme: f }));
+  });
+})();
+</script>
+</body>
+</html>
