@@ -35,10 +35,11 @@ var Rendu = (function () {
      elle redresse le motif sans entraîner ni le cadre de sélection ni le
      miroir, qui restent dans le repère de l'utilisateur. */
   function transformeForme(ctx, el, forme, echelle) {
+    var k = el.zoom || 1;
     ctx.translate(el.x * echelle, el.y * echelle);
     ctx.rotate(el.rot || 0);
     if (el.miroir) ctx.scale(-1, 1);
-    ctx.scale(echelle, echelle);
+    ctx.scale(echelle * k, echelle * k);
     ctx.translate(-forme.cx, -forme.cy);
     if (forme.rotBase) {
       ctx.translate(forme.pivot.x, forme.pivot.y);
@@ -47,17 +48,24 @@ var Rendu = (function () {
     }
   }
 
+  /* Dimensions d'une forme posée, agrandissement compris, en mm. */
+  function dimensions(el, forme) {
+    var k = el.zoom || 1;
+    return { l: forme.largeurMm * k, h: forme.hauteurMm * k };
+  }
+
   /* Un point du visage (mm) vers le repère propre d'un élément : l'inverse
      exact de la transformation ci-dessus. */
   function versLocal(el, forme, xMm, yMm) {
     if (el.type !== 'forme') return { x: xMm, y: yMm };
     var a = -(el.rot || 0);
+    var k = el.zoom || 1;
     var dx = xMm - el.x, dy = yMm - el.y;
     var lx = dx * Math.cos(a) - dy * Math.sin(a);
     var ly = dx * Math.sin(a) + dy * Math.cos(a);
     if (el.miroir) lx = -lx;
-    lx += forme.cx;
-    ly += forme.cy;
+    lx = lx / k + forme.cx;
+    ly = ly / k + forme.cy;
     if (forme.rotBase) {
       var b = -forme.rotBase;
       var px = lx - forme.pivot.x, py = ly - forme.pivot.y;
@@ -171,8 +179,9 @@ var Rendu = (function () {
 
   /* Où se trouvent les poignées d'une forme sélectionnée, en mm. */
   function poignees(el, forme, poigneeMm) {
-    var w = forme.largeurMm / 2 + MARGE_MM;
-    var h = forme.hauteurMm / 2 + MARGE_MM;
+    var d = dimensions(el, forme);
+    var w = d.l / 2 + MARGE_MM;
+    var h = d.h / 2 + MARGE_MM;
     var a = el.rot || 0;
     function place(lx, ly) {
       return {
@@ -184,6 +193,7 @@ var Rendu = (function () {
       rotation: place(0, -h - poigneeMm),
       poubelle: place(w, -h),
       miroir: place(0, h + poigneeMm),
+      redim: place(w, h),
       demi: { w: w, h: h, a: a }
     };
   }
@@ -191,7 +201,8 @@ var Rendu = (function () {
   function selection(ctx, el, echelle, poigneeMm) {
     var f = Formes.get(el.setId, el.formeId);
     if (!f) return;
-    var w = f.largeurMm * echelle, h = f.hauteurMm * echelle;
+    var d = dimensions(el, f);
+    var w = d.l * echelle, h = d.h * echelle;
     var m = MARGE_MM * echelle;
     var r = poigneeMm * echelle;
 
@@ -268,18 +279,27 @@ var Rendu = (function () {
       ctx.stroke();
     });
 
+    // agrandissement, au coin bas droit : double flèche en diagonale
+    pastille(w / 2 + m, h / 2 + m, '#7B3FD3', function (b) {
+      ctx.beginPath();
+      ctx.moveTo(-b, -b); ctx.lineTo(b, b);
+      ctx.moveTo(-b, -b * 0.1); ctx.lineTo(-b, -b); ctx.lineTo(-b * 0.1, -b);
+      ctx.moveTo(b, b * 0.1); ctx.lineTo(b, b); ctx.lineTo(b * 0.1, b);
+      ctx.stroke();
+    });
+
     ctx.restore();
   }
 
   /* Le point est-il dans le cadre de sélection de cette forme ? */
   function dansCadre(el, forme, xMm, yMm, margeMm) {
     var a = -(el.rot || 0);
+    var d = dimensions(el, forme);
     var dx = xMm - el.x, dy = yMm - el.y;
     var lx = dx * Math.cos(a) - dy * Math.sin(a);
     var ly = dx * Math.sin(a) + dy * Math.cos(a);
     var m = MARGE_MM + (margeMm || 0);
-    return Math.abs(lx) <= forme.largeurMm / 2 + m
-        && Math.abs(ly) <= forme.hauteurMm / 2 + m;
+    return Math.abs(lx) <= d.l / 2 + m && Math.abs(ly) <= d.h / 2 + m;
   }
 
   /* Quelle forme se trouve sous ce point ? (de la plus haute à la plus basse) */
@@ -309,6 +329,7 @@ var Rendu = (function () {
     repere: repere, fond: fond, maquillage: maquillage, corps: corps,
     selection: selection, poignees: poignees, dansCadre: dansCadre,
     formeSous: formeSous, transformeForme: transformeForme,
-    versLocal: versLocal, rayon: rayon, trace: trace, MARGE_MM: MARGE_MM
+    versLocal: versLocal, rayon: rayon, trace: trace,
+    dimensions: dimensions, MARGE_MM: MARGE_MM
   };
 })();

@@ -18,6 +18,10 @@
 
 html, body {
   margin: 0; padding: 0; height: 100%;
+  /* Hauteur « petite » du navigateur : elle ignore la barre d'adresse qui se
+     rétracte au défilement. Sans ça, sur téléphone, la page change de hauteur
+     en cours de route et le dessin est recalculé, donc il saute. */
+  height: 100svh;
   background: var(--fond);
   color: var(--encre);
   font-family: Nunito, "Segoe UI", system-ui, sans-serif;
@@ -105,11 +109,12 @@ button:disabled { cursor: default; }
 
 .corps { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
 
-/* Le dessin passe avant les outils : il prend 45 % de la zone disponible,
-   les outils au plus 55 %. En proportions et non en « vh », pour que la
-   hauteur de l'en-tête soit déjà déduite. */
+/* Le dessin occupe 45 % de la zone disponible, ni plus ni moins : une base
+   FIGÉE, pas extensible. Sinon, changer d'outil change la hauteur du tiroir,
+   donc celle du dessin, qui est alors redessiné à une autre échelle — c'est
+   ce qui donnait l'impression qu'il sautait. */
 .scene {
-  flex: 1 1 45%; position: relative; min-height: 0;
+  flex: 0 0 45%; position: relative; min-height: 0;
   display: flex; align-items: center; justify-content: center;
   padding: .6rem; touch-action: none;
 }
@@ -121,14 +126,15 @@ button:disabled { cursor: default; }
 
 /* -------------------------------------------------------- barre outils */
 .outils {
-  flex: 0 1 auto; min-height: 0; max-height: 55%;
+  flex: 1 1 auto; min-height: 0;
   display: flex; flex-direction: column;
   background: var(--blanc); border-top: 1px solid var(--trait);
 }
 
-/* La palette coiffe la barre : toujours visible, et surtout elle ne
-   s'intercale plus entre l'icône Pochoirs et la planche de formes. */
-.palette { padding: .55rem .7rem .5rem; border-bottom: 1px solid var(--trait); }
+/* La palette ferme la barre, après les formes : on choisit donc son pochoir
+   d'abord, sa couleur ensuite. Dans l'autre sens, on repeignait sans le
+   vouloir la forme encore sélectionnée. */
+.palette { padding: .55rem .7rem .6rem; border-top: 1px solid var(--trait); }
 
 .rangee-outils { display: flex; gap: .35rem; padding: .5rem .6rem; justify-content: center; }
 .outil {
@@ -146,23 +152,25 @@ button:disabled { cursor: default; }
 .aide { margin: 0 0 .6rem; font-size: .82rem; line-height: 1.45; color: var(--encre-d); }
 .btn-petit { padding: .5em 1em; font-size: .88rem; }
 
-/* aperçu du diamètre réel du pinceau ou de la gomme */
+/* aperçu du diamètre réel du pinceau ou de la gomme, posé à même le fond */
 .reglage-bloc { margin-top: .2rem; }
 .apercu-taille {
   display: flex; align-items: center; justify-content: center;
-  min-height: 46px; margin-top: .3rem;
-  background: #FAF7F2; border-radius: 10px;
+  margin-top: .3rem;
 }
 .apercu-taille span {
   display: block; border-radius: 50%;
   box-shadow: 0 0 0 1px rgba(58, 52, 64, .18);
+  transition: width .08s ease, height .08s ease;
 }
 
 .tiroir {
   border-top: 1px solid var(--trait); padding: .6rem .7rem .8rem;
-  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  flex: 0 1 auto; min-height: 0; overflow-y: auto;
 }
-.palette, .rangee-outils { flex: 0 0 auto; }
+.rangee-outils { flex: 0 0 auto; }
+/* la palette est poussée tout en bas, même quand le tiroir est presque vide */
+.palette { flex: 0 0 auto; margin-top: auto; }
 .tiroir-titre { font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--encre-d); margin: 0 0 .5rem; }
 
 .pastilles { display: flex; flex-wrap: wrap; gap: .5rem; }
@@ -226,6 +234,15 @@ button:disabled { cursor: default; }
 .recap .ou { display: block; font-size: .74rem; font-weight: 700; color: var(--violet); text-decoration: none; }
 .recap .ou:hover { text-decoration: underline; }
 .recap-vide { font-style: italic; }
+
+/* Sur un écran court, le dessin cède un peu de place : sinon la planche de
+   pochoirs se réduit à une bande et devient pénible à parcourir. */
+@media (max-height: 720px) {
+  .scene { flex: 0 0 38%; }
+  .pastille { width: 34px; height: 34px; }
+  .outil { font-size: .66rem; }
+  .outil svg { width: 21px; height: 21px; }
+}
 
 /* ----------------------------------------------------------- grand ecran */
 @media (min-width: 900px) {
