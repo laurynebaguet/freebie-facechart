@@ -409,11 +409,23 @@ var Rendu = (function () {
   function reglerGrain(mmParPixel) {
     MM_PAR_PIXEL = mmParPixel;
     tuiles = {};
+    imagesTuiles = {};
   }
+
+  /* La même tuile, en image, pour que les pastilles de la palette montrent le
+     grain exact du dessin et non une imitation. */
+  var imagesTuiles = {};
+  function tuileEnImage(hex) {
+    if (!imagesTuiles[hex]) imagesTuiles[hex] = tuileNacre(hex).toDataURL('image/png');
+    return imagesTuiles[hex];
+  }
+
+  /* Côté d'une tuile en millimètres de peau : sert à la dimensionner ailleurs. */
+  function cotéTuileMm() { return 128 * MM_PAR_PIXEL; }
 
   return {
     repere: repere, fond: fond, maquillage: maquillage, corps: corps,
-    reglerGrain: reglerGrain,
+    reglerGrain: reglerGrain, tuileEnImage: tuileEnImage, coteTuileMm: cotéTuileMm,
     selection: selection, poignees: poignees, dansCadre: dansCadre,
     formeSous: formeSous, transformeForme: transformeForme,
     versLocal: versLocal, rayon: rayon, trace: trace,

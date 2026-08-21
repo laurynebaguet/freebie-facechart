@@ -134,14 +134,20 @@ var UI = (function () {
     { id: 'modifier', nom: 'Modifier', icone: 'modifier' }
   ];
 
-  /* Un fard nacré reçoit un reflet oblique, pour qu'on le distingue au premier
-     coup d'œil d'un fard mat de teinte voisine. */
-  function fondPastille(c) {
-    if (!c.nacre) return c.hex;
-    return 'linear-gradient(135deg,'
-      + ' rgba(255,255,255,.75) 0%, rgba(255,255,255,.15) 30%,'
-      + ' rgba(0,0,0,.10) 55%, rgba(255,255,255,.45) 78%, rgba(0,0,0,.08) 100%),'
-      + c.hex;
+  /* La pastille d'un fard nacré porte la tuile de paillettes du dessin, et non
+     une imitation : ce qu'on choisit est ce qu'on obtient. Elle est montrée un
+     peu grossie, sans quoi le grain serait indiscernable sur 40 pixels. */
+  var GROSSISSEMENT_PASTILLE = 2.2;
+
+  function stylePastille(c) {
+    if (!c.nacre) return { background: c.hex };
+    var cote = Rendu.coteTuileMm() * 3 * GROSSISSEMENT_PASTILLE;
+    return {
+      backgroundColor: c.hex,
+      backgroundImage: 'url("' + Rendu.tuileEnImage(c.hex) + '")',
+      backgroundSize: cote.toFixed(1) + 'px',
+      backgroundRepeat: 'repeat'
+    };
   }
 
   function Pastille(p) {
@@ -149,7 +155,7 @@ var UI = (function () {
     return html`
       <button title=${c.nom + (c.nacre ? ' (nacré)' : '')} aria-label=${c.nom}
         class=${'pastille' + (c.id === p.couleurId ? ' actif' : '') + (c.nacre ? ' nacre' : '')}
-        style=${{ background: fondPastille(c) }}
+        style=${stylePastille(c)}
         onClick=${function () { p.onCouleur(c.id); }}></button>`;
   }
 
