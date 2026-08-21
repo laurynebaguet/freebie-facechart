@@ -15,12 +15,13 @@ var KITS = [
 ];
 
 /* -------------------------------------------------------------- COULEURS */
-/* hex     : la teinte telle qu'elle rend UNE FOIS APPLIQUÉE sur la peau.
-   famille : ordre d'affichage dans la palette — 'base', 'primaire', 'autre',
-             puis 'nacre' qui est montré à part.
-   nacre   : true pour les fards légèrement pailletés, qui reçoivent un reflet.
-   kits    : les kits dans lesquels on trouve cette couleur.
-   ref     : usage interne, jamais affiché à l'utilisateur.
+/* hex   : la teinte telle qu'elle rend UNE FOIS APPLIQUÉE sur la peau.
+   nacre : true pour les fards légèrement pailletés. Ils sont regroupés à part
+           dans la palette et reçoivent un reflet, à l'écran comme sur la fiche.
+   kits  : les kits dans lesquels on trouve cette couleur.
+   ref   : usage interne, jamais affiché à l'utilisateur.
+
+   L'ordre de cette liste est celui de la palette.
 
    Les teintes viennent des swatchs photographiés sur peau le 21/08/2026, à la
    lumière du jour, avec une feuille blanche dans le cadre : seule la dominante
@@ -30,25 +31,20 @@ var KITS = [
      - le noir, que la lumière du jour surexpose et éclaircit à tort ;
      - le doré, dont le flacon n'était pas encore livré : valeur estimée. */
 var COULEURS = [
-  { id: 'noir',    nom: "Noir d'encre",     hex: '#2B2A2C', ref: '10',   kits: ['B'], famille: 'base' },
-  { id: 'blanc',   nom: 'Blanc de lune',    hex: '#F2EFE8', ref: '21',   kits: ['B'], famille: 'base' },
+  { id: 'noir',    nom: "Noir d'encre",     hex: '#2B2A2C', ref: '10',   kits: ['B'] },
+  { id: 'blanc',   nom: 'Blanc de lune',    hex: '#F2EFE8', ref: '21',   kits: ['B'] },
 
-  { id: 'rouge',   nom: 'Rouge coquelicot', hex: '#E9401D', ref: '159',  kits: ['C'], famille: 'primaire' },
-  { id: 'jaune',   nom: 'Jaune soleil',     hex: '#EAAE01', ref: '58',   kits: ['C'], famille: 'primaire' },
-  { id: 'bleu',    nom: 'Bleu océan',       hex: '#11439B', ref: '28',   kits: ['C'], famille: 'primaire' },
+  { id: 'rouge',   nom: 'Rouge coquelicot', hex: '#E9401D', ref: '159',  kits: ['C'] },
+  { id: 'jaune',   nom: 'Jaune soleil',     hex: '#EAAE01', ref: '58',   kits: ['C'] },
+  { id: 'bleu',    nom: 'Bleu océan',       hex: '#11439B', ref: '28',   kits: ['C'] },
 
-  { id: 'violet',  nom: 'Violet lavande',   hex: '#BA6C97', ref: '27',   kits: ['A'], famille: 'autre' },
-  { id: 'vert',    nom: 'Vert grenouille',  hex: '#769469', ref: '49',   kits: ['A'], famille: 'autre' },
+  { id: 'violet',  nom: 'Violet lavande',   hex: '#9A5CA8', ref: '27',   kits: ['A'] },
+  { id: 'vert',    nom: 'Vert grenouille',  hex: '#769469', ref: '49',   kits: ['A'] },
 
-  { id: 'bronze',  nom: 'Bronze ancien',    hex: '#9E7D5A', ref: '8008', kits: ['A'], famille: 'nacre', nacre: true },
-  { id: 'or',      nom: "Paille d'or",      hex: '#D9B463', ref: '09',   kits: ['B'], famille: 'nacre', nacre: true }
+  { id: 'bronze',  nom: 'Bronze ancien',    hex: '#7A6244', ref: '8008', kits: ['A'], nacre: true },
+  { id: 'or',      nom: "Paille d'or",      hex: '#D9B463', ref: '09',   kits: ['B'], nacre: true }
 ];
 
-/* Ordre des familles dans la palette, et intitulé du groupe mis à part. */
-var FAMILLES = [
-  { id: 'base' }, { id: 'primaire' }, { id: 'autre' },
-  { id: 'nacre', titre: 'Nacrées' }
-];
 
 /* --------------------------------------------------------------- VISAGES */
 /* image   : chemin du fichier.
@@ -135,7 +131,7 @@ var POCHOIRS = [
         rotBase: Math.PI / 2,
         /* Trois doubles montagnes, et rien de plus. Le bord alterne une grande
            dent et une petite ; la fenêtre va d'un creux PROFOND à un creux
-           profond à un creux profond, calée au quart de millimètre sur le
+           profond, calée au quart de millimètre sur le
            point le plus bas de chacun (61,5 mm et 177 mm sur la planche).
            Dépasser ne serait-ce que d'un millimètre fait repartir le bord vers
            le haut et laisse une languette disgracieuse au bout. */
