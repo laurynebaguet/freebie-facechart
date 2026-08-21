@@ -150,9 +150,13 @@ var UI = (function () {
       </div>`;
   }
 
-  /* Réglage de taille, avec un aperçu du diamètre réel juste en dessous. */
+  /* Réglage de taille, avec un aperçu du diamètre réel juste en dessous.
+     La place réservée correspond au diamètre MAXIMAL de l'outil : l'aperçu
+     n'est ainsi jamais à l'étroit, et la mise en page ne sursaute pas quand
+     on fait glisser le curseur. */
   function Curseur(p) {
     var diametre = Math.max(3, p.valeur * p.echelle);
+    var place = parseFloat(p.max) * p.echelle;
     return html`
       <div class="reglage-bloc">
         <div class="reglage">
@@ -160,13 +164,21 @@ var UI = (function () {
           <input type="range" min=${p.min} max=${p.max} step="0.5" value=${p.valeur}
                  onInput=${function (e) { p.onChange(parseFloat(e.target.value)); }}/>
         </div>
-        <div class="apercu-taille">
+        <div class="apercu-taille" style=${{ height: (place + 10) + 'px' }}>
           <span style=${{
             width: diametre + 'px', height: diametre + 'px',
             background: p.couleur || 'var(--encre)'
           }}></span>
         </div>
       </div>`;
+  }
+
+  /* Taille réelle d'une forme posée, telle qu'on la reproduira sur la peau. */
+  function tailleLisible(el) {
+    var f = Formes.get(el.setId, el.formeId);
+    if (!f) return '—';
+    var d = Rendu.dimensions(el, f);
+    return Math.round(d.l) + ' × ' + Math.round(d.h) + ' mm';
   }
 
   function Tiroir(p) {
@@ -220,8 +232,11 @@ var UI = (function () {
           ? html`
             <p class="aide">
               Fais glisser la forme pour la placer. Autour d'elle : le rond du
-              haut la fait pivoter, la pastille violette du bas la retourne en
-              miroir, la rose la retire.
+              haut la fait pivoter, la pastille du coin bas droit l'agrandit ou
+              la réduit, celle du bas la retourne en miroir, la rose la retire.
+            </p>
+            <p class="aide" style=${{ marginBottom: 0 }}>
+              Taille actuelle : <strong>${tailleLisible(sel)}</strong>
             </p>`
           : html`
             <p class="aide">
@@ -234,8 +249,6 @@ var UI = (function () {
   function BarreOutils(p) {
     return html`
       <div class="outils">
-        <${Palette} couleurId=${p.couleurId} onCouleur=${p.onCouleur}
-                    surSelection=${!!p.selection}/>
         <div class="rangee-outils">
           ${OUTILS.map(function (o) {
             return html`
@@ -251,6 +264,8 @@ var UI = (function () {
           </button>
         </div>
         <${Tiroir} ...${p}/>
+        <${Palette} couleurId=${p.couleurId} onCouleur=${p.onCouleur}
+                    surSelection=${!!p.selection}/>
       </div>`;
   }
 

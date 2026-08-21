@@ -9,8 +9,10 @@ var Toile = (function () {
   var html = htm.bind(React.createElement);
   var useRef = React.useRef, useEffect = React.useEffect, useCallback = React.useCallback;
 
-  var POIGNEE_MM = 9;      // rayon des boutons de rotation et de suppression
+  var POIGNEE_MM = 9;      // rayon des boutons autour d'une forme choisie
   var PAS_MM = 0.35;       // distance minimale entre deux points d'un trait
+  var ZOOM_MIN = 0.35;     // un pochoir réduit reste reconnaissable
+  var ZOOM_MAX = 3;
 
   function couleurDe(id) {
     for (var i = 0; i < COULEURS.length; i++) {
@@ -23,7 +25,7 @@ var Toile = (function () {
   function boite(el) {
     if (el.type === 'forme') {
       var f = Formes.get(el.setId, el.formeId);
-      var r = f ? Math.hypot(f.largeurMm, f.hauteurMm) / 2 : 0;
+      var r = f ? Math.hypot(f.largeurMm, f.hauteurMm) / 2 * (el.zoom || 1) : 0;
       return { x1: el.x - r, y1: el.y - r, x2: el.x + r, y2: el.y + r };
     }
     var m = (el.taille || 0) / 2;
@@ -91,6 +93,29 @@ var Toile = (function () {
       ctx.restore();
     }
 
+    /* Taille réelle du motif, affichée au-dessus de lui pendant qu'on le
+       redimensionne : c'est la mesure qui compte pour maquiller pour de vrai. */
+    function etiquetteTaille(ctx, el, echelle) {
+      var f = Formes.get(el.setId, el.formeId);
+      if (!f) return;
+      var d = Rendu.dimensions(el, f);
+      var texte = Math.round(d.l) + ' × ' + Math.round(d.h) + ' mm';
+      var x = el.x * echelle;
+      var y = (el.y - d.h / 2 - Rendu.MARGE_MM) * echelle - 26;
+      ctx.save();
+      ctx.font = '600 13px Nunito, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var l = ctx.measureText(texte).width + 16;
+      ctx.fillStyle = 'rgba(58,52,64,.92)';
+      ctx.beginPath();
+      ctx.roundRect(x - l / 2, y - 11, l, 22, 11);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillText(texte, x, y);
+      ctx.restore();
+    }
+
     function redessiner() {
       var q = propsRef.current;
       var c = canvasRef.current;
@@ -114,7 +139,9 @@ var Toile = (function () {
       if (glisse) {
         elements = elements.map(function (el) {
           return el.id === glisse.id
-            ? Object.assign({}, el, { x: glisse.x, y: glisse.y, rot: glisse.rot })
+            ? Object.assign({}, el, {
+                x: glisse.x, y: glisse.y, rot: glisse.rot, zoom: glisse.zoom
+              })
             : el;
         });
       }
@@ -152,7 +179,12 @@ var Toile = (function () {
         for (var i = 0; i < elements.length; i++) {
           if (elements[i].id === q.selectionId) { sel = elements[i]; break; }
         }
-        if (sel && sel.type === 'forme') Rendu.selection(ctx, sel, v.echelle, POIGNEE_MM);
+        if (sel && sel.type === 'forme') {
+          Rendu.selection(ctx, sel, v.echelle, POIGNEE_MM);
+          // pendant qu'on tire, on annonce la taille réelle obtenue
+          var g = gesteRef.current;
+          if (g && g.mode === 'redim') etiquetteTaille(ctx, sel, v.echelle);
+        }
       }
 
       apercuRond(ctx, v.echelle);
@@ -252,6 +284,9 @@ var Toile = (function () {
       if (Math.hypot(pt.x - pg.miroir.x, pt.y - pg.miroir.y) <= POIGNEE_MM * 0.75) {
         return { quoi: 'miroir', sel: s };
       }
+      if (Math.hypot(pt.x - pg.redim.x, pt.y - pg.redim.y) <= POIGNEE_MM * 0.75) {
+        return { quoi: 'redim', sel: s };
+      }
       if (Math.hypot(pt.x - pg.rotation.x, pt.y - pg.rotation.y) <= POIGNEE_MM * 0.75) {
         return { quoi: 'rotation', sel: s };
       }
@@ -266,6 +301,7 @@ var Toile = (function () {
       var c = cible(pt);
       if (c) {
         if (c.quoi === 'poubelle' || c.quoi === 'miroir') return 'pointer';
+        if (c.quoi === 'redim') return 'nwse-resize';
         return 'grab';
       }
       if (q.outil === 'modifier') return 'default';
@@ -299,9 +335,21 @@ var Toile = (function () {
         }
         p.appliquer(null, 'debut');
         var el = vise.sel.el;
-        glisseRef.current = { id: el.id, x: el.x, y: el.y, rot: el.rot || 0 };
+        glisseRef.current = {
+          id: el.id, x: el.x, y: el.y, rot: el.rot || 0, zoom: el.zoom || 1
+        };
         if (vise.quoi === 'rotation') {
           gesteRef.current = { mode: 'rotation' };
+        } else if (vise.quoi === 'redim') {
+          // on garde le rapport entre la distance au centre et la taille
+          var d0 = Math.hypot(pt.x - el.x, pt.y - el.y);
+          gesteRef.current = {
+            mode: 'redim',
+            reference: d0 > 0.5 ? d0 / (el.zoom || 1) : null
+          };
+          c.style.cursor = 'nwse-resize';
+          planifier();
+          return;
         } else {
           // manipuler la sélection prime sur l'outil courant
           if (q.outil !== 'modifier') p.onOutil('modifier');
@@ -318,12 +366,13 @@ var Toile = (function () {
         var idPose = q.dessin.seq;
         var neuf = {
           type: 'forme', setId: q.formeChoisie.setId, formeId: q.formeChoisie.id,
-          couleurId: q.couleurId, x: pt.x, y: pt.y, rot: 0, miroir: false, gommes: []
+          couleurId: q.couleurId, x: pt.x, y: pt.y, rot: 0,
+          zoom: 1, miroir: false, gommes: []
         };
         p.appliquer(function (d) { return Modele.ajouter(d, neuf); }, 'debut');
         p.onSelection(idPose);
         gesteRef.current = { mode: 'deplacement', dx: 0, dy: 0 };
-        glisseRef.current = { id: idPose, x: pt.x, y: pt.y, rot: 0 };
+        glisseRef.current = { id: idPose, x: pt.x, y: pt.y, rot: 0, zoom: 1 };
         c.style.cursor = 'grabbing';
         return;
       }
@@ -335,7 +384,10 @@ var Toile = (function () {
         if (sous) {
           p.appliquer(null, 'debut');
           gesteRef.current = { mode: 'deplacement', dx: sous.x - pt.x, dy: sous.y - pt.y };
-          glisseRef.current = { id: sous.id, x: sous.x, y: sous.y, rot: sous.rot || 0 };
+          glisseRef.current = {
+            id: sous.id, x: sous.x, y: sous.y,
+            rot: sous.rot || 0, zoom: sous.zoom || 1
+          };
           c.style.cursor = 'grabbing';
         }
         return;
@@ -385,6 +437,14 @@ var Toile = (function () {
         var gl = glisseRef.current;
         gl.rot = Math.atan2(pt.x - gl.x, gl.y - pt.y);
         planifier();
+        return;
+      }
+
+      if (g.mode === 'redim' && g.reference) {
+        var gz = glisseRef.current;
+        var d = Math.hypot(pt.x - gz.x, pt.y - gz.y);
+        gz.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, d / g.reference));
+        planifier();
       }
     }
 
@@ -428,7 +488,9 @@ var Toile = (function () {
       glisseRef.current = null;
       if (gl) {
         p.appliquer(function (d) {
-          return Modele.modifier(d, gl.id, { x: gl.x, y: gl.y, rot: gl.rot });
+          return Modele.modifier(d, gl.id, {
+            x: gl.x, y: gl.y, rot: gl.rot, zoom: gl.zoom
+          });
         }, 'fin');
       }
     }
