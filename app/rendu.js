@@ -51,7 +51,10 @@ var Rendu = (function () {
      surface. Le semis est tiré d'une suite pseudo-aléatoire à graine fixe :
      il doit être identique d'une image à l'autre, sinon la texture grouille. */
 
-  var MM_PAR_PIXEL = 0.11;   // finesse du grain
+  /* Finesse du grain, réglée à l'œil par Lauryne : les paillettes de ses fards
+     sont très fines. Un point de la tuile vaut 0,04 mm, donc la tuile entière
+     couvre à peine 5 mm de peau. */
+  var MM_PAR_PIXEL = 0.04;
   var tuiles = {};
 
   function tuileNacre(hex) {
