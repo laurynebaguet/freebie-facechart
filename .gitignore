@@ -1,0 +1,14 @@
+# Photos personnelles : elles servent seulement à caler les couleurs,
+# l'application n'en a pas besoin, et le dépôt est public.
+swatch*.jpg
+swatch*.jpeg
+images/references/
+
+# Réglages locaux de l'éditeur
+.claude/
+
+# Fichiers créés par Windows et OneDrive
+Thumbs.db
+desktop.ini
+*.tmp
+~$*
