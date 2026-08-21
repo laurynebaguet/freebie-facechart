@@ -136,13 +136,15 @@ button:disabled { cursor: default; }
    vouloir la forme encore sélectionnée. */
 .palette { padding: .55rem .7rem .6rem; border-top: 1px solid var(--trait); }
 
-.rangee-outils { display: flex; gap: .35rem; padding: .5rem .6rem; justify-content: center; }
+/* Compacts : ces cinq boutons ne changent pas souvent, ils ne doivent pas
+   manger la place du dessin ni celle de la planche de pochoirs. */
+.rangee-outils { display: flex; gap: .25rem; padding: .3rem .5rem; justify-content: center; }
 .outil {
-  flex: 1 1 0; max-width: 96px; border-radius: 12px; padding: .45rem .2rem;
-  display: flex; flex-direction: column; align-items: center; gap: .18rem;
-  font-size: .7rem; font-weight: 700; color: var(--encre-d);
+  flex: 1 1 0; max-width: 84px; border-radius: 10px; padding: .3rem .15rem;
+  display: flex; flex-direction: column; align-items: center; gap: .1rem;
+  font-size: .63rem; font-weight: 700; color: var(--encre-d); line-height: 1.2;
 }
-.outil svg { width: 24px; height: 24px; }
+.outil svg { width: 19px; height: 19px; }
 .outil.actif { background: #F3EDFB; color: var(--violet); }
 .outil:hover:not(.actif):not(:disabled) { background: #FAF7F2; }
 .outil-danger { color: var(--rose); }
@@ -179,15 +181,15 @@ button:disabled { cursor: default; }
 .palette { flex: 0 0 auto; margin-top: auto; }
 .tiroir-titre { font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--encre-d); margin: 0 0 .5rem; }
 
-/* La palette suit l'ordre du geste : noir et blanc, primaires, puis les
-   autres. Les nacrées sont mises à part, elles ne s'emploient pas pareil. */
-.rangs { display: flex; flex-direction: column; gap: .5rem; }
-.pastilles { display: flex; flex-wrap: wrap; gap: .9rem; align-items: center; }
+/* Deux familles seulement : les fards mats, et les nacrés, qui ne s'emploient
+   pas de la même manière. */
+.rangs { display: flex; flex-direction: column; gap: .45rem; }
 .groupe { display: flex; flex-wrap: wrap; gap: .4rem; }
 .groupe-apart { display: flex; align-items: center; gap: .55rem; }
 .etiquette-groupe {
-  font-size: .68rem; font-weight: 800; text-transform: uppercase;
+  font-size: .66rem; font-weight: 800; text-transform: uppercase;
   letter-spacing: .05em; color: var(--encre-d); white-space: nowrap;
+  width: 4.4em; flex: 0 0 auto;
 }
 
 .pastille {
@@ -257,9 +259,9 @@ button:disabled { cursor: default; }
    pochoirs se réduit à une bande et devient pénible à parcourir. */
 @media (max-height: 720px) {
   .scene { flex: 0 0 38%; }
-  .pastille { width: 34px; height: 34px; }
-  .outil { font-size: .66rem; }
-  .outil svg { width: 21px; height: 21px; }
+  .pastille { width: 32px; height: 32px; border-width: 2px; }
+  .outil { font-size: .6rem; }
+  .outil svg { width: 17px; height: 17px; }
 }
 
 /* ----------------------------------------------------------- grand ecran */

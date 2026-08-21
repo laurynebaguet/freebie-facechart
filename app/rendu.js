@@ -26,6 +26,46 @@ var Rendu = (function () {
     ctx.drawImage(image, c.x, c.y, c.w, c.h, 0, 0, largeurPx, rep.hauteurMm * e);
   }
 
+  /* ------------------------------------------------------------ nacre */
+
+  function couleurPar(id) {
+    for (var i = 0; i < COULEURS.length; i++) if (COULEURS[i].id === id) return COULEURS[i];
+    return null;
+  }
+
+  /* Éclaircit (f > 0) ou assombrit (f < 0) une teinte. */
+  function nuance(hex, f) {
+    var r = parseInt(hex.slice(1, 3), 16);
+    var v = parseInt(hex.slice(3, 5), 16);
+    var b = parseInt(hex.slice(5, 7), 16);
+    function m(c) {
+      var x = f >= 0 ? c + (255 - c) * f : c * (1 + f);
+      return Math.max(0, Math.min(255, Math.round(x)));
+    }
+    return 'rgb(' + m(r) + ',' + m(v) + ',' + m(b) + ')';
+  }
+
+  /* Un fard nacré ne se pose pas en aplat : il accroche la lumière par bandes.
+     On remplit donc avec un dégradé oblique qui alterne éclats et creux autour
+     de la teinte de base, plutôt qu'avec une couleur unie. Volontairement
+     discret : il doit se remarquer sans travestir la couleur. */
+  function remplissage(ctx, hexOuId, boite, couleurDe) {
+    var c = couleurPar(hexOuId);
+    var hex = c ? c.hex : couleurDe(hexOuId);
+    if (!c || !c.nacre) return hex;
+
+    var g = ctx.createLinearGradient(boite.x1, boite.y1, boite.x2, boite.y2);
+    g.addColorStop(0.00, nuance(hex, -0.10));
+    g.addColorStop(0.16, nuance(hex, 0.20));
+    g.addColorStop(0.30, hex);
+    g.addColorStop(0.46, nuance(hex, -0.13));
+    g.addColorStop(0.60, nuance(hex, 0.26));
+    g.addColorStop(0.74, hex);
+    g.addColorStop(0.88, nuance(hex, -0.11));
+    g.addColorStop(1.00, nuance(hex, 0.16));
+    return g;
+  }
+
   /* --------------------------------------------------------- géométrie */
 
   /* Place le contexte dans le repère local d'une forme posée. Après cet
@@ -115,7 +155,11 @@ var Rendu = (function () {
       var f = Formes.get(el.setId, el.formeId);
       if (f) {
         transformeForme(ctx, el, f, echelle);
-        ctx.fillStyle = couleurDe(el.couleurId);
+        // le dégradé du nacré s'exprime dans le repère du motif, donc en mm
+        ctx.fillStyle = remplissage(ctx, el.couleurId, {
+          x1: f.cx - f.largeurMm / 2, y1: f.cy - f.hauteurMm / 2,
+          x2: f.cx + f.largeurMm / 2, y2: f.cy + f.hauteurMm / 2
+        }, couleurDe);
         if (f.bande) {
           // la fenêtre borne le motif, et le tracé y creuse les manques
           ctx.beginPath();
@@ -127,7 +171,17 @@ var Rendu = (function () {
         }
       }
     } else if (el.type === 'trait') {
-      ctx.strokeStyle = couleurDe(el.couleurId);
+      var b = { x1: Infinity, y1: Infinity, x2: -Infinity, y2: -Infinity };
+      el.points.forEach(function (p) {
+        if (p[0] < b.x1) b.x1 = p[0];
+        if (p[0] > b.x2) b.x2 = p[0];
+        if (p[1] < b.y1) b.y1 = p[1];
+        if (p[1] > b.y2) b.y2 = p[1];
+      });
+      ctx.strokeStyle = remplissage(ctx, el.couleurId, {
+        x1: b.x1 * echelle, y1: b.y1 * echelle,
+        x2: b.x2 * echelle, y2: b.y2 * echelle
+      }, couleurDe);
       trace(ctx, el.points, el.taille, echelle);
     }
     ctx.restore();

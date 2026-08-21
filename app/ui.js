@@ -154,34 +154,18 @@ var UI = (function () {
   }
 
   function Palette(p) {
-    var groupes = FAMILLES.map(function (f) {
-      return {
-        titre: f.titre,
-        couleurs: COULEURS.filter(function (c) { return c.famille === f.id; })
-      };
-    }).filter(function (g) { return g.couleurs.length; });
-
-    var courants = groupes.filter(function (g) { return !g.titre; });
-    var apart = groupes.filter(function (g) { return g.titre; });
+    var groupes = [
+      { titre: 'Mates',   couleurs: COULEURS.filter(function (c) { return !c.nacre; }) },
+      { titre: 'Nacrées', couleurs: COULEURS.filter(function (c) { return c.nacre; }) }
+    ].filter(function (g) { return g.couleurs.length; });
 
     return html`
       <div class="palette">
         <p class="tiroir-titre">Couleur${p.surSelection ? ' de la forme choisie' : ''}</p>
         <div class="rangs">
-          <div class="pastilles">
-            ${courants.map(function (g, i) {
-              return html`
-                <div class="groupe" key=${i}>
-                  ${g.couleurs.map(function (c) {
-                    return html`<${Pastille} key=${c.id} couleur=${c}
-                                  couleurId=${p.couleurId} onCouleur=${p.onCouleur}/>`;
-                  })}
-                </div>`;
-            })}
-          </div>
-          ${apart.map(function (g, i) {
+          ${groupes.map(function (g) {
             return html`
-              <div class="groupe-apart" key=${'a' + i}>
+              <div class="groupe-apart" key=${g.titre}>
                 <span class="etiquette-groupe">${g.titre}</span>
                 <div class="groupe">
                   ${g.couleurs.map(function (c) {
