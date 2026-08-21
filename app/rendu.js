@@ -45,25 +45,60 @@ var Rendu = (function () {
     return 'rgb(' + m(r) + ',' + m(v) + ',' + m(b) + ')';
   }
 
-  /* Un fard nacré ne se pose pas en aplat : il accroche la lumière par bandes.
-     On remplit donc avec un dégradé oblique qui alterne éclats et creux autour
-     de la teinte de base, plutôt qu'avec une couleur unie. Volontairement
-     discret : il doit se remarquer sans travestir la couleur. */
-  function remplissage(ctx, hexOuId, boite, couleurDe) {
-    var c = couleurPar(hexOuId);
-    var hex = c ? c.hex : couleurDe(hexOuId);
-    if (!c || !c.nacre) return hex;
+  /* Un fard nacré est une poudre : ce ne sont pas des reflets métalliques en
+     bandes, mais une multitude de points minuscules qui accrochent la lumière.
+     On fabrique donc une tuile semée de micro-paillettes, qu'on répète sur la
+     surface. Le semis est tiré d'une suite pseudo-aléatoire à graine fixe :
+     il doit être identique d'une image à l'autre, sinon la texture grouille. */
 
-    var g = ctx.createLinearGradient(boite.x1, boite.y1, boite.x2, boite.y2);
-    g.addColorStop(0.00, nuance(hex, -0.10));
-    g.addColorStop(0.16, nuance(hex, 0.20));
-    g.addColorStop(0.30, hex);
-    g.addColorStop(0.46, nuance(hex, -0.13));
-    g.addColorStop(0.60, nuance(hex, 0.26));
-    g.addColorStop(0.74, hex);
-    g.addColorStop(0.88, nuance(hex, -0.11));
-    g.addColorStop(1.00, nuance(hex, 0.16));
-    return g;
+  var MM_PAR_PIXEL = 0.11;   // finesse du grain
+  var tuiles = {};
+
+  function tuileNacre(hex) {
+    if (tuiles[hex]) return tuiles[hex];
+    var N = 128;
+    var t = document.createElement('canvas');
+    t.width = N; t.height = N;
+    var c = t.getContext('2d');
+    c.fillStyle = hex;
+    c.fillRect(0, 0, N, N);
+
+    var graine = 987654321;
+    function alea() {
+      graine = (graine * 1103515245 + 12345) & 0x7fffffff;
+      return graine / 0x7fffffff;
+    }
+    for (var i = 0; i < 340; i++) {
+      var x = alea() * N, y = alea() * N, r = 0.45 + alea() * 1.25;
+      var brille = alea();
+      c.fillStyle = brille > 0.38
+        ? 'rgba(255,255,255,' + (0.30 + alea() * 0.5).toFixed(3) + ')'
+        : 'rgba(0,0,0,' + (0.10 + alea() * 0.16).toFixed(3) + ')';
+      // chaque grain est répété sur les huit voisins : la tuile se raccorde
+      // ainsi sans couture visible
+      for (var dx = -1; dx <= 1; dx++) {
+        for (var dy = -1; dy <= 1; dy++) {
+          c.beginPath();
+          c.arc(x + dx * N, y + dy * N, r, 0, Math.PI * 2);
+          c.fill();
+        }
+      }
+    }
+    tuiles[hex] = t;
+    return t;
+  }
+
+  /* `unite` : combien de pixels du repère courant valent un millimètre.
+     1 dans le repère d'un motif (déjà en mm), l'échelle pour un trait. */
+  function remplissage(ctx, id, unite, couleurDe) {
+    var c = couleurPar(id);
+    var hex = c ? c.hex : couleurDe(id);
+    if (!c || !c.nacre) return hex;
+    var motif = ctx.createPattern(tuileNacre(hex), 'repeat');
+    if (motif.setTransform) {
+      motif.setTransform(new DOMMatrix().scale(MM_PAR_PIXEL * unite));
+    }
+    return motif;
   }
 
   /* --------------------------------------------------------- géométrie */
@@ -155,11 +190,8 @@ var Rendu = (function () {
       var f = Formes.get(el.setId, el.formeId);
       if (f) {
         transformeForme(ctx, el, f, echelle);
-        // le dégradé du nacré s'exprime dans le repère du motif, donc en mm
-        ctx.fillStyle = remplissage(ctx, el.couleurId, {
-          x1: f.cx - f.largeurMm / 2, y1: f.cy - f.hauteurMm / 2,
-          x2: f.cx + f.largeurMm / 2, y2: f.cy + f.hauteurMm / 2
-        }, couleurDe);
+        // ici le repère est déjà en millimètres : une unité vaut un millimètre
+        ctx.fillStyle = remplissage(ctx, el.couleurId, 1, couleurDe);
         if (f.bande) {
           // la fenêtre borne le motif, et le tracé y creuse les manques
           ctx.beginPath();
@@ -171,17 +203,8 @@ var Rendu = (function () {
         }
       }
     } else if (el.type === 'trait') {
-      var b = { x1: Infinity, y1: Infinity, x2: -Infinity, y2: -Infinity };
-      el.points.forEach(function (p) {
-        if (p[0] < b.x1) b.x1 = p[0];
-        if (p[0] > b.x2) b.x2 = p[0];
-        if (p[1] < b.y1) b.y1 = p[1];
-        if (p[1] > b.y2) b.y2 = p[1];
-      });
-      ctx.strokeStyle = remplissage(ctx, el.couleurId, {
-        x1: b.x1 * echelle, y1: b.y1 * echelle,
-        x2: b.x2 * echelle, y2: b.y2 * echelle
-      }, couleurDe);
+      // le tracé travaille en pixels : un millimètre y vaut « echelle »
+      ctx.strokeStyle = remplissage(ctx, el.couleurId, echelle, couleurDe);
       trace(ctx, el.points, el.taille, echelle);
     }
     ctx.restore();
@@ -379,8 +402,15 @@ var Rendu = (function () {
     return null;
   }
 
+  /* Sert à essayer différentes finesses de grain depuis outils/nacre.html. */
+  function reglerGrain(mmParPixel) {
+    MM_PAR_PIXEL = mmParPixel;
+    tuiles = {};
+  }
+
   return {
     repere: repere, fond: fond, maquillage: maquillage, corps: corps,
+    reglerGrain: reglerGrain,
     selection: selection, poignees: poignees, dansCadre: dansCadre,
     formeSous: formeSous, transformeForme: transformeForme,
     versLocal: versLocal, rayon: rayon, trace: trace,
