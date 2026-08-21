@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Effet nacré, en grand</title>
+<style>
+  body { font: 15px/1.55 Nunito, "Segoe UI", sans-serif; background: #FFF8F0;
+         color: #3A3440; margin: 0; padding: 16px; }
+  h2 { font-size: 19px; margin: 0 0 4px; color: #7B3FD3; }
+  p.sous { margin: 0 0 16px; color: #6B6474; max-width: 64ch; }
+  .rangee { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+  .c { background: #fff; border-radius: 14px; padding: 12px;
+       box-shadow: 0 2px 10px rgba(58,52,64,.12); }
+  .c canvas { display: block; border-radius: 10px; }
+  .c b { display: block; margin-top: 8px; font-size: 14px; }
+  .c span { font-size: 12px; color: #6B6474; }
+  .reglage { background: #fff; border-radius: 14px; padding: 14px 16px; max-width: 560px;
+             box-shadow: 0 2px 10px rgba(58,52,64,.12); }
+  .reglage label { font-weight: 800; display: block; margin-bottom: 6px; }
+  .reglage input { width: 100%; accent-color: #7B3FD3; }
+  .val { font-family: Consolas, monospace; color: #7B3FD3; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<h2>L'effet nacré, vu de près</h2>
+<p class="sous">
+  Le fard est posé sur un fond couleur peau, à trois tailles : de près, à la
+  taille d'un vrai motif, et en tout petit. Le curseur règle la finesse du
+  grain — dis-moi la valeur qui te paraît juste.
+</p>
+
+<div class="reglage">
+  <label>Finesse du grain : <span class="val" id="v">0,11</span> mm par point</label>
+  <input id="f" type="range" min="0.04" max="0.30" step="0.01" value="0.11">
+</div>
+
+<div class="rangee" id="r"></div>
+
+<script src="../vendor/react.production.min.js"></script>
+<script src="../app/subpaths.js"></script>
+<script src="../app/planches.js"></script>
+<script src="../app/donnees.js"></script>
+<script src="../app/formes.js"></script>
+<script src="../app/rendu.js"></script>
+<script>
+var PEAU = '#E8C0A0';
+var CAS = [
+  { id: 'bronze', ech: 9,   note: 'de très près' },
+  { id: 'bronze', ech: 3.5, note: 'taille réelle à l’écran' },
+  { id: 'or',     ech: 9,   note: 'de très près' },
+  { id: 'or',     ech: 3.5, note: 'taille réelle à l’écran' },
+  { id: 'vert',   ech: 9,   note: 'un fard MAT, pour comparer' }
+];
+
+function couleurDe(id) {
+  for (var i = 0; i < COULEURS.length; i++) if (COULEURS[i].id === id) return COULEURS[i].hex;
+  return '#000';
+}
+function nom(id) {
+  for (var i = 0; i < COULEURS.length; i++) if (COULEURS[i].id === id) return COULEURS[i].nom;
+  return id;
+}
+
+function dessiner() {
+  Formes.init();
+  var r = document.getElementById('r');
+  r.innerHTML = '';
+  CAS.forEach(function (cas) {
+    var d = document.createElement('div');
+    d.className = 'c';
+    var c = document.createElement('canvas');
+    c.width = 210; c.height = 210;
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = PEAU;
+    ctx.fillRect(0, 0, c.width, c.height);
+
+    var f = Formes.get('av1', 'fiole');
+    var el = { id: 1, type: 'forme', setId: 'av1', formeId: 'fiole',
+               couleurId: cas.id, x: 0, y: 0, rot: 0, zoom: 1 };
+    ctx.save();
+    ctx.translate(c.width / 2, c.height / 2);
+    ctx.translate(-el.x * cas.ech, -el.y * cas.ech);
+    Rendu.corps(ctx, el, cas.ech, couleurDe);
+    ctx.restore();
+
+    d.appendChild(c);
+    var b = document.createElement('b');
+    b.textContent = nom(cas.id);
+    d.appendChild(b);
+    var s = document.createElement('span');
+    s.textContent = cas.note;
+    d.appendChild(s);
+    r.appendChild(d);
+  });
+}
+
+document.getElementById('f').addEventListener('input', function (e) {
+  var v = parseFloat(e.target.value);
+  document.getElementById('v').textContent = v.toFixed(2).replace('.', ',');
+  Rendu.reglerGrain(v);
+  dessiner();
+});
+dessiner();
+</script>
+</body>
+</html>
