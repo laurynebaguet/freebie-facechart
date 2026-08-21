@@ -163,6 +163,12 @@ button:disabled { cursor: default; }
   box-shadow: 0 0 0 1px rgba(58, 52, 64, .18);
   transition: width .08s ease, height .08s ease;
 }
+/* la gomme n'ajoute rien : son aperçu est un cercle vide, comme sur le visage */
+.apercu-taille span.creux {
+  box-shadow: none;
+  border: 1.5px solid var(--encre);
+  outline: 1px solid rgba(255, 255, 255, .9);
+}
 
 .tiroir {
   border-top: 1px solid var(--trait); padding: .6rem .7rem .8rem;
@@ -173,7 +179,17 @@ button:disabled { cursor: default; }
 .palette { flex: 0 0 auto; margin-top: auto; }
 .tiroir-titre { font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--encre-d); margin: 0 0 .5rem; }
 
-.pastilles { display: flex; flex-wrap: wrap; gap: .5rem; }
+/* La palette suit l'ordre du geste : noir et blanc, primaires, puis les
+   autres. Les nacrées sont mises à part, elles ne s'emploient pas pareil. */
+.rangs { display: flex; flex-direction: column; gap: .5rem; }
+.pastilles { display: flex; flex-wrap: wrap; gap: .9rem; align-items: center; }
+.groupe { display: flex; flex-wrap: wrap; gap: .4rem; }
+.groupe-apart { display: flex; align-items: center; gap: .55rem; }
+.etiquette-groupe {
+  font-size: .68rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--encre-d); white-space: nowrap;
+}
+
 .pastille {
   width: 40px; height: 40px; border-radius: 50%;
   border: 3px solid var(--blanc); box-shadow: 0 0 0 1px var(--trait), var(--ombre);
@@ -181,6 +197,8 @@ button:disabled { cursor: default; }
 }
 .pastille:hover { transform: scale(1.08); }
 .pastille.actif { box-shadow: 0 0 0 3px var(--violet), var(--ombre); transform: scale(1.08); }
+.pastille.nacre { box-shadow: 0 0 0 1px #C9AE72, var(--ombre); }
+.pastille.nacre.actif { box-shadow: 0 0 0 3px var(--violet), var(--ombre); }
 
 .set-titre { font-weight: 800; font-size: .8rem; color: var(--violet); margin: .6rem 0 .4rem; }
 .grille-formes { display: grid; gap: .45rem; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
