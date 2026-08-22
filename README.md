@@ -10,11 +10,17 @@ une fiche A4 à imprimer listant le matériel utilisé.
 ## Ce qu'on peut faire
 
 - Poser les motifs d'une planche de pochoirs, puis les déplacer, les faire
-  pivoter, les retourner en miroir, les repeindre ou les retirer.
+  pivoter, les retourner en miroir, les redimensionner, les repeindre ou les
+  retirer.
 - Dessiner au pinceau et gommer, avec une taille réglable.
 - Annuler et rétablir chaque geste.
 - Changer de visage sans perdre son maquillage, pour comparer un même look.
 - Télécharger une fiche A4 avec le dessin en grand et la liste du matériel.
+
+Les teintes de la palette sont celles des fards réels, relevées sur des swatchs
+photographiés sur peau. Les fards nacrés sont rendus par un semis de
+micro-paillettes plutôt qu'en aplat — dans la palette, sur le dessin et sur la
+fiche imprimée.
 
 Le travail est sauvegardé en continu dans le navigateur : aucun compte, aucun
 serveur, aucune donnée collectée.

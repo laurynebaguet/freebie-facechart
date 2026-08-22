@@ -109,11 +109,14 @@ bouge jamais.
 
 Il te faudra mon aide pour la première étape, mais voici le principe.
 
-1. Le fichier SVG de la planche est découpé en morceaux numérotés. Ouvre
-   `outils/diag2.html` (avec le serveur lancé) : chaque morceau y est affiché
-   en gros plan avec son numéro et sa taille réelle.
-2. Le tracé de la planche est recopié dans `app/planches.js`.
-3. Dans `app/donnees.js`, partie `POCHOIRS`, on décrit les formes :
+1. Dépose le SVG dans le dossier `Pochoirs`, à côté des autres. Il doit être au
+   format A4 (`viewBox="0 0 210 297"`) : c'est ce qui fait qu'une unité du
+   fichier vaut un millimètre réel, et donc que les tailles sont justes.
+2. Son tracé est recopié dans `app/planches.js`, sous une clé (`'av1'`, `'1v1'`).
+3. Ouvre **`outils/diag-planche.html?p=1v1`** (avec le serveur lancé, en
+   remplaçant `1v1` par la clé de ta planche) : chaque morceau y est affiché en
+   gros plan, avec son numéro et sa taille réelle.
+4. Dans `app/donnees.js`, partie `POCHOIRS`, on décrit les formes :
 
 ```js
 { id: 'araignee', nom: 'Araignée', traces: [8] }
@@ -121,10 +124,14 @@ Il te faudra mon aide pour la première étape, mais voici le principe.
 
 - `traces` : les numéros des morceaux qui composent la forme. Plusieurs numéros
   = un seul tampon (les bulles du chaudron sont sept morceaux).
-- `colleA` : le motif se pose automatiquement sur un autre (le visage du crâne
-  se cale sur le crâne).
-- `bande` : pour un bord de planche (les coulures, les fanions), où la peinture
-  passe **autour** du plastique.
+- `rotBase` : redresse un motif couché sur la planche, en radians. Seul le
+  dessin tourne, son cadre de sélection reste droit.
+- `bande` : pour un bord de planche (les coulures, les dents de scie), où la
+  peinture passe **autour** du plastique. La fenêtre doit aller d'un creux à un
+  creux, sinon le motif se termine par un demi-morceau disgracieux.
+
+Une même planche peut porter plusieurs exemplaires d'un même motif : un seul
+tampon suffit alors, inutile de tous les déclarer.
 
 ---
 
