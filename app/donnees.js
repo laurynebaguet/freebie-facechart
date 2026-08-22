@@ -186,9 +186,10 @@ var POCHOIRS = [
         rotBase: -Math.PI / 2,
         bande: { x: 177, y: 51.5, w: 14, h: 73.5, positif: true, fondu: 2.5 } },
 
-      /* Période 35 mm, creux à 62 / 97 / 132 / 166. */
+      /* Période 35 mm, creux à 62 / 97 / 132 / 166. Le « fondu » n'estompe que
+         les deux bouts, pour que la frise ne s'arrête pas à la verticale. */
       { id: 'vagues', nom: 'Vagues', traces: [0],
-        bande: { x: 62, y: 268, w: 104, h: 12, fondu: 2.5 } }
+        bande: { x: 62, y: 268, w: 104, h: 12, fondu: 5 } }
     ]
   }
 ];
