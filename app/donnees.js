@@ -145,39 +145,50 @@ var POCHOIRS = [
     lien: 'https://www.labaguettemaquille.fr',
     planche: '1v1',
 
-    /* ATTENTION — noms provisoires, à remplacer par les vrais.
-       Cette planche est plus grande que la Av1 : 175,7 x 248,9 mm.
+    /* Cette planche est plus grande que la Av1 : 175,7 x 248,9 mm.
 
-       Les formes ont été regroupées en comparant leurs silhouettes : les
-       morceaux 6 et 11 sont deux exemplaires du MÊME motif (un seul tampon
-       suffit), et les morceaux 9, 12 et 14 sont un même motif décliné en trois
-       tailles, comme 7/10/16 et 8/13/15 pour le petit. */
+       Plusieurs motifs y figurent en double ou en triple, à des tailles
+       différentes : comme on peut redimensionner un tampon, on ne déclare que
+       le plus grand exemplaire, qui a la meilleure définition. */
     formes: [
-      { id: 'f1', nom: 'Forme 1',  traces: [1] },   /* 21,9 x 25,8 mm */
-      { id: 'f2', nom: 'Forme 2',  traces: [2] },   /* 48,7 x 50,9 mm */
-      { id: 'f3', nom: 'Forme 3',  traces: [3] },   /* 27,3 x 33,4 mm */
-      { id: 'f4', nom: 'Forme 4',  traces: [4] },   /* 39,2 x 48,8 mm */
-      { id: 'f5', nom: 'Forme 5',  traces: [5] },   /* 27,3 x 48,9 mm */
-      { id: 'ajoure', nom: 'Motif ajouré', traces: [6] },  /* 33,6 mm, en double sur la planche */
+      /* Le cœur est découpé trois fois (morceaux 1, 3 et 4). L'échancrure de
+         l'exemplaire retenu pointe vers la droite : on le redresse d'un quart
+         de tour à gauche pour la ramener en haut, pointe en bas. */
+      { id: 'coeur',  nom: 'Cœur',  traces: [4],
+        rotBase: -80 * Math.PI / 180 },
 
-      { id: 'rond-grand', nom: 'Grand rond',  traces: [9] },   /* 43,1 mm */
-      { id: 'rond-moyen', nom: 'Rond moyen',  traces: [12] },  /* 24,7 mm */
-      { id: 'rond-petit', nom: 'Petit rond',  traces: [14] },  /* 15,6 mm */
+      /* Cinq branches, espacées de 72°. La plus haute est à 290° : on ramène
+         une branche à la verticale. */
+      { id: 'etoile', nom: 'Étoile', traces: [2],
+        rotBase: -20 * Math.PI / 180 },
 
-      { id: 'semis-moyen', nom: 'Petit motif', traces: [8] },  /* 9,0 mm, en triple */
-      { id: 'semis-petit', nom: 'Micro motif', traces: [7] },  /* 5,4 mm, en triple */
+      /* Grand axe vertical sur la planche, couché ici. */
+      { id: 'ovale',  nom: 'Ovale',  traces: [5],
+        rotBase: Math.PI / 2 },
 
-      /* Deux bords travaillés, tous deux très réguliers. Comme pour la Av1, la
-         fenêtre va d'un creux à un creux pour que le motif se répète trois fois
-         à l'identique, sans morceau orphelin au bout. */
-      { id: 'bord-droit', nom: 'Bordure vagues', traces: [0],
-        /* période 24,5 mm, creux à 51,5 / 76 / 100,5 / 125 */
-        bande: { x: 181, y: 51.5, w: 15, h: 73.5 } },
-      { id: 'bord-bas', nom: 'Bordure festons', traces: [0],
-        /* Période 35 mm. On part d'un CREUX de peinture (62 / 97 / 132 / 166)
-           et non d'une pointe : sinon le motif commence et finit par un demi
-           feston collé au bord. */
-        bande: { x: 62, y: 268, w: 104, h: 12 } }
+      { id: 'rond',   nom: 'Rond',   traces: [9] },
+
+      /* Huit étoiles de trois tailles, semées sur la planche. On garde leurs
+         positions les unes par rapport aux autres : c'est le semis qui fait le
+         motif, comme les bulles de chaudron de la Av1. */
+      { id: 'etincelles', nom: 'Étincelles',
+        traces: [6, 11, 8, 13, 15, 7, 10, 16] },
+
+      /* Deux bords travaillés, tous deux très réguliers. La fenêtre va d'un
+         creux à un creux pour que le motif se répète trois fois à l'identique,
+         sans morceau orphelin au bout. */
+
+      /* Ici c'est le PLASTIQUE qui dessine, en arcs arrondis : on remplit donc
+         le tracé lui-même (« positif ») et non son pourtour, qui ne donnerait
+         que des pointes en V. Période 24,5 mm. */
+      { id: 'collines', nom: 'Collines', traces: [0],
+        /* couchée sur la planche : on la redresse, bosses vers le haut */
+        rotBase: -Math.PI / 2,
+        bande: { x: 177, y: 51.5, w: 14, h: 73.5, positif: true, fondu: 2.5 } },
+
+      /* Période 35 mm, creux à 62 / 97 / 132 / 166. */
+      { id: 'vagues', nom: 'Vagues', traces: [0],
+        bande: { x: 62, y: 268, w: 104, h: 12, fondu: 2.5 } }
     ]
   }
 ];
