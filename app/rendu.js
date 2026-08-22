@@ -186,16 +186,86 @@ var Rendu = (function () {
     ctx.stroke();
   }
 
-  /* Fenêtre d'une bordure. `arrondi` casse l'angle droit des extrémités, là où
-     la frise s'interrompt : le trait reste franc, seuls les coins s'adoucissent. */
+  /* Fenêtre d'une bordure, sans adoucissement. */
   function fenetreBande(ctx, bande) {
-    var r = bande.arrondi || 0;
     ctx.beginPath();
-    if (r > 0 && ctx.roundRect) {
-      ctx.roundRect(bande.x, bande.y, bande.w, bande.h, r);
-    } else {
-      ctx.rect(bande.x, bande.y, bande.w, bande.h);
+    ctx.rect(bande.x, bande.y, bande.w, bande.h);
+  }
+
+  /* ------------------------------------------------ silhouette arrondie */
+
+  /* `arrondi` ne peut pas se traiter avec un rectangle à coins arrondis : les
+     angles vifs d'une bordure ne sont pas ses quatre coins, mais les endroits
+     où la coupe rencontre le dessin — en haut, là où le mur du bout croise la
+     courbe d'une vague.
+
+     On arrondit donc la SILHOUETTE entière : on la dessine, on la floute du
+     rayon voulu, puis on reseuille. Tout angle saillant ou rentrant plus aigu
+     que ce rayon s'en trouve adouci, en haut comme en bas. C'est calculé une
+     fois par forme et gardé en mémoire. */
+
+  var DEF = 10;              // points par millimètre de la silhouette
+  var silhouettes = {};
+
+  function silhouetteArrondie(forme) {
+    if (silhouettes[forme.cle]) return silhouettes[forme.cle];
+    var b = forme.bande, r = b.arrondi;
+    var marge = r + 2;
+    var L = Math.ceil((b.w + 2 * marge) * DEF);
+    var H = Math.ceil((b.h + 2 * marge) * DEF);
+
+    var net = document.createElement('canvas');
+    net.width = L; net.height = H;
+    var n = net.getContext('2d');
+    n.setTransform(DEF, 0, 0, DEF, 0, 0);
+    n.translate(-b.x + marge, -b.y + marge);
+    n.beginPath();
+    n.rect(b.x, b.y, b.w, b.h);
+    n.clip();
+    n.fillStyle = '#000';
+    n.fill(forme.path2d, b.positif ? 'nonzero' : 'evenodd');
+
+    var flou = document.createElement('canvas');
+    flou.width = L; flou.height = H;
+    var g = flou.getContext('2d', { willReadFrequently: true });
+    g.filter = 'blur(' + (r * DEF / 2).toFixed(2) + 'px)';
+    g.drawImage(net, 0, 0);
+    g.filter = 'none';
+
+    /* Reseuillage : on redurcit le flou autour de la moitié. La transition
+       reste étalée sur un point ou deux — un seuil franc rendrait le contour
+       en escalier, faute de lissage. */
+    var img = g.getImageData(0, 0, L, H);
+    var d = img.data;
+    var PENTE = 14;
+    for (var i = 3; i < d.length; i += 4) {
+      var v = 128 + (d[i] - 128) * PENTE;
+      d[i] = v < 0 ? 0 : (v > 255 ? 255 : v);
     }
+    g.putImageData(img, 0, 0);
+
+    var res = { toile: flou, marge: marge, def: DEF };
+    silhouettes[forme.cle] = res;
+    return res;
+  }
+
+  /* La silhouette sert de pochoir : on peint la couleur au travers. */
+  var bandesTeintes = {};
+  function bandeTeintee(forme, couleurId, couleurDe) {
+    var cle = forme.cle + '|' + couleurId;
+    if (bandesTeintes[cle]) return bandesTeintes[cle];
+    var s = silhouetteArrondie(forme);
+    var c = document.createElement('canvas');
+    c.width = s.toile.width; c.height = s.toile.height;
+    var ctx = c.getContext('2d');
+    ctx.setTransform(s.def, 0, 0, s.def, 0, 0);
+    ctx.fillStyle = remplissage(ctx, couleurId, s.def, couleurDe);
+    ctx.fillRect(0, 0, c.width / s.def, c.height / s.def);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.drawImage(s.toile, 0, 0);
+    bandesTeintes[cle] = { toile: c, marge: s.marge, def: s.def };
+    return bandesTeintes[cle];
   }
 
   /* Dessine un élément sans tenir compte de ses morsures. */
@@ -207,7 +277,13 @@ var Rendu = (function () {
         transformeForme(ctx, el, f, echelle);
         // ici le repère est déjà en millimètres : une unité vaut un millimètre
         ctx.fillStyle = remplissage(ctx, el.couleurId, 1, couleurDe);
-        if (f.bande) {
+        if (f.bande && f.bande.arrondi) {
+          // silhouette déjà adoucie et teintée : on la pose telle quelle
+          var bt = bandeTeintee(f, el.couleurId, couleurDe);
+          ctx.drawImage(bt.toile,
+            f.bande.x - bt.marge, f.bande.y - bt.marge,
+            bt.toile.width / bt.def, bt.toile.height / bt.def);
+        } else if (f.bande) {
           fenetreBande(ctx, f.bande);
           ctx.clip();
           // « positif » : le tracé EST le motif ; sinon il creuse la fenêtre
@@ -421,6 +497,7 @@ var Rendu = (function () {
     MM_PAR_PIXEL = mmParPixel;
     tuiles = {};
     imagesTuiles = {};
+    bandesTeintes = {};   // elles portent le grain, il faut les refaire
   }
 
   /* La même tuile, en image, pour que les pastilles de la palette montrent le

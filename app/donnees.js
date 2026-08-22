@@ -180,12 +180,10 @@ var POCHOIRS = [
 
          Période 35 mm, creux à 62 / 97 / 132 / 166. */
       { id: 'vagues', nom: 'Vagues', traces: [0],
-        /* La fenêtre est calée sur l'ÉPAISSEUR DE PEINTURE, pas sur le tracé du
-           bord — c'est ce qui compte pour la tenue des extrémités. Elle varie
-           de 6,8 à 12 mm ; on coupe à 46 et 151 mm, où elle vaut 12, si bien
-           que chaque bout est de pleine hauteur et supporte un arrondi franc.
-           105 mm valent par ailleurs exactement trois périodes de 35. */
-        bande: { x: 46, y: 268, w: 105, h: 12, arrondi: 6 } }
+        /* Coupée aux creux (62 et 166), donc trois vagues entières. « arrondi »
+           adoucit toute la silhouette, pas seulement les coins de la fenêtre :
+           il n'y reste aucun angle vif, ni en haut ni en bas. */
+        bande: { x: 62, y: 268, w: 104, h: 12, arrondi: 2.2 } }
 
       /* BORD DROIT — retiré volontairement, en attente d'une planche corrigée.
          Il est découpé en arcs qui BOMBENT vers l'extérieur. Or la peinture
