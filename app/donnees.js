@@ -137,6 +137,48 @@ var POCHOIRS = [
            le haut et laisse une languette disgracieuse au bout. */
         bande: { x: 52, y: 61.5, w: 17, h: 115.5 } }
     ]
+  },
+
+  {
+    id: '1v1',
+    nom: 'Planche 1v1',
+    lien: 'https://www.labaguettemaquille.fr',
+    planche: '1v1',
+
+    /* ATTENTION — noms provisoires, à remplacer par les vrais.
+       Cette planche est plus grande que la Av1 : 175,7 x 248,9 mm.
+
+       Les formes ont été regroupées en comparant leurs silhouettes : les
+       morceaux 6 et 11 sont deux exemplaires du MÊME motif (un seul tampon
+       suffit), et les morceaux 9, 12 et 14 sont un même motif décliné en trois
+       tailles, comme 7/10/16 et 8/13/15 pour le petit. */
+    formes: [
+      { id: 'f1', nom: 'Forme 1',  traces: [1] },   /* 21,9 x 25,8 mm */
+      { id: 'f2', nom: 'Forme 2',  traces: [2] },   /* 48,7 x 50,9 mm */
+      { id: 'f3', nom: 'Forme 3',  traces: [3] },   /* 27,3 x 33,4 mm */
+      { id: 'f4', nom: 'Forme 4',  traces: [4] },   /* 39,2 x 48,8 mm */
+      { id: 'f5', nom: 'Forme 5',  traces: [5] },   /* 27,3 x 48,9 mm */
+      { id: 'ajoure', nom: 'Motif ajouré', traces: [6] },  /* 33,6 mm, en double sur la planche */
+
+      { id: 'rond-grand', nom: 'Grand rond',  traces: [9] },   /* 43,1 mm */
+      { id: 'rond-moyen', nom: 'Rond moyen',  traces: [12] },  /* 24,7 mm */
+      { id: 'rond-petit', nom: 'Petit rond',  traces: [14] },  /* 15,6 mm */
+
+      { id: 'semis-moyen', nom: 'Petit motif', traces: [8] },  /* 9,0 mm, en triple */
+      { id: 'semis-petit', nom: 'Micro motif', traces: [7] },  /* 5,4 mm, en triple */
+
+      /* Deux bords travaillés, tous deux très réguliers. Comme pour la Av1, la
+         fenêtre va d'un creux à un creux pour que le motif se répète trois fois
+         à l'identique, sans morceau orphelin au bout. */
+      { id: 'bord-droit', nom: 'Bordure vagues', traces: [0],
+        /* période 24,5 mm, creux à 51,5 / 76 / 100,5 / 125 */
+        bande: { x: 181, y: 51.5, w: 15, h: 73.5 } },
+      { id: 'bord-bas', nom: 'Bordure festons', traces: [0],
+        /* Période 35 mm. On part d'un CREUX de peinture (62 / 97 / 132 / 166)
+           et non d'une pointe : sinon le motif commence et finit par un demi
+           feston collé au bord. */
+        bande: { x: 62, y: 268, w: 104, h: 12 } }
+    ]
   }
 ];
 
