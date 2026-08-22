@@ -180,7 +180,10 @@ var POCHOIRS = [
 
          Période 35 mm, creux à 62 / 97 / 132 / 166. */
       { id: 'vagues', nom: 'Vagues', traces: [0],
-        bande: { x: 62, y: 268, w: 104, h: 12, arrondi: 5 } }
+        /* Arrondi modeste, et pour cause : aux deux bouts la frise commence au
+           creux d'une vague, donc là où la matière est la plus mince. Un rayon
+           trop grand y ronge toute la base et effile l'extrémité en pointe. */
+        bande: { x: 62, y: 268, w: 104, h: 12, arrondi: 2.5 } }
 
       /* BORD DROIT — retiré volontairement, en attente d'une planche corrigée.
          Il est découpé en arcs qui BOMBENT vers l'extérieur. Or la peinture
