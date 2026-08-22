@@ -174,22 +174,23 @@ var POCHOIRS = [
       { id: 'etincelles', nom: 'Étincelles',
         traces: [6, 11, 8, 13, 15, 7, 10, 16] },
 
-      /* Deux bords travaillés, tous deux très réguliers. La fenêtre va d'un
-         creux à un creux pour que le motif se répète trois fois à l'identique,
-         sans morceau orphelin au bout. */
+      /* La fenêtre d'une bordure va d'un creux à un creux, pour que le motif
+         se répète à l'identique sans morceau orphelin au bout. « arrondi »
+         casse l'angle droit des extrémités, sans rien estomper.
 
-      /* Ici c'est le PLASTIQUE qui dessine, en arcs arrondis : on remplit donc
-         le tracé lui-même (« positif ») et non son pourtour, qui ne donnerait
-         que des pointes en V. Période 24,5 mm. */
-      { id: 'collines', nom: 'Collines', traces: [0],
-        /* couchée sur la planche : on la redresse, bosses vers le haut */
-        rotBase: -Math.PI / 2,
-        bande: { x: 177, y: 51.5, w: 14, h: 73.5, positif: true, fondu: 2.5 } },
-
-      /* Période 35 mm, creux à 62 / 97 / 132 / 166. Le « fondu » n'estompe que
-         les deux bouts, pour que la frise ne s'arrête pas à la verticale. */
+         Période 35 mm, creux à 62 / 97 / 132 / 166. */
       { id: 'vagues', nom: 'Vagues', traces: [0],
-        bande: { x: 62, y: 268, w: 104, h: 12, fondu: 5 } }
+        bande: { x: 62, y: 268, w: 104, h: 12, arrondi: 5 } }
+
+      /* BORD DROIT — retiré volontairement, en attente d'une planche corrigée.
+         Il est découpé en arcs qui BOMBENT vers l'extérieur. Or la peinture
+         passe autour du plastique : ces bosses de plastique donnent donc des
+         pointes en V peintes, et non les collines voulues. Pour obtenir des
+         collines, il faut creuser des encoches arrondies DANS le bord, au lieu
+         d'y ajouter des bosses.
+
+         Le moteur sait rendre les deux cas : une bande « positif: true »
+         remplit le tracé lui-même au lieu de son pourtour. */
     ]
   }
 ];
