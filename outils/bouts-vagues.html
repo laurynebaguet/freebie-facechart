@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Les bouts de la bordure vagues</title>
+<style>
+  body { font: 15px/1.5 Nunito, "Segoe UI", sans-serif; background: #FFF8F0;
+         color: #3A3440; margin: 0; padding: 16px; }
+  h2 { color: #7B3FD3; margin: 0 0 4px; font-size: 19px; }
+  p.sous { color: #6B6474; margin: 0 0 16px; max-width: 62ch; }
+  .c { background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 14px;
+       box-shadow: 0 2px 10px rgba(58,52,64,.12); max-width: 620px; }
+  .c canvas { display: block; background: #E8C0A0; border-radius: 8px; width: 100%; }
+  .t { font-weight: 800; margin-bottom: 6px; }
+  .t em { font-style: normal; color: #D9487E; }
+  .d { font-size: 13px; color: #6B6474; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<h2>Le bout gauche de la bordure, en gros plan</h2>
+<p class="sous">
+  Les 26 premiers millimètres, agrandis. Dis-moi simplement la lettre.
+</p>
+
+<div id="g"></div>
+
+<script src="../app/subpaths.js"></script>
+<script src="../app/planches.js"></script>
+<script src="../app/donnees.js"></script>
+<script src="../app/formes.js"></script>
+<script src="../app/rendu.js"></script>
+<script>
+Formes.init();
+var contour = SubPaths.split(PLANCHES['1v1'])[0];
+var CAS = [
+  { l: 'A', x: 62,  w: 104, h: 12, r: 0,
+    d: 'Coupe nette au creux de la vague. Aucun arrondi.' },
+  { l: 'B', x: 62,  w: 104, h: 12, r: 2.5,
+    d: 'Coins juste cassés. C’est la version que tu as annotée.' },
+  { l: 'C', x: 62,  w: 104, h: 12, r: 6,
+    d: 'Arrondi maximal à cet endroit : c’est lui qui effile le bout en pointe.' },
+  { l: 'D', x: 46,  w: 105, h: 12, r: 6,
+    d: 'Coupé là où la peinture est épaisse : bout en demi-cercle. Version actuelle, que tu trouves pire.' },
+  { l: 'E', x: 55,  w: 104, h: 12, r: 5,
+    d: 'Entre les deux : on recule un peu dans la matière, arrondi franc.' },
+  { l: 'F', x: 58,  w: 104, h: 9,  r: 4.5,
+    d: 'Bande plus fine, épousant mieux la matière au bout.' }
+];
+
+var g = document.getElementById('g');
+CAS.forEach(function (cas) {
+  var d = document.createElement('div');
+  d.className = 'c';
+  var t = document.createElement('div');
+  t.className = 't';
+  t.innerHTML = '<em>' + cas.l + '</em> — bande ' + cas.w + ' × ' + cas.h
+              + ' mm, arrondi ' + cas.r + ' mm';
+  d.appendChild(t);
+
+  var e = 20, LARGE = 26;
+  var c = document.createElement('canvas');
+  c.width = LARGE * e; c.height = (cas.h + 6) * e;
+  var ctx = c.getContext('2d');
+  ctx.scale(e, e);
+  ctx.translate(-cas.x + 2, -(280 - cas.h) + 3);
+  var y0 = 280 - cas.h;
+  ctx.beginPath();
+  if (cas.r > 0) ctx.roundRect(cas.x, y0, cas.w, cas.h, cas.r);
+  else ctx.rect(cas.x, y0, cas.w, cas.h);
+  ctx.clip();
+  // comme dans le moteur : la fenêtre débordante, trouée du tracé du plastique
+  var p = new Path2D();
+  p.rect(cas.x - 8, y0 - 8, cas.w + 16, cas.h + 16);
+  p.addPath(new Path2D(contour));
+  ctx.fillStyle = '#2B2A2C';
+  ctx.fill(p, 'evenodd');
+  d.appendChild(c);
+
+  var p = document.createElement('div');
+  p.className = 'd';
+  p.textContent = cas.d;
+  d.appendChild(p);
+  g.appendChild(d);
+});
+</script>
+</body>
+</html>
