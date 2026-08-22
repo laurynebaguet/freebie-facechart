@@ -186,19 +186,20 @@ var Rendu = (function () {
     ctx.stroke();
   }
 
-  /* Estompe le pourtour d'une bande : sur la peau, la peinture ne s'arrête pas
-     sur une ligne nette là où l'on cesse de tamponner. `fondu` est la largeur
-     de l'estompe, en millimètres. Cela suppose de dessiner sur une toile de
-     travail, sinon l'effacement mordrait ce qui se trouve dessous. */
+  /* Estompe les deux EXTRÉMITÉS d'une bordure, là où elle s'interrompt net.
+     Le dessin lui-même n'est pas touché : on ne floute que les bouts, dans le
+     sens de la longueur, comme une frise qu'on laisse mourir.
+     `fondu` est la longueur de l'estompe, en millimètres. Cela suppose de
+     dessiner sur une toile de travail, sinon l'effacement mordrait ce qui se
+     trouve dessous. */
   function adoucirBords(ctx, bande) {
     var f = bande.fondu;
     var x1 = bande.x, y1 = bande.y, x2 = bande.x + bande.w, y2 = bande.y + bande.h;
-    var cotes = [
-      [x1, y1, x1 + f, y1, x1, y1, f, bande.h],          // gauche
-      [x2, y1, x2 - f, y1, x2 - f, y1, f, bande.h],      // droite
-      [x1, y1, x1, y1 + f, x1, y1, bande.w, f],          // haut
-      [x1, y2, x1, y2 - f, x1, y2 - f, bande.w, f]       // bas
-    ];
+    var cotes = bande.w >= bande.h
+      ? [[x1, y1, x1 + f, y1, x1, y1, f, bande.h],       // début, à gauche
+         [x2, y1, x2 - f, y1, x2 - f, y1, f, bande.h]]   // fin, à droite
+      : [[x1, y1, x1, y1 + f, x1, y1, bande.w, f],       // début, en haut
+         [x1, y2, x1, y2 - f, x1, y2 - f, bande.w, f]];  // fin, en bas
     ctx.save();
     ctx.globalCompositeOperation = 'destination-out';
     cotes.forEach(function (c) {
