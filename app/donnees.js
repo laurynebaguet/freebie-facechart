@@ -180,10 +180,12 @@ var POCHOIRS = [
 
          Période 35 mm, creux à 62 / 97 / 132 / 166. */
       { id: 'vagues', nom: 'Vagues', traces: [0],
-        /* Arrondi modeste, et pour cause : aux deux bouts la frise commence au
-           creux d'une vague, donc là où la matière est la plus mince. Un rayon
-           trop grand y ronge toute la base et effile l'extrémité en pointe. */
-        bande: { x: 62, y: 268, w: 104, h: 12, arrondi: 2.5 } }
+        /* La fenêtre est calée sur l'ÉPAISSEUR DE PEINTURE, pas sur le tracé du
+           bord — c'est ce qui compte pour la tenue des extrémités. Elle varie
+           de 6,8 à 12 mm ; on coupe à 46 et 151 mm, où elle vaut 12, si bien
+           que chaque bout est de pleine hauteur et supporte un arrondi franc.
+           105 mm valent par ailleurs exactement trois périodes de 35. */
+        bande: { x: 46, y: 268, w: 105, h: 12, arrondi: 6 } }
 
       /* BORD DROIT — retiré volontairement, en attente d'une planche corrigée.
          Il est découpé en arcs qui BOMBENT vers l'extérieur. Or la peinture
