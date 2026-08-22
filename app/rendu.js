@@ -216,14 +216,43 @@ var Rendu = (function () {
 
     var net = document.createElement('canvas');
     net.width = L; net.height = H;
-    var n = net.getContext('2d');
+    var n = net.getContext('2d', { willReadFrequently: true });
     n.setTransform(DEF, 0, 0, DEF, 0, 0);
     n.translate(-b.x + marge, -b.y + marge);
+    n.save();
     n.beginPath();
     n.rect(b.x, b.y, b.w, b.h);
     n.clip();
     n.fillStyle = '#000';
     n.fill(forme.path2d, b.positif ? 'nonzero' : 'evenodd');
+    n.restore();
+
+    /* Bouts ronds : la frise ne s'arrête pas sur une coupe, on la PROLONGE
+       d'un demi-disque à chaque extrémité — le bout rond d'un trait de
+       pinceau. Le rayon suit l'épaisseur de matière mesurée sur place, pour
+       que le disque prolonge la bande sans la gonfler. */
+    if (b.boutsRonds) {
+      var px = n.getImageData(0, 0, L, H).data;
+      function etendue(colonne) {
+        var haut = -1, bas = -1;
+        for (var y = 0; y < H; y++) {
+          if (px[(y * L + colonne) * 4 + 3] > 127) { if (haut < 0) haut = y; bas = y; }
+        }
+        return haut < 0 ? null : { haut: haut, bas: bas };
+      }
+      [[Math.round(marge * DEF) + 1, b.x],
+       [Math.round((marge + b.w) * DEF) - 2, b.x + b.w]].forEach(function (bord) {
+        var e = etendue(bord[0]);
+        if (!e) return;
+        var yHaut = b.y - marge + e.haut / DEF;
+        var yBas = b.y - marge + e.bas / DEF;
+        var rayon = (yBas - yHaut) / 2;
+        if (rayon <= 0.2) return;
+        n.beginPath();
+        n.arc(bord[1], (yHaut + yBas) / 2, rayon, 0, Math.PI * 2);
+        n.fill();
+      });
+    }
 
     var flou = document.createElement('canvas');
     flou.width = L; flou.height = H;
