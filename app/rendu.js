@@ -186,6 +186,31 @@ var Rendu = (function () {
     ctx.stroke();
   }
 
+  /* Estompe le pourtour d'une bande : sur la peau, la peinture ne s'arrête pas
+     sur une ligne nette là où l'on cesse de tamponner. `fondu` est la largeur
+     de l'estompe, en millimètres. Cela suppose de dessiner sur une toile de
+     travail, sinon l'effacement mordrait ce qui se trouve dessous. */
+  function adoucirBords(ctx, bande) {
+    var f = bande.fondu;
+    var x1 = bande.x, y1 = bande.y, x2 = bande.x + bande.w, y2 = bande.y + bande.h;
+    var cotes = [
+      [x1, y1, x1 + f, y1, x1, y1, f, bande.h],          // gauche
+      [x2, y1, x2 - f, y1, x2 - f, y1, f, bande.h],      // droite
+      [x1, y1, x1, y1 + f, x1, y1, bande.w, f],          // haut
+      [x1, y2, x1, y2 - f, x1, y2 - f, bande.w, f]       // bas
+    ];
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    cotes.forEach(function (c) {
+      var g = ctx.createLinearGradient(c[0], c[1], c[2], c[3]);
+      g.addColorStop(0, 'rgba(0,0,0,1)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(c[4], c[5], c[6], c[7]);
+    });
+    ctx.restore();
+  }
+
   /* Dessine un élément sans tenir compte de ses morsures. */
   function corps(ctx, el, echelle, couleurDe) {
     ctx.save();
@@ -196,11 +221,12 @@ var Rendu = (function () {
         // ici le repère est déjà en millimètres : une unité vaut un millimètre
         ctx.fillStyle = remplissage(ctx, el.couleurId, 1, couleurDe);
         if (f.bande) {
-          // la fenêtre borne le motif, et le tracé y creuse les manques
           ctx.beginPath();
           ctx.rect(f.bande.x, f.bande.y, f.bande.w, f.bande.h);
           ctx.clip();
-          ctx.fill(f.path2d, 'evenodd');
+          // « positif » : le tracé EST le motif ; sinon il creuse la fenêtre
+          ctx.fill(f.path2d, f.bande.positif ? 'nonzero' : 'evenodd');
+          if (f.bande.fondu) adoucirBords(ctx, f.bande);
         } else {
           ctx.fill(f.path2d);
         }
@@ -233,8 +259,15 @@ var Rendu = (function () {
   /* Dessine tout le maquillage sur une toile transparente.
      `tampon` est une toile de travail de même taille, réutilisée. */
   function maquillage(ctx, dessin, echelle, couleurDe, apercu, tampon) {
+    /* Une bande estompée doit passer par la toile de travail : son effacement
+       de bord attaquerait sinon les éléments déjà posés en dessous. */
+    function estompee(el) {
+      if (el.type !== 'forme') return false;
+      var f = Formes.get(el.setId, el.formeId);
+      return !!(f && f.bande && f.bande.fondu);
+    }
     function un(el) {
-      if (!el.gommes || !el.gommes.length || !tampon) {
+      if ((!el.gommes || !el.gommes.length) && !estompee(el) || !tampon) {
         corps(ctx, el, echelle, couleurDe);
         morsures(ctx, el, echelle);
         return;

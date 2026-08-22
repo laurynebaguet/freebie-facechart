@@ -149,8 +149,11 @@ var Formes = (function () {
            la fenêtre : superposé au tracé, son bord adouci ne s'annulerait pas
            exactement et laisserait un liseré tout autour du motif. On le fait
            déborder, et le rognage à la fenêtre exacte l'élimine. */
+        /* Une bande « positive » montre le tracé lui-même, découpé dans une
+           fenêtre, au lieu de son pourtour : c'est le cas quand le bord du
+           plastique dessine le motif (des collines) et non l'inverse. */
         var chemin = new Path2D();
-        if (f.bande) {
+        if (f.bande && !f.bande.positif) {
           chemin.rect(f.bande.x - DEBORD, f.bande.y - DEBORD,
                       f.bande.w + 2 * DEBORD, f.bande.h + 2 * DEBORD);
         }
