@@ -48,6 +48,8 @@ var Toile = (function () {
   }
 
   function Composant(p) {
+    var etatVue = React.useState({ k: 1, main: false });
+    var vueBoutons = etatVue[0], setVueBoutons = etatVue[1];
     var canvasRef = useRef(null);
     var boiteRef = useRef(null);
     var horsRef = useRef(null);
@@ -282,6 +284,30 @@ var Toile = (function () {
       lp.dy = Math.min(0, Math.max(v.hauteur * (1 - lp.k), lp.dy));
     }
 
+    /* Maintient la vue dans le cadre après un déplacement à la main. */
+    function recadrer() {
+      var lp = loupeRef.current, v = vueRef.current;
+      if (lp.k <= 1) { lp.dx = 0; lp.dy = 0; return; }
+      lp.dx = Math.min(0, Math.max(v.largeur * (1 - lp.k), lp.dx));
+      lp.dy = Math.min(0, Math.max(v.hauteur * (1 - lp.k), lp.dy));
+    }
+
+    /* Les commandes de vue n'apparaissent qu'une fois la loupe engagée. */
+    function majBoutons() {
+      var k = loupeRef.current.k;
+      setVueBoutons(function (ancien) {
+        var main = k > 1.01 ? ancien.main : false;
+        return (Math.abs(ancien.k - k) < 0.01 && ancien.main === main)
+          ? ancien : { k: k, main: main };
+      });
+    }
+
+    function revenirVue() {
+      loupeRef.current = { k: 1, dx: 0, dy: 0 };
+      setVueBoutons({ k: 1, main: false });
+      planifier();
+    }
+
     function selectionCourante() {
       var q = propsRef.current;
       if (q.selectionId == null) return null;
@@ -356,6 +382,18 @@ var Toile = (function () {
       if (ids.length > 2) return;
 
       c.setPointerCapture(ev.pointerId);
+
+      // main active : le geste promène la vue au lieu de dessiner
+      if (vueBoutons.main && loupeRef.current.k > 1) {
+        var d = surToile(ev);
+        gesteRef.current = {
+          mode: 'vue',
+          depart: { x: d.x, y: d.y, dx: loupeRef.current.dx, dy: loupeRef.current.dy }
+        };
+        c.style.cursor = 'grabbing';
+        return;
+      }
+
       var pt = enMm(ev);
       var ctx = c.getContext('2d');
       var e = vueRef.current.echelle;
@@ -460,11 +498,22 @@ var Toile = (function () {
         lp.dx = pince.depart.dx + (centre.x - pince.centre.x);
         lp.dy = pince.depart.dy + (centre.y - pince.centre.y);
         zoomerVers(pince.k * (ecart / pince.ecart), centre.x, centre.y);
+        majBoutons();
         planifier();
         return;
       }
 
       var g = gesteRef.current;
+
+      if (g && g.mode === 'vue') {
+        var d = surToile(ev);
+        loupeRef.current.dx = g.depart.dx + (d.x - g.depart.x);
+        loupeRef.current.dy = g.depart.dy + (d.y - g.depart.y);
+        recadrer();
+        planifier();
+        return;
+      }
+
       var pt = enMm(ev);
 
       if (!g) {
@@ -536,6 +585,7 @@ var Toile = (function () {
       var g = gesteRef.current;
       gesteRef.current = null;
       try { canvasRef.current.releasePointerCapture(ev.pointerId); } catch (e) {}
+      if (g && g.mode === 'vue') { canvasRef.current.style.cursor = 'grab'; return; }
       canvasRef.current.style.cursor = curseurPour(enMm(ev));
       if (!g) return;
 
@@ -581,6 +631,7 @@ var Toile = (function () {
       var pos = surToile(ev);
       var lp = loupeRef.current;
       zoomerVers(lp.k * (ev.deltaY < 0 ? 1.15 : 1 / 1.15), pos.x, pos.y);
+      majBoutons();
       planifier();
     }
 
@@ -591,6 +642,8 @@ var Toile = (function () {
       return function () { c.removeEventListener('wheel', onMolette); };
     }, []);
 
+    var zoome = vueBoutons.k > 1.01;
+
     return html`
       <div class="scene" ref=${boiteRef}>
         <canvas
@@ -599,8 +652,30 @@ var Toile = (function () {
           onPointerMove=${onMove}
           onPointerUp=${onUp}
           onPointerLeave=${onSortie}
-          onPointerCancel=${onAnnuleGeste}
+          onPointerCancel=${function () { onAnnuleGeste(); }}
         ></canvas>
+
+        ${zoome ? html`
+          <div class="cmd-vue">
+            <button class=${'cmd' + (vueBoutons.main ? ' actif' : '')}
+                    title="Se déplacer sur le visage"
+                    onClick=${function () {
+                      setVueBoutons(function (a) { return { k: a.k, main: !a.main }; });
+                    }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V12m0-1a1.5 1.5 0 0 1 3 0v4.5a5.5 5.5 0 0 1-5.5 5.5h-1a5.5 5.5 0 0 1-5.5-5.5V10a1.5 1.5 0 0 1 3 0"/>
+              </svg>
+            </button>
+            <button class="cmd" title="Revoir tout le visage" onClick=${revenirVue}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/>
+              </svg>
+            </button>
+            <span class="cmd-taux">${Math.round(vueBoutons.k * 100)} %</span>
+          </div>` : null}
+
         ${p.enfants}
       </div>`;
   }
