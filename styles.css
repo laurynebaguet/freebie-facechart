@@ -192,10 +192,12 @@ button:disabled { cursor: default; }
 }
 .groupe .pastille { flex: 0 0 auto; }
 .groupe-apart { display: flex; align-items: center; gap: .55rem; min-width: 0; }
+/* Largeur calée sur le mot le plus long — « Nacrées » — sinon il chevauche la
+   première pastille : la boîte est fixe et le texte ne se coupe pas. */
 .etiquette-groupe {
   font-size: .62rem; font-weight: 800; text-transform: uppercase;
   letter-spacing: .02em; color: var(--encre-d); white-space: nowrap;
-  width: 3.7em; flex: 0 0 auto;
+  width: 5.2em; flex: 0 0 auto;
 }
 
 /* Assez petites pour que les neuf tiennent d'un coup dans la colonne de
@@ -324,7 +326,7 @@ button:disabled { cursor: default; }
     order: 2; overflow-y: auto;
   }
   /* les neuf couleurs doivent tenir d'un coup dans cette colonne */
-  .pastille { width: 33px; height: 33px; }
+  .pastille { width: 31px; height: 31px; }
   .rangee-outils { flex-wrap: wrap; }
   .outil { flex: 1 1 28%; max-width: none; }
   .tiroir { max-height: none; flex: 1; }
