@@ -48,7 +48,7 @@ var Toile = (function () {
   }
 
   function Composant(p) {
-    var etatVue = React.useState({ k: 1, main: false });
+    var etatVue = React.useState({ k: 1 });
     var vueBoutons = etatVue[0], setVueBoutons = etatVue[1];
     var canvasRef = useRef(null);
     var boiteRef = useRef(null);
@@ -292,19 +292,17 @@ var Toile = (function () {
       lp.dy = Math.min(0, Math.max(v.hauteur * (1 - lp.k), lp.dy));
     }
 
-    /* Les commandes de vue n'apparaissent qu'une fois la loupe engagée. */
+    /* Le repère de grossissement n'apparaît qu'une fois la loupe engagée. */
     function majBoutons() {
       var k = loupeRef.current.k;
       setVueBoutons(function (ancien) {
-        var main = k > 1.01 ? ancien.main : false;
-        return (Math.abs(ancien.k - k) < 0.01 && ancien.main === main)
-          ? ancien : { k: k, main: main };
+        return Math.abs(ancien.k - k) < 0.01 ? ancien : { k: k };
       });
     }
 
     function revenirVue() {
       loupeRef.current = { k: 1, dx: 0, dy: 0 };
-      setVueBoutons({ k: 1, main: false });
+      setVueBoutons({ k: 1 });
       planifier();
     }
 
@@ -348,7 +346,12 @@ var Toile = (function () {
         if (c.quoi === 'redim') return 'nwse-resize';
         return 'grab';
       }
-      if (q.outil === 'modifier') return 'default';
+      // en Modifier, hors d'un tampon, le geste promène le visage
+      if (q.outil === 'modifier') {
+        var ctx = canvasRef.current.getContext('2d');
+        var sous = Rendu.formeSous(ctx, q.dessin, pt.x, pt.y, vueRef.current.echelle);
+        return sous ? 'grab' : (loupeRef.current.k > 1 ? 'grab' : 'default');
+      }
       if (q.outil === 'pochoir') return 'copy';
       return 'crosshair';
     }
@@ -382,18 +385,6 @@ var Toile = (function () {
       if (ids.length > 2) return;
 
       c.setPointerCapture(ev.pointerId);
-
-      // main active : le geste promène la vue au lieu de dessiner
-      if (vueBoutons.main && loupeRef.current.k > 1) {
-        var d = surToile(ev);
-        gesteRef.current = {
-          mode: 'vue',
-          depart: { x: d.x, y: d.y, dx: loupeRef.current.dx, dy: loupeRef.current.dy }
-        };
-        c.style.cursor = 'grabbing';
-        return;
-      }
-
       var pt = enMm(ev);
       var ctx = c.getContext('2d');
       var e = vueRef.current.echelle;
@@ -456,7 +447,8 @@ var Toile = (function () {
         return;
       }
 
-      // 3. attraper une forme déjà posée
+      /* 3. Outil Modifier : sur un tampon on déplace le tampon, ailleurs on
+            déplace le visage. Pas besoin d'un outil séparé pour se promener. */
       if (q.outil === 'modifier') {
         var sous = Rendu.formeSous(ctx, q.dessin, pt.x, pt.y, e);
         p.onSelection(sous ? sous.id : null);
@@ -467,8 +459,14 @@ var Toile = (function () {
             id: sous.id, x: sous.x, y: sous.y,
             rot: sous.rot || 0, zoom: sous.zoom || 1
           };
-          c.style.cursor = 'grabbing';
+        } else {
+          var d = surToile(ev);
+          gesteRef.current = {
+            mode: 'vue',
+            depart: { x: d.x, y: d.y, dx: loupeRef.current.dx, dy: loupeRef.current.dy }
+          };
         }
+        c.style.cursor = 'grabbing';
         return;
       }
 
@@ -657,23 +655,13 @@ var Toile = (function () {
 
         ${zoome ? html`
           <div class="cmd-vue">
-            <button class=${'cmd' + (vueBoutons.main ? ' actif' : '')}
-                    title="Se déplacer sur le visage"
-                    onClick=${function () {
-                      setVueBoutons(function (a) { return { k: a.k, main: !a.main }; });
-                    }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V12m0-1a1.5 1.5 0 0 1 3 0v4.5a5.5 5.5 0 0 1-5.5 5.5h-1a5.5 5.5 0 0 1-5.5-5.5V10a1.5 1.5 0 0 1 3 0"/>
-              </svg>
-            </button>
+            <span class="cmd-taux">${Math.round(vueBoutons.k * 100)} %</span>
             <button class="cmd" title="Revoir tout le visage" onClick=${revenirVue}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                    stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/>
               </svg>
             </button>
-            <span class="cmd-taux">${Math.round(vueBoutons.k * 100)} %</span>
           </div>` : null}
 
         ${p.enfants}
