@@ -186,21 +186,23 @@ button:disabled { cursor: default; }
 .rangs { display: flex; flex-direction: column; gap: .4rem; }
 /* les couleurs aussi tiennent sur une ligne, qui défile si besoin */
 .groupe {
-  display: flex; gap: .4rem; overflow-x: auto; overflow-y: hidden;
+  display: flex; gap: .28rem; overflow-x: auto; overflow-y: hidden;
   /* de quoi laisser respirer le halo de la pastille choisie */
-  padding: 4px 0 .3rem; -webkit-overflow-scrolling: touch;
+  padding: 4px 0 .25rem; -webkit-overflow-scrolling: touch;
 }
 .groupe .pastille { flex: 0 0 auto; }
 .groupe-apart { display: flex; align-items: center; gap: .55rem; min-width: 0; }
 .etiquette-groupe {
-  font-size: .66rem; font-weight: 800; text-transform: uppercase;
-  letter-spacing: .05em; color: var(--encre-d); white-space: nowrap;
-  width: 4.4em; flex: 0 0 auto;
+  font-size: .62rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .02em; color: var(--encre-d); white-space: nowrap;
+  width: 3.7em; flex: 0 0 auto;
 }
 
+/* Assez petites pour que les neuf tiennent d'un coup dans la colonne de
+   droite, sans avoir à faire défiler pour trouver une couleur. */
 .pastille {
-  width: 40px; height: 40px; border-radius: 50%;
-  border: 3px solid var(--blanc); box-shadow: 0 0 0 1px var(--trait), var(--ombre);
+  width: 36px; height: 36px; border-radius: 50%; flex: 0 0 auto;
+  border: 2px solid var(--blanc); box-shadow: 0 0 0 1px var(--trait), var(--ombre);
   transition: transform .12s ease;
 }
 .pastille:hover { transform: scale(1.08); }
@@ -307,7 +309,7 @@ button:disabled { cursor: default; }
   .scene { flex: 0 0 46%; }
   .case-forme { flex-basis: 64px; }
   .case-forme svg { height: 34px; }
-  .pastille { width: 32px; height: 32px; border-width: 2px; }
+  .pastille { width: 31px; height: 31px; }
   .outil { font-size: .6rem; }
   .outil svg { width: 17px; height: 17px; }
 }
@@ -317,10 +319,12 @@ button:disabled { cursor: default; }
   .corps { flex-direction: row; }
   .scene { flex: 1 1 auto; }
   .outils {
-    width: 330px; flex: 0 0 330px; max-height: none;
+    width: 352px; flex: 0 0 352px; max-height: none;
     border-top: 0; border-left: 1px solid var(--trait);
     order: 2; overflow-y: auto;
   }
+  /* les neuf couleurs doivent tenir d'un coup dans cette colonne */
+  .pastille { width: 33px; height: 33px; }
   .rangee-outils { flex-wrap: wrap; }
   .outil { flex: 1 1 28%; max-width: none; }
   .tiroir { max-height: none; flex: 1; }
