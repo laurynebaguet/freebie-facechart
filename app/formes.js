@@ -177,10 +177,12 @@ var Formes = (function () {
           rotBase: rotBase,
           pivot: pivot,        // autour duquel on redresse le motif
           cx: cx, cy: cy,      // centre du motif une fois redressé
-          largeurMm: largeur,
-          hauteurMm: hauteur,
+          // facteur propre à la planche, appliqué à tous ses motifs
+          echelleSet: set.echelle || 1,
+          largeurMm: largeur * (set.echelle || 1),
+          hauteurMm: hauteur * (set.echelle || 1),
           // rayon qui contient la forme quelle que soit sa rotation
-          rayonMm: Math.hypot(largeur, hauteur) / 2,
+          rayonMm: Math.hypot(largeur, hauteur) / 2 * (set.echelle || 1),
           path2d: chemin
         };
         catalogue[forme.cle] = forme;

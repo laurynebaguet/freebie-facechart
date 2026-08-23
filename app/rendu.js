@@ -113,7 +113,7 @@ var Rendu = (function () {
      elle redresse le motif sans entraîner ni le cadre de sélection ni le
      miroir, qui restent dans le repère de l'utilisateur. */
   function transformeForme(ctx, el, forme, echelle) {
-    var k = el.zoom || 1;
+    var k = (el.zoom || 1) * (forme.echelleSet || 1);
     ctx.translate(el.x * echelle, el.y * echelle);
     ctx.rotate(el.rot || 0);
     if (el.miroir) ctx.scale(-1, 1);
@@ -137,7 +137,7 @@ var Rendu = (function () {
   function versLocal(el, forme, xMm, yMm) {
     if (el.type !== 'forme') return { x: xMm, y: yMm };
     var a = -(el.rot || 0);
-    var k = el.zoom || 1;
+    var k = (el.zoom || 1) * (forme.echelleSet || 1);
     var dx = xMm - el.x, dy = yMm - el.y;
     var lx = dx * Math.cos(a) - dy * Math.sin(a);
     var ly = dx * Math.sin(a) + dy * Math.cos(a);
@@ -365,9 +365,13 @@ var Rendu = (function () {
     };
   }
 
-  function selection(ctx, el, echelle, poigneeMm) {
+  /* `finesse` compense un éventuel agrandissement de la vue : les traits et
+     les pastilles doivent garder la même taille à l'écran quel que soit le
+     zoom, sinon ils deviennent énormes dès qu'on regarde de près. */
+  function selection(ctx, el, echelle, poigneeMm, finesse) {
     var f = Formes.get(el.setId, el.formeId);
     if (!f) return;
+    var t = finesse || 1;
     var d = dimensions(el, f);
     var w = d.l * echelle, h = d.h * echelle;
     var m = MARGE_MM * echelle;
@@ -379,8 +383,8 @@ var Rendu = (function () {
     ctx.rotate(a);
 
     ctx.strokeStyle = '#7B3FD3';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([6, 5]);
+    ctx.lineWidth = 2 * t;
+    ctx.setLineDash([6 * t, 5 * t]);
     ctx.strokeRect(-w / 2 - m, -h / 2 - m, w + 2 * m, h + 2 * m);
     ctx.setLineDash([]);
 
@@ -403,14 +407,14 @@ var Rendu = (function () {
       ctx.fillStyle = fond;
       ctx.fill();
       ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.5 * t;
       ctx.stroke();
       ctx.save();
       ctx.translate(px, py);
       ctx.rotate(-a);
       ctx.strokeStyle = '#fff';
       // trait fin : à cette taille, un trait épais empâte le pictogramme
-      ctx.lineWidth = 1.2;
+      ctx.lineWidth = 1.2 * t;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       dessine(r * 0.3);
@@ -427,7 +431,7 @@ var Rendu = (function () {
 
     // tige du bouton miroir, en écho à celle de la rotation
     ctx.strokeStyle = '#7B3FD3';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2 * t;
     ctx.beginPath();
     ctx.moveTo(0, h / 2 + m);
     ctx.lineTo(0, h / 2 + m + r);

@@ -61,6 +61,12 @@ var Toile = (function () {
     var propsRef = useRef(p);
     propsRef.current = p;
 
+    /* Loupe : agrandissement et décalage de la vue, en pixels d'écran. Le
+       dessin, lui, ne change pas — seule la façon de le regarder. */
+    var loupeRef = useRef({ k: 1, dx: 0, dy: 0 });
+    var doigtsRef = useRef({});        // pointeurs posés, pour le pincement
+    var pinceRef = useRef(null);
+
     var rep = Rendu.repere(p.visage);
 
     /* ------------------------------------------------------------ rendu */
@@ -85,14 +91,15 @@ var Toile = (function () {
       if (!s || gesteRef.current) return;
       if (q.outil !== 'pinceau' && q.outil !== 'gomme') return;
       var t = (q.outil === 'gomme' ? q.tailleGomme : q.taillePinceau) / 2;
+      var fin = 1 / loupeRef.current.k;   // trait constant à l'écran
       ctx.save();
       ctx.beginPath();
-      ctx.arc(s.x * e, s.y * e, Math.max(2, t * e), 0, Math.PI * 2);
+      ctx.arc(s.x * e, s.y * e, Math.max(2 * fin, t * e), 0, Math.PI * 2);
       ctx.strokeStyle = q.outil === 'gomme' ? '#3A3440' : couleurDe(q.couleurId);
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.5 * fin;
       ctx.stroke();
       ctx.strokeStyle = 'rgba(255,255,255,.9)';
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1 * fin;
       ctx.stroke();
       ctx.restore();
     }
@@ -104,16 +111,23 @@ var Toile = (function () {
       var v = vueRef.current;
       if (!v.largeur) return;
       var ctx = c.getContext('2d');
+      var lp = loupeRef.current;
 
       ctx.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
       ctx.clearRect(0, 0, v.largeur, v.hauteur);
+      ctx.save();
+      ctx.translate(lp.dx, lp.dy);
+      ctx.scale(lp.k, lp.k);
       Rendu.fond(ctx, q.image, Rendu.repere(q.visage), v.largeur);
+      ctx.restore();
 
       // couche maquillage, à part, pour que la gomme n'attaque pas le visage
       var hors = horsRef.current;
       var hctx = hors.getContext('2d');
       hctx.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
       hctx.clearRect(0, 0, v.largeur, v.hauteur);
+      hctx.translate(lp.dx, lp.dy);
+      hctx.scale(lp.k, lp.k);
 
       var glisse = glisseRef.current;
       var elements = q.dessin.elements;
@@ -155,15 +169,22 @@ var Toile = (function () {
       ctx.drawImage(hors, 0, 0);
       ctx.restore();
 
+      // les repères de sélection suivent la loupe, comme le dessin
+      ctx.save();
+      ctx.translate(lp.dx, lp.dy);
+      ctx.scale(lp.k, lp.k);
       if (q.selectionId != null) {
         var sel = null;
         for (var i = 0; i < elements.length; i++) {
           if (elements[i].id === q.selectionId) { sel = elements[i]; break; }
         }
-        if (sel && sel.type === 'forme') Rendu.selection(ctx, sel, v.echelle, POIGNEE_MM);
+        if (sel && sel.type === 'forme') {
+          // les poignées gardent leur taille à l'écran quel que soit le zoom
+          Rendu.selection(ctx, sel, v.echelle, POIGNEE_MM / lp.k, 1 / lp.k);
+        }
       }
-
       apercuRond(ctx, v.echelle);
+      ctx.restore();
     }
 
     function planifier() {
@@ -234,10 +255,31 @@ var Toile = (function () {
 
     /* ------------------------------------------------------- géométrie */
 
+    /* Un point de l'écran vers le visage, en millimètres : il faut défaire la
+       loupe avant l'échelle, sinon tout est décalé dès qu'on a zoomé. */
     function enMm(ev) {
       var r = canvasRef.current.getBoundingClientRect();
       var e = vueRef.current.echelle;
-      return { x: (ev.clientX - r.left) / e, y: (ev.clientY - r.top) / e };
+      var lp = loupeRef.current;
+      return {
+        x: (ev.clientX - r.left - lp.dx) / lp.k / e,
+        y: (ev.clientY - r.top - lp.dy) / lp.k / e
+      };
+    }
+
+    /* Agrandit autour d'un point fixe de l'écran : ce qui est sous le doigt y
+       reste, sinon la vue file sur le côté à chaque pincement. */
+    function zoomerVers(k, ecranX, ecranY) {
+      var lp = loupeRef.current;
+      var v = vueRef.current;
+      var neuf = Math.min(6, Math.max(1, k));
+      lp.dx = ecranX - (ecranX - lp.dx) * (neuf / lp.k);
+      lp.dy = ecranY - (ecranY - lp.dy) * (neuf / lp.k);
+      lp.k = neuf;
+      // au repos, la vue se recale : pas de bande vide sur les bords
+      if (lp.k <= 1.001) { lp.k = 1; lp.dx = 0; lp.dy = 0; return; }
+      lp.dx = Math.min(0, Math.max(v.largeur * (1 - lp.k), lp.dx));
+      lp.dy = Math.min(0, Math.max(v.hauteur * (1 - lp.k), lp.dy));
     }
 
     function selectionCourante() {
@@ -287,9 +329,32 @@ var Toile = (function () {
 
     /* ---------------------------------------------------------- gestes */
 
+    /* Position d'un pointeur dans le cadre de la toile, en pixels d'écran. */
+    function surToile(ev) {
+      var r = canvasRef.current.getBoundingClientRect();
+      return { x: ev.clientX - r.left, y: ev.clientY - r.top };
+    }
+
     function onDown(ev) {
       var q = propsRef.current;
       var c = canvasRef.current;
+      doigtsRef.current[ev.pointerId] = surToile(ev);
+
+      // deux doigts : on regarde, on ne dessine pas
+      var ids = Object.keys(doigtsRef.current);
+      if (ids.length === 2) {
+        onAnnuleGeste(true);
+        var a = doigtsRef.current[ids[0]], b = doigtsRef.current[ids[1]];
+        pinceRef.current = {
+          ecart: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+          k: loupeRef.current.k,
+          centre: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+          depart: { dx: loupeRef.current.dx, dy: loupeRef.current.dy }
+        };
+        return;
+      }
+      if (ids.length > 2) return;
+
       c.setPointerCapture(ev.pointerId);
       var pt = enMm(ev);
       var ctx = c.getContext('2d');
@@ -380,6 +445,25 @@ var Toile = (function () {
     }
 
     function onMove(ev) {
+      if (doigtsRef.current[ev.pointerId]) doigtsRef.current[ev.pointerId] = surToile(ev);
+
+      // pincement en cours : on règle la loupe et on laisse le dessin tranquille
+      var pince = pinceRef.current;
+      if (pince) {
+        var ids = Object.keys(doigtsRef.current);
+        if (ids.length < 2) return;
+        var a = doigtsRef.current[ids[0]], b = doigtsRef.current[ids[1]];
+        var ecart = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+        var centre = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        var lp = loupeRef.current;
+        lp.k = pince.k;
+        lp.dx = pince.depart.dx + (centre.x - pince.centre.x);
+        lp.dy = pince.depart.dy + (centre.y - pince.centre.y);
+        zoomerVers(pince.k * (ecart / pince.ecart), centre.x, centre.y);
+        planifier();
+        return;
+      }
+
       var g = gesteRef.current;
       var pt = enMm(ev);
 
@@ -444,6 +528,11 @@ var Toile = (function () {
     }
 
     function onUp(ev) {
+      delete doigtsRef.current[ev.pointerId];
+      if (pinceRef.current) {
+        if (Object.keys(doigtsRef.current).length < 2) pinceRef.current = null;
+        return;
+      }
       var g = gesteRef.current;
       gesteRef.current = null;
       try { canvasRef.current.releasePointerCapture(ev.pointerId); } catch (e) {}
@@ -477,13 +566,30 @@ var Toile = (function () {
       planifier();
     }
 
-    function onAnnuleGeste() {
+    function onAnnuleGeste(garderLesDoigts) {
       gesteRef.current = null;
       brouillonRef.current = null;
       glisseRef.current = null;
       survolRef.current = null;
+      if (!garderLesDoigts) { doigtsRef.current = {}; pinceRef.current = null; }
       planifier();
     }
+
+    /* À la molette : zoom sur le point visé, comme une loupe qu'on approche. */
+    function onMolette(ev) {
+      ev.preventDefault();
+      var pos = surToile(ev);
+      var lp = loupeRef.current;
+      zoomerVers(lp.k * (ev.deltaY < 0 ? 1.15 : 1 / 1.15), pos.x, pos.y);
+      planifier();
+    }
+
+    useEffect(function () {
+      var c = canvasRef.current;
+      if (!c) return;
+      c.addEventListener('wheel', onMolette, { passive: false });
+      return function () { c.removeEventListener('wheel', onMolette); };
+    }, []);
 
     return html`
       <div class="scene" ref=${boiteRef}>
