@@ -266,7 +266,8 @@ var UI = (function () {
           : html`
             <p class="aide">
               Touche une forme déjà posée pour la déplacer, la faire tourner,
-              la retourner ou changer sa couleur.
+              la retourner ou changer sa couleur. À côté d'une forme, le geste
+              promène le visage — pratique une fois qu'on a zoomé.
             </p>`}
       </div>`;
   }

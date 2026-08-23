@@ -473,27 +473,41 @@ var Rendu = (function () {
     return Math.abs(lx) <= d.l / 2 + m && Math.abs(ly) <= d.h / 2 + m;
   }
 
-  /* Quelle forme se trouve sous ce point ? (de la plus haute à la plus basse) */
+  /* Quelle forme se trouve sous ce point ? (de la plus haute à la plus basse)
+
+     La tolérance se mesure depuis le TRACÉ, jamais depuis la boîte englobante :
+     celle d'un motif ajouré — une toile d'araignée, un semis d'étincelles — est
+     énorme au regard du dessin, et l'on attrapait alors une forme en cliquant
+     dans un trou, très loin de tout trait. */
+  var TOLERANCE_MM = 2.5;
+
   function formeSous(ctx, dessin, xMm, yMm, echelle) {
-    for (var i = dessin.elements.length - 1; i >= 0; i--) {
-      var el = dessin.elements[i];
-      if (el.type !== 'forme') continue;
-      var f = Formes.get(el.setId, el.formeId);
-      if (!f || f.bande) continue;   // une bande se vise par son cadre
-      ctx.save();
-      transformeForme(ctx, el, f, echelle);
-      var dedans = ctx.isPointInPath(f.path2d, xMm * echelle, yMm * echelle);
-      ctx.restore();
-      if (dedans) return el;
+    function essai(avecTolerance) {
+      for (var i = dessin.elements.length - 1; i >= 0; i--) {
+        var el = dessin.elements[i];
+        if (el.type !== 'forme') continue;
+        var f = Formes.get(el.setId, el.formeId);
+        if (!f) continue;
+        // une bande se vise par son cadre : il épouse déjà le motif
+        if (f.bande) {
+          if (dansCadre(el, f, xMm, yMm, avecTolerance ? TOLERANCE_MM : 0)) return el;
+          continue;
+        }
+        ctx.save();
+        transformeForme(ctx, el, f, echelle);
+        var x = xMm * echelle, y = yMm * echelle;
+        var touche = ctx.isPointInPath(f.path2d, x, y);
+        if (!touche && avecTolerance) {
+          // à défaut, on accepte le voisinage immédiat du contour
+          ctx.lineWidth = 2 * TOLERANCE_MM;
+          touche = ctx.isPointInStroke(f.path2d, x, y);
+        }
+        ctx.restore();
+        if (touche) return el;
+      }
+      return null;
     }
-    // deuxième passe, plus tolérante : les motifs fins sont durs à viser
-    for (var j = dessin.elements.length - 1; j >= 0; j--) {
-      var e2 = dessin.elements[j];
-      if (e2.type !== 'forme') continue;
-      var f2 = Formes.get(e2.setId, e2.formeId);
-      if (f2 && dansCadre(e2, f2, xMm, yMm, 0)) return e2;
-    }
-    return null;
+    return essai(false) || essai(true);
   }
 
   /* Sert à essayer différentes finesses de grain depuis outils/nacre.html. */
