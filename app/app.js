@@ -160,7 +160,14 @@
           ev.preventDefault();
           supprimer(selectionId);
         } else if (ev.key === 'Escape') {
-          setSelectionId(null);
+          /* Échap ramène à la main : depuis un outil qui dessine on bascule
+             sur Modifier, et si on y est déjà on lâche la forme choisie. */
+          ev.preventDefault();
+          setOutil(function (courant) {
+            if (courant !== 'modifier') return 'modifier';
+            setSelectionId(null);
+            return courant;
+          });
         }
       }
       window.addEventListener('keydown', touche);

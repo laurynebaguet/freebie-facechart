@@ -30,9 +30,10 @@ var UI = (function () {
   /* Vignette d'une forme de pochoir, cadrée sur son motif et redressée. */
   function VignetteForme(p) {
     var f = p.forme;
-    // carré centré sur le motif redressé ; les dimensions tiennent déjà compte
-    // de la rotation de présentation
-    var demi = Math.max(f.largeurMm, f.hauteurMm) / 2 * 1.08;
+    // Carré centré sur le motif redressé ; les dimensions tiennent déjà compte
+    // de la rotation de présentation. On les ramène à l'échelle du tracé : le
+    // facteur propre à la planche s'applique au rendu, pas au fichier.
+    var demi = Math.max(f.largeurMm, f.hauteurMm) / 2 * 1.08 / (f.echelleSet || 1);
     var vb = [f.cx - demi, f.cy - demi, demi * 2, demi * 2].join(' ');
     var tourne = f.rotBase
       ? 'rotate(' + (f.rotBase * 180 / Math.PI) + ' ' + f.pivot.x + ' ' + f.pivot.y + ')'

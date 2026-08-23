@@ -114,7 +114,7 @@ button:disabled { cursor: default; }
    donc celle du dessin, qui est alors redessiné à une autre échelle — c'est
    ce qui donnait l'impression qu'il sautait. */
 .scene {
-  flex: 0 0 45%; position: relative; min-height: 0;
+  flex: 0 0 52%; position: relative; min-height: 0;
   display: flex; align-items: center; justify-content: center;
   padding: .6rem; touch-action: none;
 }
@@ -183,9 +183,15 @@ button:disabled { cursor: default; }
 
 /* Deux familles seulement : les fards mats, et les nacrés, qui ne s'emploient
    pas de la même manière. */
-.rangs { display: flex; flex-direction: column; gap: .45rem; }
-.groupe { display: flex; flex-wrap: wrap; gap: .4rem; }
-.groupe-apart { display: flex; align-items: center; gap: .55rem; }
+.rangs { display: flex; flex-direction: column; gap: .4rem; }
+/* les couleurs aussi tiennent sur une ligne, qui défile si besoin */
+.groupe {
+  display: flex; gap: .4rem; overflow-x: auto; overflow-y: hidden;
+  /* de quoi laisser respirer le halo de la pastille choisie */
+  padding: 4px 0 .3rem; -webkit-overflow-scrolling: touch;
+}
+.groupe .pastille { flex: 0 0 auto; }
+.groupe-apart { display: flex; align-items: center; gap: .55rem; min-width: 0; }
 .etiquette-groupe {
   font-size: .66rem; font-weight: 800; text-transform: uppercase;
   letter-spacing: .05em; color: var(--encre-d); white-space: nowrap;
@@ -202,12 +208,31 @@ button:disabled { cursor: default; }
 .pastille.nacre { box-shadow: 0 0 0 1px #C9AE72, var(--ombre); }
 .pastille.nacre.actif { box-shadow: 0 0 0 3px var(--violet), var(--ombre); }
 
-.set-titre { font-weight: 800; font-size: .8rem; color: var(--violet); margin: .6rem 0 .4rem; }
-.grille-formes { display: grid; gap: .45rem; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
+.set-titre { font-weight: 800; font-size: .8rem; color: var(--violet); margin: .5rem 0 .35rem; }
+
+/* Une seule ligne qui défile sur le côté : sur un téléphone, chaque rangée
+   gagnée est de la place rendue au visage. */
+.grille-formes {
+  display: flex; gap: .45rem;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  padding-bottom: .3rem;
+  -webkit-overflow-scrolling: touch;
+}
 .case-forme {
   background: #FAF7F2; border-radius: 10px; padding: .35rem .2rem .3rem;
   display: flex; flex-direction: column; align-items: center; gap: .15rem;
   border: 2px solid transparent; font-size: .62rem; font-weight: 700; color: var(--encre-d);
+  flex: 0 0 72px; scroll-snap-align: start;
+}
+
+/* barre de défilement discrète, mais visible : elle signale qu'il y a la suite */
+.grille-formes::-webkit-scrollbar, .pastilles-rang::-webkit-scrollbar { height: 5px; }
+.grille-formes::-webkit-scrollbar-thumb, .pastilles-rang::-webkit-scrollbar-thumb {
+  background: #D8CEC2; border-radius: 3px;
+}
+.grille-formes::-webkit-scrollbar-track, .pastilles-rang::-webkit-scrollbar-track {
+  background: transparent;
 }
 .case-forme svg { width: 100%; height: 40px; }
 .case-forme.actif { border-color: var(--violet); background: #F3EDFB; color: var(--violet); }
@@ -258,7 +283,9 @@ button:disabled { cursor: default; }
 /* Sur un écran court, le dessin cède un peu de place : sinon la planche de
    pochoirs se réduit à une bande et devient pénible à parcourir. */
 @media (max-height: 720px) {
-  .scene { flex: 0 0 38%; }
+  .scene { flex: 0 0 46%; }
+  .case-forme { flex-basis: 64px; }
+  .case-forme svg { height: 34px; }
   .pastille { width: 32px; height: 32px; border-width: 2px; }
   .outil { font-size: .6rem; }
   .outil svg { width: 17px; height: 17px; }

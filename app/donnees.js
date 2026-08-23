@@ -145,6 +145,13 @@ var POCHOIRS = [
     lien: 'https://www.labaguettemaquille.fr',
     planche: '1v1',
 
+    /* Ce fichier n'est pas à l'échelle, contrairement à celui de la Av1 : il
+       mesure 175,7 x 248,9 mm pour une planche qui en fait 120 x 170. On le
+       ramène donc à sa taille réelle. Le rapport est le même en largeur
+       (120/175,7) et en hauteur (170/248,9), ce qui confirme un simple
+       agrandissement du dessin. */
+    echelle: 0.683,
+
     /* Cette planche est plus grande que la Av1 : 175,7 x 248,9 mm.
 
        Plusieurs motifs y figurent en double ou en triple, à des tailles
