@@ -94,11 +94,18 @@
         }
         /* Geste abandonné : on revient à l'état d'avant, sans laisser de trace
            dans l'historique. Sert quand un second doigt se pose pour zoomer,
-           alors que le premier venait de commencer à tamponner. */
+           alors que le premier venait de commencer à tamponner.
+
+           On défait le geste en partant de l'état COURANT, `fn` retirant le
+           motif par son identifiant, plutôt qu'en restaurant l'instantané pris
+           au début : quand les deux doigts se posent dans le même instant, cet
+           instantané n'est pas encore en place et le repli manquait sa cible.
+           Rien n'a été poussé dans le passé entre-temps, donc l'historique
+           reste intact. */
         if (phase === 'annule') {
-          var repli = histoAvant.current;
           histoAvant.current = null;
-          return repli || h;
+          var etat = fn ? fn(h.present) : h.present;
+          return { passe: h.passe, present: etat, futur: h.futur };
         }
         var base = histoAvant.current || h;
         histoAvant.current = null;

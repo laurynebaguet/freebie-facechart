@@ -376,7 +376,13 @@ var Toile = (function () {
          pincement ne tamponne pas non plus. */
       var ids = Object.keys(doigtsRef.current);
       if (ids.length === 2) {
-        if (gesteRef.current) p.appliquer(null, 'annule');
+        var enCours = gesteRef.current;
+        if (enCours) {
+          var ne = enCours.idPose;
+          p.appliquer(ne == null ? null : function (d) {
+            return Modele.supprimer(d, ne);
+          }, 'annule');
+        }
         onAnnuleGeste(true);
         p.onSelection(null);
         if (q.outil !== 'modifier') p.onOutil('modifier');
@@ -448,7 +454,9 @@ var Toile = (function () {
         };
         p.appliquer(function (d) { return Modele.ajouter(d, neuf); }, 'debut');
         p.onSelection(idPose);
-        gesteRef.current = { mode: 'deplacement', dx: 0, dy: 0 };
+        // on retient le motif tout juste posé, pour pouvoir le retirer si le
+        // geste s'avérait être le début d'un pincement
+        gesteRef.current = { mode: 'deplacement', dx: 0, dy: 0, idPose: idPose };
         glisseRef.current = { id: idPose, x: pt.x, y: pt.y, rot: 0, zoom: 1 };
         c.style.cursor = 'grabbing';
         return;
