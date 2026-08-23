@@ -494,6 +494,11 @@ var Rendu = (function () {
           continue;
         }
         ctx.save();
+        /* On repart d'une transformation NEUTRE. Le contexte porte encore celle
+           du dernier rendu — densité de l'écran, loupe — et le tracé serait
+           alors comparé à une autre échelle que le point : sur un écran à 1,5
+           pixel, le test échouait toujours. */
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         transformeForme(ctx, el, f, echelle);
         var x = xMm * echelle, y = yMm * echelle;
         var touche = ctx.isPointInPath(f.path2d, x, y);
