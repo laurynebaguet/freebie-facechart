@@ -33,17 +33,6 @@ var Rendu = (function () {
     return null;
   }
 
-  /* Éclaircit (f > 0) ou assombrit (f < 0) une teinte. */
-  function nuance(hex, f) {
-    var r = parseInt(hex.slice(1, 3), 16);
-    var v = parseInt(hex.slice(3, 5), 16);
-    var b = parseInt(hex.slice(5, 7), 16);
-    function m(c) {
-      var x = f >= 0 ? c + (255 - c) * f : c * (1 + f);
-      return Math.max(0, Math.min(255, Math.round(x)));
-    }
-    return 'rgb(' + m(r) + ',' + m(v) + ',' + m(b) + ')';
-  }
 
   /* Un fard nacré est une poudre : ce ne sont pas des reflets métalliques en
      bandes, mais une multitude de points minuscules qui accrochent la lumière.

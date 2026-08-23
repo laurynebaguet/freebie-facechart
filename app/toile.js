@@ -315,23 +315,24 @@ var Toile = (function () {
       return f ? { el: el, f: f } : null;
     }
 
-    /* Que vise-t-on à cet endroit ? */
+    /* Que vise-t-on à cet endroit ?
+
+       Le rayon des poignées est divisé par l'agrandissement, exactement comme
+       au tracé : elles gardent une taille constante à l'écran, donc elles se
+       rapprochent du motif en millimètres quand on zoome. Viser avec le rayon
+       d'origine reviendrait à cliquer à côté. */
     function cible(pt) {
       var s = selectionCourante();
       if (!s) return null;
-      var pg = Rendu.poignees(s.el, s.f, POIGNEE_MM);
-      if (Math.hypot(pt.x - pg.poubelle.x, pt.y - pg.poubelle.y) <= POIGNEE_MM * 0.75) {
-        return { quoi: 'poubelle', sel: s };
-      }
-      if (Math.hypot(pt.x - pg.miroir.x, pt.y - pg.miroir.y) <= POIGNEE_MM * 0.75) {
-        return { quoi: 'miroir', sel: s };
-      }
-      if (Math.hypot(pt.x - pg.redim.x, pt.y - pg.redim.y) <= POIGNEE_MM * 0.75) {
-        return { quoi: 'redim', sel: s };
-      }
-      if (Math.hypot(pt.x - pg.rotation.x, pt.y - pg.rotation.y) <= POIGNEE_MM * 0.75) {
-        return { quoi: 'rotation', sel: s };
-      }
+      var pm = POIGNEE_MM / loupeRef.current.k;
+      var pg = Rendu.poignees(s.el, s.f, pm);
+      var atteinte = pm * 0.75;
+      function pres(p) { return Math.hypot(pt.x - p.x, pt.y - p.y) <= atteinte; }
+
+      if (pres(pg.poubelle)) return { quoi: 'poubelle', sel: s };
+      if (pres(pg.miroir)) return { quoi: 'miroir', sel: s };
+      if (pres(pg.redim)) return { quoi: 'redim', sel: s };
+      if (pres(pg.rotation)) return { quoi: 'rotation', sel: s };
       if (Rendu.dansCadre(s.el, s.f, pt.x, pt.y, 0)) {
         return { quoi: 'cadre', sel: s };
       }
