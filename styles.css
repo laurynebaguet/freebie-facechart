@@ -242,6 +242,27 @@ button:disabled { cursor: default; }
 .reglage label { font-size: .74rem; font-weight: 800; color: var(--encre-d); white-space: nowrap; }
 .reglage input[type=range] { flex: 1; accent-color: var(--violet); }
 
+/* Commandes de vue : elles n'apparaissent qu'une fois la loupe engagée, pour
+   ne pas encombrer l'écran le reste du temps. */
+.cmd-vue {
+  position: absolute; top: 1rem; right: 1rem; z-index: 4;
+  display: flex; align-items: center; gap: .25rem;
+  background: rgba(255, 255, 255, .94); border-radius: 999px;
+  padding: .25rem .3rem; box-shadow: var(--ombre-f);
+}
+.cmd {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--encre); background: transparent;
+}
+.cmd svg { width: 19px; height: 19px; }
+.cmd:hover { background: #F3EDFB; color: var(--violet); }
+.cmd.actif { background: var(--violet); color: #fff; }
+.cmd-taux {
+  font-size: .72rem; font-weight: 800; color: var(--encre-d);
+  padding-right: .45rem; min-width: 3.1em; text-align: center;
+}
+
 /* --------------------------------------------------------------- messages */
 .rappel {
   position: absolute; left: 50%; transform: translateX(-50%);
