@@ -168,7 +168,11 @@ var UI = (function () {
 
     return html`
       <div class="palette">
-        <p class="tiroir-titre">Couleur${p.surSelection ? ' de la forme choisie' : ''}</p>
+        ${/* Le mot « Couleur » n'apprend rien devant des pastilles de couleur :
+             on ne l'affiche que lorsqu'il précise sur quoi elles agissent. */
+          p.surSelection
+            ? html`<p class="tiroir-titre">Couleur de la forme choisie</p>`
+            : null}
         <div class="rangs">
           ${groupes.map(function (g) {
             return html`
