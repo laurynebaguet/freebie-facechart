@@ -370,10 +370,16 @@ var Toile = (function () {
       var c = canvasRef.current;
       doigtsRef.current[ev.pointerId] = surToile(ev);
 
-      // deux doigts : on regarde, on ne dessine pas
+      /* Deux doigts : on regarde, on ne dessine pas. Le premier doigt vient
+         peut-être de poser un tampon ou d'attraper une forme — on défait ce
+         qu'il a commencé, et on bascule sur Modifier pour que la suite du
+         pincement ne tamponne pas non plus. */
       var ids = Object.keys(doigtsRef.current);
       if (ids.length === 2) {
+        if (gesteRef.current) p.appliquer(null, 'annule');
         onAnnuleGeste(true);
+        p.onSelection(null);
+        if (q.outil !== 'modifier') p.onOutil('modifier');
         var a = doigtsRef.current[ids[0]], b = doigtsRef.current[ids[1]];
         pinceRef.current = {
           ecart: Math.hypot(a.x - b.x, a.y - b.y) || 1,

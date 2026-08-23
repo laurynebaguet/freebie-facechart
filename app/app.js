@@ -92,6 +92,14 @@
         if (phase === 'cours') {
           return { passe: h.passe, present: suivant, futur: h.futur };
         }
+        /* Geste abandonné : on revient à l'état d'avant, sans laisser de trace
+           dans l'historique. Sert quand un second doigt se pose pour zoomer,
+           alors que le premier venait de commencer à tamponner. */
+        if (phase === 'annule') {
+          var repli = histoAvant.current;
+          histoAvant.current = null;
+          return repli || h;
+        }
         var base = histoAvant.current || h;
         histoAvant.current = null;
         return Modele.histoAppliquer(base, suivant);
