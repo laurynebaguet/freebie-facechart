@@ -126,9 +126,6 @@ var Modele = (function () {
     }, 400);
   }
 
-  function oublier() {
-    try { window.localStorage.removeItem(CLE); } catch (e) {}
-  }
 
   return {
     vide: vide, ajouter: ajouter, modifier: modifier, supprimer: supprimer,
@@ -136,6 +133,6 @@ var Modele = (function () {
     histoNeuf: histoNeuf, histoAppliquer: histoAppliquer,
     annuler: annuler, refaire: refaire,
     peutAnnuler: peutAnnuler, peutRefaire: peutRefaire,
-    charger: charger, enregistrer: enregistrer, oublier: oublier
+    charger: charger, enregistrer: enregistrer
   };
 })();
