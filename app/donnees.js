@@ -183,9 +183,10 @@ var POCHOIRS = [
         /* Coupée aux creux (62 et 166), donc trois vagues entières.
            « arrondi » adoucit toute la silhouette, pas seulement les coins de
            la fenêtre : il n'y reste aucun angle vif, ni en haut ni en bas.
-           « boutsRonds » prolonge chaque extrémité d'un demi-disque, au lieu
-           de la couper net : la frise se termine comme un trait de pinceau. */
-        bande: { x: 62, y: 268, w: 104, h: 12, arrondi: 2.2, boutsRonds: true } }
+           Le rayon vaut la moitié de l'épaisseur de matière aux extrémités
+           (6,8 mm) : le bout s'y arrondit donc en demi-cercle de lui-même,
+           en rognant, sans rien prolonger. */
+        bande: { x: 62, y: 268, w: 104, h: 12, arrondi: 3.4 } }
 
       /* BORD DROIT — retiré volontairement, en attente d'une planche corrigée.
          Il est découpé en arcs qui BOMBENT vers l'extérieur. Or la peinture
