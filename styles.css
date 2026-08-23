@@ -186,9 +186,11 @@ button:disabled { cursor: default; }
 .rangs { display: flex; flex-direction: column; gap: .4rem; }
 /* les couleurs aussi tiennent sur une ligne, qui défile si besoin */
 .groupe {
-  display: flex; gap: .28rem; overflow-x: auto; overflow-y: hidden;
-  /* de quoi laisser respirer le halo de la pastille choisie */
-  padding: 4px 0 .25rem; -webkit-overflow-scrolling: touch;
+  display: flex; gap: .28rem; overflow-x: auto;
+  /* de quoi laisser respirer le halo de la pastille choisie, sur les quatre
+     côtés : sans cette marge il serait rogné par le rognage latéral */
+  padding: 7px 6px; -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 .groupe .pastille { flex: 0 0 auto; }
 .groupe-apart { display: flex; align-items: center; gap: .55rem; min-width: 0; }
@@ -205,12 +207,16 @@ button:disabled { cursor: default; }
 .pastille {
   width: 36px; height: 36px; border-radius: 50%; flex: 0 0 auto;
   border: 2px solid var(--blanc); box-shadow: 0 0 0 1px var(--trait), var(--ombre);
-  transition: transform .12s ease;
+  transition: box-shadow .12s ease;
 }
-.pastille:hover { transform: scale(1.08); }
-.pastille.actif { box-shadow: 0 0 0 3px var(--violet), var(--ombre); transform: scale(1.08); }
-.pastille.nacre { box-shadow: 0 0 0 1px #C9AE72, var(--ombre); }
+/* Pas d'agrandissement au survol ni à la sélection : une transformation
+   déborde de la boîte, et ce débordement compte comme zone défilable — d'où
+   une barre de défilement sous deux pastilles, et un halo rogné. On marque
+   donc la sélection par le seul halo, qui lui ne perturbe pas la mise en page. */
+.pastille:hover { box-shadow: 0 0 0 2px var(--violet-c), var(--ombre); }
+.pastille.actif,
 .pastille.nacre.actif { box-shadow: 0 0 0 3px var(--violet), var(--ombre); }
+.pastille.nacre { box-shadow: 0 0 0 1px #C9AE72, var(--ombre); }
 
 .set-titre { font-weight: 800; font-size: .8rem; color: var(--violet); margin: .5rem 0 .35rem; }
 
