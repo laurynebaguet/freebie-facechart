@@ -75,7 +75,12 @@ button:disabled { cursor: default; }
 .galerie h2 { font-size: clamp(1.4rem, 4vw, 2rem); color: var(--violet); text-align: center; margin-bottom: .4rem; }
 .galerie .sous { text-align: center; color: var(--encre-d); margin: 0 0 1.6rem; }
 /* en flex plutôt qu'en grille : les cartes restent centrées, même à deux */
-.grille-visages { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+/* align-items en haut : les cartes ne sont plus étirées à la hauteur de la
+   plus grande, chacune suit les proportions de son propre cadrage. */
+.grille-visages {
+  display: flex; flex-wrap: wrap; gap: 1rem;
+  justify-content: center; align-items: flex-start;
+}
 .grille-visages .carte-visage { flex: 0 1 180px; }
 .carte-visage {
   background: var(--blanc); border-radius: var(--r); overflow: hidden;
@@ -84,8 +89,38 @@ button:disabled { cursor: default; }
   display: flex; flex-direction: column; padding: 0;
 }
 .carte-visage:hover { transform: translateY(-3px); box-shadow: var(--ombre-f); }
-.carte-visage .vignette { width: 100%; aspect-ratio: 4/5; display: block; background: #fff; }
-.carte-visage .pied { padding: .55rem .7rem .7rem; font-weight: 700; text-align: center; }
+.carte-visage .choix { display: block; width: 100%; padding: 0; }
+/* Les proportions viennent du cadrage du visage, posées par `cadrageFond`. */
+.carte-visage .vignette { width: 100%; display: block; background: #fff; }
+.carte-visage .pied {
+  padding: .55rem .5rem .7rem; font-weight: 700; text-align: center;
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: .3rem;
+  border-top: 1px solid var(--trait);
+}
+/* Le crayon reste discret tant qu'on ne s'y intéresse pas : la carte doit
+   d'abord donner envie de choisir le visage. */
+.carte-visage .pied svg { width: 15px; height: 15px; flex: 0 0 auto; color: var(--violet); opacity: .45; }
+.carte-visage .pied:hover { color: var(--violet); }
+.carte-visage .pied:hover svg { opacity: 1; }
+.carte-visage .prenom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.carte-visage .renomme { padding: .45rem .45rem .6rem; gap: .25rem; }
+.carte-visage .renomme input {
+  flex: 1 1 auto; min-width: 0;
+  font: inherit; font-weight: 700; text-align: center;
+  color: var(--encre); background: var(--blanc);
+  border: 2px solid var(--violet); border-radius: 9px; padding: .25rem .3rem;
+  /* 16 px au moins : en deçà, le téléphone zoome tout seul sur le champ. */
+  font-size: 16px;
+}
+.carte-visage .renomme input:focus { outline: none; box-shadow: 0 0 0 3px #EDE2FF; }
+.carte-visage .renomme .ok {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--violet); color: #fff;
+}
+.carte-visage .renomme .ok svg { width: 17px; height: 17px; color: #fff; opacity: 1; }
+.galerie .astuce { margin-top: -1.2rem; font-size: .92rem; }
 
 /* --------------------------------------------------------------- atelier */
 .atelier { height: 100%; display: flex; flex-direction: column; }

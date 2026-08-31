@@ -98,6 +98,28 @@ var Modele = (function () {
     };
   }
 
+  /* ------------------------------------------------------------ prénoms */
+  /* Chacun peut rebaptiser un visage pour y mettre le prénom de son enfant.
+     Ces prénoms sont rangés à part du dessin, par identifiant de visage
+     ({ lou: 'Camille' }), et ne quittent jamais le navigateur. */
+
+  /* De quoi loger un prénom composé sans que la carte déborde. */
+  var LIMITE_NOM = 18;
+
+  function nom(noms, visage) {
+    var choisi = noms && noms[visage.id];
+    return (choisi && choisi.trim()) || visage.nom;
+  }
+
+  /* Renvoie la liste des prénoms modifiée. Un texte vide efface le choix,
+     donc le visage retrouve son prénom d'origine. */
+  function renommer(noms, visageId, texte) {
+    var propre = (texte || '').replace(/\s+/g, ' ').trim().slice(0, LIMITE_NOM);
+    var suivant = Object.assign({}, noms);
+    if (propre) suivant[visageId] = propre; else delete suivant[visageId];
+    return suivant;
+  }
+
   /* ---------------------------------------------------------- sauvegarde */
 
   var CLE = 'lbm-freebie-v2';
@@ -120,6 +142,7 @@ var Modele = (function () {
           version: 2,
           visageId: etat.visageId,
           telecharge: etat.telecharge,
+          noms: etat.noms || {},
           dessin: etat.dessin
         }));
       } catch (e) { /* quota plein ou navigation privée : on continue sans */ }
@@ -130,6 +153,7 @@ var Modele = (function () {
   return {
     vide: vide, ajouter: ajouter, modifier: modifier, supprimer: supprimer,
     trouver: trouver, gommer: gommer,
+    nom: nom, renommer: renommer, LIMITE_NOM: LIMITE_NOM,
     histoNeuf: histoNeuf, histoAppliquer: histoAppliquer,
     annuler: annuler, refaire: refaire,
     peutAnnuler: peutAnnuler, peutRefaire: peutRefaire,

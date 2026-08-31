@@ -2,6 +2,7 @@
 var UI = (function () {
   'use strict';
   var html = htm.bind(React.createElement);
+  var useState = React.useState, useEffect = React.useEffect, useRef = React.useRef;
 
   /* ---------------------------------------------------------- icônes */
 
@@ -16,7 +17,9 @@ var UI = (function () {
     refaire:  ['M20 9H10a5 5 0 0 0 0 10h4m6-10-4-4m4 4-4 4'],
     poubelle: ['M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m3 0-.8 12.1a2 2 0 0 1-2 1.9H8.8a2 2 0 0 1-2-1.9L6 7M10 11v6M14 11v6'],
     telecharger: ['M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2'],
-    visages:  ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9 10h.01M15 10h.01M8.5 14.5a4.5 4.5 0 0 0 7 0']
+    visages:  ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9 10h.01M15 10h.01M8.5 14.5a4.5 4.5 0 0 0 7 0'],
+    crayon:   ['M5 19h3.4L19.6 7.8a2.1 2.1 0 0 0-3-3L5.4 16z', 'M14.5 6.9l3 3'],
+    valider:  ['M5 12.5 10 17.5 19.5 7']
   };
 
   function Icone(p) {
@@ -92,16 +95,81 @@ var UI = (function () {
 
   /* -------------------------------------------------------- galerie */
 
+  /* Reproduit en CSS le cadrage que la toile fait au pinceau : la vignette de
+     la galerie doit montrer exactement ce que l'atelier montrera.
+
+     Une position en pourcentage aligne le même pourcentage de l'image sur
+     celui de la pastille, ce qui donne pile `cadre.x / (taille - cadre)`. La
+     formule reste juste quand le cadre déborde du fichier — les deux termes
+     changent de signe ensemble ; seule l'égalité parfaite est à écarter, elle
+     diviserait par zéro. */
   function cadrageFond(v) {
     var zx = v.taille.w / v.cadre.w * 100;
-    var px = v.cadre.w >= v.taille.w ? 50 : v.cadre.x / (v.taille.w - v.cadre.w) * 100;
-    var py = v.cadre.h >= v.taille.h ? 50 : v.cadre.y / (v.taille.h - v.cadre.h) * 100;
+    var px = v.cadre.w === v.taille.w ? 50 : v.cadre.x / (v.taille.w - v.cadre.w) * 100;
+    var py = v.cadre.h === v.taille.h ? 50 : v.cadre.y / (v.taille.h - v.cadre.h) * 100;
     return {
+      /* La pastille prend les proportions du cadre. Sans ça, elle resterait
+         en portrait et rognerait un visage cadré plus large que haut. */
+      aspectRatio: v.cadre.w + ' / ' + v.cadre.h,
       backgroundImage: 'url("' + v.image + '")',
       backgroundSize: zx + '% auto',
       backgroundPosition: px + '% ' + py + '%',
       backgroundRepeat: 'no-repeat'
     };
+  }
+
+  /* Carte d'un visage : l'image le choisit, le prénom se rebaptise.
+
+     Le prénom est un bouton VOISIN de celui de l'image, et non dedans : un
+     bouton dans un bouton n'existe pas en HTML, et le navigateur défait
+     l'imbrication en silence. La carte est donc une simple boîte. */
+  function CarteVisage(p) {
+    var v = p.visage;
+    var e1 = useState(false), edite = e1[0], setEdite = e1[1];
+    var e2 = useState(''), texte = e2[0], setTexte = e2[1];
+    var champ = useRef(null);
+    var affiche = Modele.nom(p.noms, v);
+
+    /* Le prénom en place est présélectionné : taper le remplace d'un coup,
+       ce qui est le geste attendu quand on vient mettre celui de son enfant. */
+    useEffect(function () {
+      if (edite && champ.current) champ.current.select();
+    }, [edite]);
+
+    function ouvrir() { setTexte(affiche); setEdite(true); }
+    function garder() { p.onRenommer(v.id, texte); setEdite(false); }
+
+    return html`
+      <div class="carte-visage">
+        <button class="choix" title=${'Maquiller ' + affiche}
+                onClick=${function () { p.onChoisir(v.id); }}>
+          <span class="vignette" style=${cadrageFond(v)}></span>
+        </button>
+
+        ${edite
+          ? html`
+            <form class="pied renomme"
+                  onSubmit=${function (ev) { ev.preventDefault(); garder(); }}>
+              <input ref=${champ} type="text" value=${texte}
+                     maxLength=${Modele.LIMITE_NOM}
+                     placeholder=${v.nom}
+                     aria-label=${'Prénom à la place de ' + v.nom}
+                     onChange=${function (ev) { setTexte(ev.target.value); }}
+                     onBlur=${garder}
+                     onKeyDown=${function (ev) {
+                       if (ev.key === 'Escape') { ev.preventDefault(); setEdite(false); }
+                     }}/>
+              <button type="submit" class="ok" title="Garder ce prénom">
+                <${Icone} nom="valider"/>
+              </button>
+            </form>`
+          : html`
+            <button class="pied" title=${'Remplacer « ' + affiche +' » par un autre prénom'}
+                    onClick=${ouvrir}>
+              <span class="prenom">${affiche}</span>
+              <${Icone} nom="crayon"/>
+            </button>`}
+      </div>`;
   }
 
   function Galerie(p) {
@@ -113,14 +181,14 @@ var UI = (function () {
             ? 'Ton maquillage te suit : tu peux voir le même sur un autre enfant.'
             : 'Tu pourras en changer à tout moment sans rien perdre.'}
         </p>
+        <p class="sous astuce">
+          Touche le prénom sous une image pour y mettre celui de ton enfant.
+        </p>
         <div class="grille-visages">
           ${VISAGES.map(function (v) {
             return html`
-              <button key=${v.id} class="carte-visage"
-                      onClick=${function () { p.onChoisir(v.id); }}>
-                <span class="vignette" style=${cadrageFond(v)}></span>
-                <span class="pied">${v.nom}</span>
-              </button>`;
+              <${CarteVisage} key=${v.id} visage=${v} noms=${p.noms}
+                              onChoisir=${p.onChoisir} onRenommer=${p.onRenommer}/>`;
           })}
         </div>
       </div>`;
