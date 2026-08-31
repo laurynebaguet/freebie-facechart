@@ -355,6 +355,9 @@ var Fiche = (function () {
       doc.setTextColor(140, 134, 148);
       doc.text('Retrouve tes pochoirs et tes couleurs sur la boutique.',
                PAGE_L - MARGE, PAGE_H - 10, { align: 'right' });
+      doc.setFontSize(7.5);
+      doc.setTextColor(158, 152, 166);
+      doc.text(TEXTES.credit, MARGE, PAGE_H - 5.5);
 
       return doc;
     });

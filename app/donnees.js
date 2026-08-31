@@ -241,6 +241,9 @@ var TEXTES = {
      devant une voyelle : « Le maquillage d'Anna ». */
   titreDe: 'Le maquillage de ',
   titreElide: "Le maquillage d'",
+  /* Les visages sont son travail : le crédit apparaît sur l'accueil et sur la
+     fiche imprimée. Ajoute son adresse si elle en veut une. */
+  credit: 'Visages illustrés par Pauline Dussert',
   siteNom: 'labaguettemaquille.fr',
   siteLien: 'https://www.labaguettemaquille.fr',
   /* Gravé dans l'image à partager : c'est la seule chose qui voyage avec elle,

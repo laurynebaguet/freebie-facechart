@@ -20,6 +20,8 @@ une fiche A4 à imprimer listant le matériel utilisé.
 - Repartir avec l'image seule, au format des réseaux, pour la montrer autour
   de soi.
 
+Les visages sont illustrés par **Pauline Dussert**.
+
 Les teintes de la palette sont celles des fards réels, relevées sur des swatchs
 photographiés sur peau. Les fards nacrés sont rendus par un semis de
 micro-paillettes plutôt qu'en aplat — dans la palette, sur le dessin et sur la

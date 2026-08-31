@@ -69,6 +69,7 @@ button:disabled { cursor: default; }
 .accueil h1 { font-size: clamp(1.7rem, 5.5vw, 2.9rem); color: var(--violet); max-width: 16em; }
 .accueil p { font-size: clamp(1rem, 2.6vw, 1.15rem); color: var(--encre-d); max-width: 34em; line-height: 1.6; margin: 0; }
 .accueil .btn { font-size: 1.15rem; padding: .9em 2em; }
+.accueil .credit { font-size: .85rem; color: var(--encre-d); opacity: .8; margin-top: -.4rem; }
 
 /* ------------------------------------------------------- galerie visages */
 .galerie { padding: 1.4rem 1.2rem 3rem; max-width: 1100px; margin: 0 auto; }
@@ -161,6 +162,12 @@ button:disabled { cursor: default; }
   max-width: 100%; max-height: 100%;
   border-radius: var(--r); box-shadow: var(--ombre-f); background: #fff;
   touch-action: none; display: block;
+  /* iOS ouvre sinon sa propre loupe et son menu « copier l'image » sur un
+     appui long, par-dessus la nôtre, qui suit tout le geste au lieu de son
+     seul début. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* -------------------------------------------------------- barre outils */

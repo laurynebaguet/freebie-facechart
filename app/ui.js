@@ -90,6 +90,7 @@ var UI = (function () {
         <h1>${TEXTES.titre}</h1>
         <p>${TEXTES.accroche}</p>
         <button class="btn btn-primaire" onClick=${p.onDemarrer}>${TEXTES.boutonDemarrer}</button>
+        <p class="credit">${TEXTES.credit}</p>
       </div>`;
   }
 
