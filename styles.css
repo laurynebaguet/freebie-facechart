@@ -349,6 +349,16 @@ button:disabled { cursor: default; }
 .boite .actions { display: flex; gap: .6rem; justify-content: flex-end; flex-wrap: wrap; }
 
 /* ---------------------------------------------------- récapitulatif */
+/* Les commandes de la forme choisie : de vrais boutons, sous la barre d'outils,
+   plutôt que des pastilles à viser sur la forme elle-même. */
+.boutons-forme {
+  display: flex; gap: .6rem; flex-wrap: wrap;
+  padding: .55rem .7rem 0; flex: 0 0 auto;
+}
+.boutons-forme .btn svg { width: 16px; height: 16px; }
+.boutons-forme .btn-fantome { color: var(--rose); }
+.boutons-forme .btn-fantome:hover { color: var(--rose); background: #FCEAF1; }
+
 .recap { display: flex; gap: 1.2rem; flex-wrap: wrap; margin: 0 0 1.2rem; }
 .recap-bloc { flex: 1 1 160px; min-width: 0; }
 .recap ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .45rem; }

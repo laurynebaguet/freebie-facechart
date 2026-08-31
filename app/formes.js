@@ -94,6 +94,62 @@ var Formes = (function () {
       return groupe.getBBox();
     }
 
+    /* Le rectangle EXACT d'un motif redressé.
+
+       `getBBox()` d'un groupe ne mesure pas ce qu'on croit : il réunit les
+       rectangles de ses enfants une fois transformés, si bien qu'une forme
+       tournée hérite du rectangle de son propre rectangle tourné — toujours
+       plus grand que le dessin, et d'autant plus que l'angle approche 45°.
+       Le chapeau de sorcière, couché à 66° sur la planche, flottait ainsi au
+       milieu d'un cadre 20 % trop large et 60 % trop haut.
+
+       On mesure donc le contour lui-même, point par point, dans le repère
+       redressé. Un contour borne son remplissage : c'est bien le cadre du
+       motif peint qu'on obtient. */
+    function cadreTendu(morceaux, rotBase, pivot) {
+      var base = new DOMMatrix();
+      if (rotBase) {
+        base = base.translate(pivot.x, pivot.y)
+                   .rotate(deg(rotBase))
+                   .translate(-pivot.x, -pivot.y);
+      }
+      interne.setAttribute('transform', '');
+      while (interne.firstChild) interne.removeChild(interne.firstChild);
+
+      var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      morceaux.forEach(function (m) {
+        var p = document.createElementNS(NS, 'path');
+        p.setAttribute('d', m.d);
+        interne.appendChild(p);
+
+        var mat = base;
+        if (m.dx || m.dy) mat = mat.translate(m.dx, m.dy);
+        if (m.rot) {
+          mat = mat.translate(m.pcx, m.pcy).rotate(deg(m.rot))
+                   .translate(-m.pcx, -m.pcy);
+        }
+
+        var L = p.getTotalLength();
+        /* Un point tous les demi-millimètres, borné des deux côtés : en deçà
+           un petit motif serait mal cerné, au-delà on ferait traîner le
+           démarrage sur téléphone sans rien gagner de visible. */
+        var n = Math.min(1200, Math.max(32, Math.ceil(L * 2)));
+        for (var i = 0; i <= n; i++) {
+          var pt = p.getPointAtLength(L * i / n);
+          var X = mat.a * pt.x + mat.c * pt.y + mat.e;
+          var Y = mat.b * pt.x + mat.d * pt.y + mat.f;
+          if (X < minX) minX = X;
+          if (X > maxX) maxX = X;
+          if (Y < minY) minY = Y;
+          if (Y > maxY) maxY = Y;
+        }
+        interne.removeChild(p);
+      });
+
+      if (minX > maxX) return null;
+      return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+    }
+
     POCHOIRS.forEach(function (set) {
       var liste = traces[set.planche];
       var cent = centres[set.planche];
@@ -138,7 +194,10 @@ var Formes = (function () {
               height: Math.max.apply(null, ys) - Math.min.apply(null, ys)
             };
           } else {
-            redresse = poser(morceaux, rotBase, pivot.x, pivot.y);
+            // le cadre d'un motif tourné se mesure sur son contour, pas sur
+            // le rectangle du groupe qui le porte
+            redresse = cadreTendu(morceaux, rotBase, pivot)
+                    || poser(morceaux, rotBase, pivot.x, pivot.y);
           }
         }
         var cx = redresse.x + redresse.width / 2;

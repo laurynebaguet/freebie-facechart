@@ -50,6 +50,13 @@ var Toile = (function () {
     return t === 'touch';
   }
 
+  /* Les poignées de rotation et d'agrandissement ne s'affichent que là où l'on
+     vise au pixel près, c'est-à-dire à la souris. Au doigt, deux doigts font le
+     même travail sans rien avoir à viser. */
+  function avecPoignees() {
+    return !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  }
+
   function couleurDe(id) {
     for (var i = 0; i < COULEURS.length; i++) {
       if (COULEURS[i].id === id) return COULEURS[i].hex;
@@ -215,7 +222,8 @@ var Toile = (function () {
         }
         if (sel && sel.type === 'forme') {
           // les poignées gardent leur taille à l'écran quel que soit le zoom
-          Rendu.selection(ctx, sel, v.echelle, POIGNEE_PX / (v.echelle * lp.k), 1 / lp.k);
+          Rendu.selection(ctx, sel, v.echelle, POIGNEE_PX / (v.echelle * lp.k),
+                          1 / lp.k, avecPoignees());
         }
       }
       apercuRond(ctx, v.echelle);
@@ -234,11 +242,16 @@ var Toile = (function () {
       var d = loupeDoigtRef.current;
       if (!d) return;
 
-      var cx = Math.max(LOUPE_R + 4, Math.min(v.largeur - LOUPE_R - 4, d.x));
-      var cy = d.y - LOUPE_ECART - LOUPE_R;
-      // trop haut, le disque sortirait de la toile : on le passe sous le doigt
-      if (cy - LOUPE_R < 4) cy = d.y + LOUPE_ECART + LOUPE_R;
-      cy = Math.min(cy, v.hauteur - LOUPE_R - 4);
+      /* Place FIXE, en haut à gauche. Une loupe qui suit le doigt danse d'un
+         bord à l'autre et fatigue plus qu'elle n'aide ; et sur les côtés, ce
+         qu'elle montre n'apprend rien. Elle ne passe à droite que si le doigt
+         vient travailler juste dessous, ce qui n'arrive presque jamais. */
+      var marge = 10;
+      var cx = LOUPE_R + marge;
+      var cy = LOUPE_R + marge;
+      if (Math.hypot(d.x - cx, d.y - cy) < LOUPE_R + 44) {
+        cx = v.largeur - LOUPE_R - marge;
+      }
 
       var demi = LOUPE_R / LOUPE_K;   // demi-côté relu sous le doigt
 
@@ -274,9 +287,11 @@ var Toile = (function () {
       ctx.restore();
     }
 
-    /* La loupe ne sert que pendant un geste qui touche au maquillage, et
-       seulement au doigt : à la souris, rien ne cache le dessin. */
-    var GESTES_LOUPE = { trace: 1, deplacement: 1, redim: 1, rotation: 1 };
+    /* La loupe ne sert qu'au pinceau et à la gomme, là où le doigt cache
+       précisément la pointe qu'on guide. Déplacer un pochoir se fait à vue :
+       on voit la forme entière bouger, la loupe n'y apporte rien et gêne.
+       À la souris, rien ne cache le dessin : pas de loupe non plus. */
+    var GESTES_LOUPE = { trace: 1 };
 
     function majLoupeDoigt(ev) {
       var g = gesteRef.current;
@@ -367,6 +382,13 @@ var Toile = (function () {
       };
     }
 
+    /* Même conversion, depuis un point déjà exprimé en pixels de la toile. */
+    function pxEnMm(pt) {
+      var e = vueRef.current.echelle;
+      var lp = loupeRef.current;
+      return { x: (pt.x - lp.dx) / lp.k / e, y: (pt.y - lp.dy) / lp.k / e };
+    }
+
     /* Agrandit autour d'un point fixe de l'écran : ce qui est sous le doigt y
        reste, sinon la vue file sur le côté à chaque pincement. */
     function zoomerVers(k, ecranX, ecranY) {
@@ -432,7 +454,7 @@ var Toile = (function () {
       /* La poignée la PLUS PROCHE dans le rayon, et non la première de la
          liste : élargies pour le doigt, deux poignées voisines se recouvrent,
          et l'ordre de déclaration n'a rien à voir avec ce qu'on visait. */
-      var noms = ['poubelle', 'miroir', 'redim', 'rotation'];
+      var noms = avecPoignees() ? ['redim', 'rotation'] : [];
       var meilleure = null, plusCourt = Infinity;
       for (var i = 0; i < noms.length; i++) {
         var d = Math.hypot(pt.x - pg[noms[i]].x, pt.y - pg[noms[i]].y);
@@ -454,7 +476,6 @@ var Toile = (function () {
       var q = propsRef.current;
       var c = cible(pt);
       if (c) {
-        if (c.quoi === 'poubelle' || c.quoi === 'miroir') return 'pointer';
         if (c.quoi === 'redim') return 'nwse-resize';
         return 'grab';
       }
@@ -510,13 +531,48 @@ var Toile = (function () {
           }, 'annule');
         }
         onAnnuleGeste(true);
+
+        var a = doigtsRef.current[ids[0]], b = doigtsRef.current[ids[1]];
+        var ecart0 = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+        var angle0 = Math.atan2(b.y - a.y, b.x - a.x);
+        var milieu = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+
+        /* Deux doigts POSÉS SUR UN MOTIF le transforment, comme un
+           autocollant : on l'écarte pour l'agrandir, on tourne pour le faire
+           pivoter, on le promène avec le milieu des deux doigts. Ailleurs,
+           les deux doigts regardent le visage de plus près. */
+        var sansLePose = (enCours && enCours.idPose != null)
+          ? Modele.supprimer(q.dessin, enCours.idPose) : q.dessin;
+        var ctxP = c.getContext('2d');
+        var eP = vueRef.current.echelle;
+        var ma = pxEnMm(a), mb = pxEnMm(b);
+        var pris = Rendu.formeSous(ctxP, sansLePose, ma.x, ma.y, eP)
+                || Rendu.formeSous(ctxP, sansLePose, mb.x, mb.y, eP);
+
+        if (pris) {
+          if (q.outil !== 'modifier') p.onOutil('modifier');
+          p.onSelection(pris.id);
+          p.appliquer(null, 'debut');
+          glisseRef.current = {
+            id: pris.id, x: pris.x, y: pris.y,
+            rot: pris.rot || 0, zoom: pris.zoom || 1
+          };
+          pinceRef.current = {
+            quoi: 'forme', ecart: ecart0, angle: angle0,
+            milieu: pxEnMm(milieu),
+            depart: { x: pris.x, y: pris.y, rot: pris.rot || 0, zoom: pris.zoom || 1 }
+          };
+          planifier();
+          return;
+        }
+
         p.onSelection(null);
         if (q.outil !== 'modifier') p.onOutil('modifier');
-        var a = doigtsRef.current[ids[0]], b = doigtsRef.current[ids[1]];
         pinceRef.current = {
-          ecart: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+          quoi: 'vue',
+          ecart: ecart0,
           k: loupeRef.current.k,
-          centre: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+          centre: milieu,
           depart: { dx: loupeRef.current.dx, dy: loupeRef.current.dy }
         };
         return;
@@ -532,16 +588,6 @@ var Toile = (function () {
       // 1. le geste porte-t-il sur la forme déjà sélectionnée ?
       var vise = cible(pt, auDoigt(ev));
       if (vise) {
-        if (vise.quoi === 'poubelle') {
-          gesteRef.current = null;
-          p.onSupprimer(vise.sel.el.id);
-          return;
-        }
-        if (vise.quoi === 'miroir') {
-          gesteRef.current = null;
-          p.onMiroir(vise.sel.el.id);
-          return;
-        }
         p.appliquer(null, 'debut');
         var el = vise.sel.el;
         glisseRef.current = {
@@ -632,6 +678,21 @@ var Toile = (function () {
         var a = doigtsRef.current[ids[0]], b = doigtsRef.current[ids[1]];
         var ecart = Math.hypot(a.x - b.x, a.y - b.y) || 1;
         var centre = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+
+        if (pince.quoi === 'forme') {
+          var gp = glisseRef.current;
+          if (gp) {
+            var mi = pxEnMm(centre);
+            gp.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN,
+                        pince.depart.zoom * (ecart / pince.ecart)));
+            gp.rot = pince.depart.rot
+                   + (Math.atan2(b.y - a.y, b.x - a.x) - pince.angle);
+            gp.x = pince.depart.x + (mi.x - pince.milieu.x);
+            gp.y = pince.depart.y + (mi.y - pince.milieu.y);
+            planifier();
+          }
+          return;
+        }
         var lp = loupeRef.current;
         lp.k = pince.k;
         lp.dx = pince.depart.dx + (centre.x - pince.centre.x);
@@ -720,7 +781,23 @@ var Toile = (function () {
       loupeDoigtRef.current = null;
       planifier();
       if (pinceRef.current) {
-        if (Object.keys(doigtsRef.current).length < 2) pinceRef.current = null;
+        if (Object.keys(doigtsRef.current).length >= 2) return;
+        var pz = pinceRef.current;
+        pinceRef.current = null;
+        /* Un pincement sur un motif se range dans l'historique comme un
+           déplacement : sans ça, la nouvelle taille et le nouvel angle
+           n'existaient que le temps du geste. */
+        if (pz.quoi === 'forme') {
+          var gp = glisseRef.current;
+          glisseRef.current = null;
+          if (gp) {
+            p.appliquer(function (d) {
+              return Modele.modifier(d, gp.id, {
+                x: gp.x, y: gp.y, rot: gp.rot, zoom: gp.zoom
+              });
+            }, 'fin');
+          }
+        }
         return;
       }
       var g = gesteRef.current;
