@@ -9,7 +9,28 @@ var Toile = (function () {
   var html = htm.bind(React.createElement);
   var useRef = React.useRef, useEffect = React.useEffect, useCallback = React.useCallback;
 
-  var POIGNEE_MM = 9;      // rayon des boutons autour d'une forme choisie
+  /* Les poignées d'une forme choisie se mesurent en PIXELS D'ÉCRAN, et non en
+     millimètres du visage. C'est un bouton : ce qui compte est la taille du
+     doigt, pas celle du maquillage. En millimètres, un visage affiché sur
+     360 pixels de large donnait des boutons de 22 pixels — moitié moins que
+     ce qu'un pouce sait viser. */
+  var POIGNEE_PX = 15;     // rayon dessiné
+
+  /* Rayon d'ATTEINTE, plus large que le bouton dessiné. Au doigt on vise à
+     peu près, et le prix d'une erreur est cher : hors de la zone, l'appui
+     retombait sur « poser un nouveau pochoir ». 26 pixels de rayon font
+     52 pixels de diamètre, au-dessus des 44 recommandés par Apple. */
+  var VISEE_DOIGT_PX = 26;
+  var VISEE_SOURIS_PX = 15;
+
+  /* La loupe du doigt. En dessinant au doigt, la main cache précisément
+     l'endroit qu'on vise. On montre donc, au-dessus du doigt, un disque de ce
+     qui se trouve dessous. iPhone le fait nativement sur un appui long,
+     Android non — et le nôtre suit tout le geste, pas seulement son début. */
+  var LOUPE_R = 44;        // rayon du disque, en pixels d'écran
+  var LOUPE_K = 2;         // agrandissement
+  var LOUPE_ECART = 62;    // hauteur libre laissée entre le doigt et le disque
+
   var PAS_MM = 0.35;       // distance minimale entre deux points d'un trait
   /* Marge d'adaptation d'un pochoir au visage qu'on maquille. Volontairement
      étroite : un pochoir a une taille physique, on l'ajuste d'un enfant à
@@ -17,6 +38,17 @@ var Toile = (function () {
      le triple pas, ce serait irréalisable au tampon. */
   var ZOOM_MIN = 0.7;
   var ZOOM_MAX = 1.5;
+
+  /* Un doigt vise moins bien qu'une souris, et mérite des zones plus larges.
+     Le stylet, lui, est précis : on le range du côté de la souris. */
+  function auDoigt(ev) {
+    var t = ev.pointerType;
+    if (!t) {
+      t = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+        ? 'touch' : 'mouse';
+    }
+    return t === 'touch';
+  }
 
   function couleurDe(id) {
     for (var i = 0; i < COULEURS.length; i++) {
@@ -68,6 +100,7 @@ var Toile = (function () {
     var loupeRef = useRef({ k: 1, dx: 0, dy: 0 });
     var doigtsRef = useRef({});        // pointeurs posés, pour le pincement
     var pinceRef = useRef(null);
+    var loupeDoigtRef = useRef(null);  // position du doigt sous la loupe
 
     var rep = Rendu.repere(p.visage);
 
@@ -182,11 +215,76 @@ var Toile = (function () {
         }
         if (sel && sel.type === 'forme') {
           // les poignées gardent leur taille à l'écran quel que soit le zoom
-          Rendu.selection(ctx, sel, v.echelle, POIGNEE_MM / lp.k, 1 / lp.k);
+          Rendu.selection(ctx, sel, v.echelle, POIGNEE_PX / (v.echelle * lp.k), 1 / lp.k);
         }
       }
       apercuRond(ctx, v.echelle);
       ctx.restore();
+
+      dessinerLoupe(ctx, v);
+    }
+
+    /* Le disque grossissant, dessiné en dernier, en pixels d'écran.
+
+       Il relit la toile elle-même, qui porte déjà le visage, le maquillage et
+       l'aperçu de l'outil. Comme il se place loin du point lu, il ne se
+       photographie jamais lui-même ; et chaque image repart d'une toile
+       effacée, donc la loupe précédente a disparu avant qu'on relise. */
+    function dessinerLoupe(ctx, v) {
+      var d = loupeDoigtRef.current;
+      if (!d) return;
+
+      var cx = Math.max(LOUPE_R + 4, Math.min(v.largeur - LOUPE_R - 4, d.x));
+      var cy = d.y - LOUPE_ECART - LOUPE_R;
+      // trop haut, le disque sortirait de la toile : on le passe sous le doigt
+      if (cy - LOUPE_R < 4) cy = d.y + LOUPE_ECART + LOUPE_R;
+      cy = Math.min(cy, v.hauteur - LOUPE_R - 4);
+
+      var demi = LOUPE_R / LOUPE_K;   // demi-côté relu sous le doigt
+
+      ctx.save();
+      ctx.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, LOUPE_R, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(cx - LOUPE_R, cy - LOUPE_R, LOUPE_R * 2, LOUPE_R * 2);
+      ctx.drawImage(canvasRef.current,
+        (d.x - demi) * v.dpr, (d.y - demi) * v.dpr,
+        demi * 2 * v.dpr, demi * 2 * v.dpr,
+        cx - LOUPE_R, cy - LOUPE_R, LOUPE_R * 2, LOUPE_R * 2);
+      ctx.restore();
+
+      // le point exact visé, que le doigt masque en bas
+      ctx.beginPath();
+      ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(123, 63, 211, .5)';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, LOUPE_R, 0, Math.PI * 2);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(58, 52, 64, .22)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    /* La loupe ne sert que pendant un geste qui touche au maquillage, et
+       seulement au doigt : à la souris, rien ne cache le dessin. */
+    var GESTES_LOUPE = { trace: 1, deplacement: 1, redim: 1, rotation: 1 };
+
+    function majLoupeDoigt(ev) {
+      var g = gesteRef.current;
+      if (!g || !GESTES_LOUPE[g.mode] || !auDoigt(ev) || pinceRef.current) {
+        loupeDoigtRef.current = null;
+        return;
+      }
+      loupeDoigtRef.current = surToile(ev);
     }
 
     function planifier() {
@@ -315,25 +413,38 @@ var Toile = (function () {
       return f ? { el: el, f: f } : null;
     }
 
-    /* Que vise-t-on à cet endroit ?
+    /* Combien de millimètres du visage vaut un pixel de l'écran, agrandissement
+       compris. Sert à convertir les tailles de boutons, qui se pensent en
+       pixels, vers le repère du dessin, qui se pense en millimètres. */
+    function mmParPixel() {
+      var v = vueRef.current;
+      return 1 / ((v.echelle || 1) * loupeRef.current.k);
+    }
 
-       Le rayon des poignées est divisé par l'agrandissement, exactement comme
-       au tracé : elles gardent une taille constante à l'écran, donc elles se
-       rapprochent du motif en millimètres quand on zoome. Viser avec le rayon
-       d'origine reviendrait à cliquer à côté. */
-    function cible(pt) {
+    /* Que vise-t-on à cet endroit ? `doigt` élargit la zone d'atteinte. */
+    function cible(pt, doigt) {
       var s = selectionCourante();
       if (!s) return null;
-      var pm = POIGNEE_MM / loupeRef.current.k;
-      var pg = Rendu.poignees(s.el, s.f, pm);
-      var atteinte = pm * 0.75;
-      function pres(p) { return Math.hypot(pt.x - p.x, pt.y - p.y) <= atteinte; }
+      var mpp = mmParPixel();
+      var pg = Rendu.poignees(s.el, s.f, POIGNEE_PX * mpp);
+      var atteinte = (doigt ? VISEE_DOIGT_PX : VISEE_SOURIS_PX) * mpp;
 
-      if (pres(pg.poubelle)) return { quoi: 'poubelle', sel: s };
-      if (pres(pg.miroir)) return { quoi: 'miroir', sel: s };
-      if (pres(pg.redim)) return { quoi: 'redim', sel: s };
-      if (pres(pg.rotation)) return { quoi: 'rotation', sel: s };
-      if (Rendu.dansCadre(s.el, s.f, pt.x, pt.y, 0)) {
+      /* La poignée la PLUS PROCHE dans le rayon, et non la première de la
+         liste : élargies pour le doigt, deux poignées voisines se recouvrent,
+         et l'ordre de déclaration n'a rien à voir avec ce qu'on visait. */
+      var noms = ['poubelle', 'miroir', 'redim', 'rotation'];
+      var meilleure = null, plusCourt = Infinity;
+      for (var i = 0; i < noms.length; i++) {
+        var d = Math.hypot(pt.x - pg[noms[i]].x, pt.y - pg[noms[i]].y);
+        if (d <= atteinte && d < plusCourt) { plusCourt = d; meilleure = noms[i]; }
+      }
+      if (meilleure) return { quoi: meilleure, sel: s };
+
+      /* Une bande de sécurité autour de la forme choisie. Un doigt qui tombe
+         là voulait la manipuler ; sans cette bande, l'appui passait à l'étape
+         suivante et tamponnait un motif de plus — le défaut le plus agaçant
+         signalé sur téléphone. */
+      if (Rendu.dansCadre(s.el, s.f, pt.x, pt.y, atteinte)) {
         return { quoi: 'cadre', sel: s };
       }
       return null;
@@ -365,7 +476,22 @@ var Toile = (function () {
       return { x: ev.clientX - r.left, y: ev.clientY - r.top };
     }
 
+    /* Les deux enveloppes ci-dessous tiennent la loupe à jour sans avoir à la
+       rappeler dans chacune des sorties de `poser` et `bouger`, qui sont
+       nombreuses — c'est la façon sûre de n'en oublier aucune. */
     function onDown(ev) {
+      poser(ev);
+      majLoupeDoigt(ev);
+      planifier();
+    }
+
+    function onMove(ev) {
+      bouger(ev);
+      majLoupeDoigt(ev);
+      if (loupeDoigtRef.current) planifier();
+    }
+
+    function poser(ev) {
       var q = propsRef.current;
       var c = canvasRef.current;
       doigtsRef.current[ev.pointerId] = surToile(ev);
@@ -404,7 +530,7 @@ var Toile = (function () {
       survolRef.current = null;
 
       // 1. le geste porte-t-il sur la forme déjà sélectionnée ?
-      var vise = cible(pt);
+      var vise = cible(pt, auDoigt(ev));
       if (vise) {
         if (vise.quoi === 'poubelle') {
           gesteRef.current = null;
@@ -495,7 +621,7 @@ var Toile = (function () {
       planifier();
     }
 
-    function onMove(ev) {
+    function bouger(ev) {
       if (doigtsRef.current[ev.pointerId]) doigtsRef.current[ev.pointerId] = surToile(ev);
 
       // pincement en cours : on règle la loupe et on laisse le dessin tranquille
@@ -531,7 +657,7 @@ var Toile = (function () {
 
       if (!g) {
         // simple survol : on met à jour l'aperçu
-        var vise = cible(pt);
+        var vise = cible(pt, auDoigt(ev));
         survolRef.current = { x: pt.x, y: pt.y, surSelection: !!vise };
         canvasRef.current.style.cursor = curseurPour(pt);
         planifier();
@@ -591,6 +717,8 @@ var Toile = (function () {
 
     function onUp(ev) {
       delete doigtsRef.current[ev.pointerId];
+      loupeDoigtRef.current = null;
+      planifier();
       if (pinceRef.current) {
         if (Object.keys(doigtsRef.current).length < 2) pinceRef.current = null;
         return;
@@ -634,6 +762,7 @@ var Toile = (function () {
       brouillonRef.current = null;
       glisseRef.current = null;
       survolRef.current = null;
+      loupeDoigtRef.current = null;
       if (!garderLesDoigts) { doigtsRef.current = {}; pinceRef.current = null; }
       planifier();
     }
