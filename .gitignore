@@ -4,6 +4,12 @@ swatch*.jpg
 swatch*.jpeg
 images/references/
 
+# Les dessins en haute resolution : plusieurs Mo chacun, inutiles en ligne.
+# L'application ne se sert que des copies allegees, posees dans
+# images/visages/ par outils/reduire-visage.ps1. Les originaux restent ici,
+# sur ton disque et dans OneDrive.
+images/visages/originaux/
+
 # Réglages locaux de l'éditeur
 .claude/
 

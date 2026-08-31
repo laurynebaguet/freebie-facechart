@@ -47,10 +47,16 @@ var COULEURS = [
 
 
 /* --------------------------------------------------------------- VISAGES */
-/* image   : chemin du fichier.
+/* nom     : prénom proposé par défaut. Chacun peut le remplacer par celui de
+             son enfant ; ce choix-là reste dans son navigateur, ce fichier
+             ne bouge pas.
+   image   : chemin du fichier.
    taille  : dimensions du fichier image, en pixels.
    cadre   : zone de l'image à afficher, en pixels de l'image d'origine.
-             Sert à recadrer sans retoucher le fichier.
+             Sert à recadrer sans retoucher le fichier. Il a le droit de
+             DÉBORDER du fichier (x négatif, largeur plus grande que l'image) :
+             c'est ainsi qu'on ménage une marge autour d'un dessin qui touche
+             déjà les bords de son fichier. Le vide se remplit de blanc.
    visage  : repères anatomiques DANS LE CADRE, en pixels :
              gauche/droite = les tempes, hauteur = ligne des yeux.
              C'est ce qui donne l'échelle réelle des pochoirs. */
@@ -58,10 +64,12 @@ var VISAGES = [
   {
     id: 'lou',
     nom: 'Lou',
-    image: 'images/visages/visage1.jpg',
-    taille: { w: 1080, h: 1440 },
-    cadre:  { x: 110, y: 210, w: 880, h: 1080 },
-    visage: { gauche: 120, droite: 745, ligneYeux: 590 }
+    image: 'images/visages/lou.png',
+    taille: { w: 1400, h: 1753 },
+    /* Le dessin occupe x 44→1391 et y 154→1449 du fichier : ce cadre lui
+       laisse 67 pixels de marge tout autour, quitte à dépasser à droite. */
+    cadre:  { x: -23, y: 87, w: 1482, h: 1430 },
+    visage: { gauche: 245, droite: 1178, ligneYeux: 830 }
   },
   {
     id: 'noe',
@@ -208,12 +216,34 @@ var POCHOIRS = [
   }
 ];
 
+/* ---------------------------------------------------- BAS DE LA FICHE */
+/* Le bloc d'appel imprimé sous la liste du matériel. C'est la contrepartie
+   commerciale du freebie : la fiche reste affichée plusieurs jours, et c'est
+   le seul endroit du projet qui sort de l'écran.
+
+   `qr` attend l'adresse que le code renverra. Tant qu'elle vaut null, la fiche
+   imprime un emplacement réservé à la bonne taille : la mise en page est déjà
+   celle qu'on aura, sans promettre un code qui ne marche pas encore. */
+var APPEL_FICHE = {
+  titre: 'Tout le matériel en un scan',
+  texte: 'Scanne ce code pour retrouver sur la boutique les couleurs et les ' +
+         'pochoirs de ce maquillage.',
+  qr: null
+};
+
 /* ----------------------------------------------------------------- TEXTES */
 var TEXTES = {
   titre: 'Imagine le maquillage de ton enfant',
   accroche: 'Choisis un visage, pose tes pochoirs, essaie tes couleurs. ' +
             'Quand tu es content du résultat, repars avec ta fiche à imprimer.',
   boutonDemarrer: "C'est parti",
+  /* Titre de la fiche et de l'image. Deux formes, parce que le « de » s'élide
+     devant une voyelle : « Le maquillage d'Anna ». */
+  titreDe: 'Le maquillage de ',
+  titreElide: "Le maquillage d'",
   siteNom: 'labaguettemaquille.fr',
-  siteLien: 'https://www.labaguettemaquille.fr'
+  siteLien: 'https://www.labaguettemaquille.fr',
+  /* Gravé dans l'image à partager : c'est la seule chose qui voyage avec elle,
+     puisque les réseaux ne reprennent pas la légende qu'on leur propose. */
+  instagram: '@labaguettemaquille'
 };

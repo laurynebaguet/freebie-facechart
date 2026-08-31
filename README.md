@@ -15,7 +15,10 @@ une fiche A4 à imprimer listant le matériel utilisé.
 - Dessiner au pinceau et gommer, avec une taille réglable.
 - Annuler et rétablir chaque geste.
 - Changer de visage sans perdre son maquillage, pour comparer un même look.
+- Donner à chaque visage le prénom de son enfant.
 - Télécharger une fiche A4 avec le dessin en grand et la liste du matériel.
+- Repartir avec l'image seule, au format des réseaux, pour la montrer autour
+  de soi.
 
 Les teintes de la palette sont celles des fards réels, relevées sur des swatchs
 photographiés sur peau. Les fards nacrés sont rendus par un semis de

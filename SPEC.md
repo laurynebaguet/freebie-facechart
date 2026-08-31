@@ -76,8 +76,13 @@ Les références internes ne sont **jamais** affichées. Les noms de kits, si.
 ### 4.3 Comportement des formes de pochoir
 
 - Posées d'un appui sur le visage, dans la couleur active.
-- **Taille figée** : elle correspond à la taille physique réelle du pochoir,
-  rapportée à la largeur du visage. Non modifiable, volontairement.
+- **Taille réelle, ajustable à la marge** : elle correspond à la taille physique
+  du pochoir, rapportée à la largeur du visage. Une poignée au coin bas droit
+  permet de l'ajuster **de 0,7 à 1,5 fois**, et pas au-delà : entre 3 et 10 ans
+  la largeur d'un visage varie d'environ 20 %, mais tripler un pochoir donnerait
+  un maquillage intamponnable. La taille réelle en millimètres s'affiche pendant
+  qu'on tire — c'est elle qui compte pour maquiller pour de vrai.
+  *(Ajouté le 21/08/2026. La première version les figeait complètement.)*
 - Restent **manipulables indéfiniment** : déplacement, rotation, miroir,
   changement de couleur, suppression.
 - Une seule couleur unie par forme (pas de dégradé en v1).
@@ -108,12 +113,36 @@ Trois natures de motifs coexistent :
 
 **Fiche PDF A4, une page**, générée dans le navigateur :
 
+- un titre au **prénom de l'enfant** — « Le maquillage de Camille » — repris de
+  celui qu'on a donné au visage dans la galerie (§3) ;
 - le facechart maquillé, en grand ;
 - la liste des **couleurs** utilisées : nom commercial, pastille, et le ou les
   kits dans lesquels la trouver ;
 - la liste des **pochoirs** utilisés (nom du set + nom de la forme) ;
 - chaque entrée renvoie vers la fiche produit de la boutique ;
+- un **bloc d'appel** en bas de page : un QR code vers la boutique et une phrase
+  d'invitation. C'est la contrepartie commerciale du freebie, sur le seul objet
+  qui en sort et qui reste affiché plusieurs jours ;
 - logo et adresse du site en pied de page.
+
+Le texte du bloc d'appel vit dans `app/donnees.js`, comme le reste des contenus.
+*(Prénom et bloc d'appel ajoutés le 31/08/2026.)*
+
+## 5 bis. L'image à montrer
+
+Distincte de la fiche, et d'un autre métier : la fiche sert à maquiller, l'image
+sert à montrer. Le visage maquillé seul, au format 4/5, avec le prénom en titre.
+
+La marque est **gravée dans l'image** — logo et compte Instagram — parce
+qu'aucun réseau ne reprend la légende qu'un site lui propose : seule l'image
+voyage.
+
+Sur téléphone, le bouton ouvre la **fenêtre de partage native**, d'où l'on
+choisit Instagram en un geste. Publier directement n'est pas possible : aucun
+site web ne peut le faire, Instagram ne l'autorise pas. Sur ordinateur, la
+fenêtre n'existe pas et l'image est simplement enregistrée.
+
+*(Ajouté le 31/08/2026.)*
 
 ## 6. Sauvegarde et protection du travail
 
@@ -143,9 +172,12 @@ sans toucher au code de l'application. Mode d'emploi fourni.
 
 ## 8. Hors périmètre (v1)
 
-Dégradés deux couleurs · comptes utilisateurs · partage sur les réseaux ·
-galerie publique · paillettes et effets de matière · impression directe depuis
-l'application (le PDF suffit).
+Dégradés deux couleurs · comptes utilisateurs · galerie publique · impression
+directe depuis l'application (le PDF suffit).
+
+Deux points sont sortis de cette liste en cours de route : les **paillettes**
+des fards nacrés, rendues par un semis de micro-points, et le **partage sur les
+réseaux** (§5 bis).
 
 ## 9. En attente de Lauryne
 

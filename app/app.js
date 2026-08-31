@@ -34,6 +34,9 @@
     var e13 = useState(false), pret = e13[0], setPret = e13[1];
     var e14 = useState(false), fabrique = e14[0], setFabrique = e14[1];
     var e15 = useState(3), echelle = e15[0], setEchelle = e15[1];
+    /* Les prénoms que la personne a donnés aux visages, par identifiant. */
+    var e16 = useState({}), noms = e16[0], setNoms = e16[1];
+    var e17 = useState(false), envoie = e17[0], setEnvoie = e17[1];
 
     var histoAvant = useRef(null);
     var dessin = histoire.present;
@@ -43,6 +46,10 @@
 
     useEffect(function () {
       Formes.init();
+      /* Logo et polices chargés d'avance : le partage se fabrique ensuite sans
+         la moindre attente, seule façon pour le téléphone d'accepter d'ouvrir
+         sa fenêtre de partage (voir app/partage.js). */
+      Partage.prechauffer();
       var sets = Formes.sets();
       if (sets.length && sets[0].formes.length) setFormeChoisie(sets[0].formes[0]);
 
@@ -50,6 +57,7 @@
       if (sauve) {
         setHistoire(Modele.histoNeuf(sauve.dessin));
         if (sauve.visageId) setVisageId(sauve.visageId);
+        if (sauve.noms) setNoms(sauve.noms);
         setTelecharge(sauve.telecharge !== false);
       }
 
@@ -66,8 +74,10 @@
     /* ------------------------------------------------------ sauvegarde */
 
     useEffect(function () {
-      Modele.enregistrer({ visageId: visageId, telecharge: telecharge, dessin: dessin });
-    }, [dessin, visageId, telecharge]);
+      Modele.enregistrer({
+        visageId: visageId, telecharge: telecharge, noms: noms, dessin: dessin
+      });
+    }, [dessin, visageId, telecharge, noms]);
 
     /* ------------------------------- rappel avant de quitter la page */
 
@@ -154,6 +164,12 @@
       setEcran('atelier');
     }
 
+    /* Rebaptiser un visage. Ça ne touche pas au dessin, donc ça ne passe pas
+       par l'historique : annuler ne défait pas un prénom. */
+    function renommerVisage(id, texte) {
+      setNoms(function (n) { return Modele.renommer(n, id, texte); });
+    }
+
     function choisirOutil(id) {
       setOutil(id);
       if (id !== 'modifier') setSelectionId(null);
@@ -192,12 +208,31 @@
     function telecharger() {
       if (fabrique) return;
       setFabrique(true);
-      Fiche.generer(visage, images[visageId], dessin)
+      Fiche.generer(visage, images[visageId], dessin, Modele.nom(noms, visage))
         .then(function () { setTelecharge(true); setDialogue(null); })
         .catch(function (err) {
           window.alert("La fiche n'a pas pu être créée : " + err.message);
         })
         .then(function () { setFabrique(false); });
+    }
+
+    /* Rien n'est attendu avant l'appel : tout le travail est synchrone, sans
+       quoi le téléphone refuserait d'ouvrir sa fenêtre de partage. */
+    function partagerImage() {
+      if (envoie) return;
+      setEnvoie(true);
+      var fini = function () { setEnvoie(false); };
+      try {
+        Partage.envoyer(visage, images[visageId], dessin, Modele.nom(noms, visage))
+          .then(function (issue) { if (issue !== 'annule') setDialogue(null); })
+          .catch(function (err) {
+            window.alert("L'image n'a pas pu être créée : " + err.message);
+          })
+          .then(fini);
+      } catch (err) {
+        window.alert("L'image n'a pas pu être créée : " + err.message);
+        fini();
+      }
     }
 
     var majEchelle = useCallback(function (e) {
@@ -214,7 +249,8 @@
 
     if (ecran === 'galerie') {
       return html`
-        <${UI.Galerie} visageId=${visageId} enCours=${aDuTravail} onChoisir=${choisirVisage}/>`;
+        <${UI.Galerie} visageId=${visageId} enCours=${aDuTravail} noms=${noms}
+                       onChoisir=${choisirVisage} onRenommer=${renommerVisage}/>`;
     }
 
     var selection = selectionId != null ? Modele.trouver(dessin, selectionId) : null;
@@ -227,7 +263,7 @@
                   onClick=${function () { setEcran('galerie'); }}>
             <${UI.Icone} nom="visages"/>
           </button>
-          <span class="titre-mini">${visage.nom}</span>
+          <span class="titre-mini">${Modele.nom(noms, visage)}</span>
           <span class="espace"></span>
           <button class="icone-btn" title="Annuler" disabled=${!Modele.peutAnnuler(histoire)}
                   onClick=${function () { pasHistoire('annuler'); }}>
@@ -304,11 +340,17 @@
           ? html`
             <${UI.Dialogue}
               titre="Ta fiche à imprimer"
-              texte="Elle contient ton maquillage en grand, et la liste de ce qu'il te faut pour le réaliser pour de vrai."
+              texte=${"Elle contient ton maquillage en grand, et la liste de ce qu'il te faut " +
+                      "pour le réaliser pour de vrai. Tu peux aussi repartir avec l'image seule, " +
+                      "à montrer autour de toi."}
               enfants=${html`<${UI.Recap} inventaire=${inv}/>`}
               onFermer=${function () { setDialogue(null); }}
               actions=${html`
                 <button class="btn btn-fantome" onClick=${function () { setDialogue(null); }}>Plus tard</button>
+                <button class="btn btn-secondaire" disabled=${envoie || !aDuTravail}
+                        onClick=${partagerImage}>
+                  ${envoie ? 'Un instant…' : (Partage.peutPartager() ? "Partager l'image" : "Enregistrer l'image")}
+                </button>
                 <button class="btn btn-primaire" disabled=${fabrique} onClick=${telecharger}>
                   ${fabrique ? 'Préparation…' : 'Télécharger la fiche'}
                 </button>`}/>`

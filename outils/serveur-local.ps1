@@ -39,7 +39,12 @@ try {
       $ctx.Response.Headers.Add('Cache-Control', 'no-store')
       $bytes = [IO.File]::ReadAllBytes($path)
       $ctx.Response.ContentLength64 = $bytes.Length
-      $ctx.Response.OutputStream.Write($bytes, 0, $bytes.Length)
+      # Une requete HEAD ne demande que les entetes : y ecrire le fichier fait
+      # tomber le serveur. Certains outils sondent le site ainsi avant de
+      # l'ouvrir.
+      if ($ctx.Request.HttpMethod -ne 'HEAD') {
+        $ctx.Response.OutputStream.Write($bytes, 0, $bytes.Length)
+      }
       Write-Host ("  200  /" + $rel)
     } else {
       $ctx.Response.StatusCode = 404

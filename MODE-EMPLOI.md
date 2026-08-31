@@ -66,27 +66,57 @@ kits : mets-les tous dans son champ `kits`.
 
 ## 4. Ajouter un visage
 
-1. Dépose l'image dans `images/visages/`.
-2. Dans `app/donnees.js`, partie `VISAGES`, recopie un bloc existant :
+1. Dépose ton dessin en haute résolution dans **`images/visages/originaux/`**.
+   Ce dossier est ta réserve : il reste sur ton disque et n'est **pas** publié
+   en ligne.
+2. Lance **`outils/reduire-visage.ps1`** (clic droit → « Exécuter avec
+   PowerShell »). Il en pose une copie allégée dans `images/visages/` et
+   affiche les chiffres à recopier à l'étape suivante.
+3. Dans `app/donnees.js`, partie `VISAGES`, recopie un bloc existant :
 
 ```js
 {
   id: 'lou',
   nom: 'Lou',
-  image: 'images/visages/visage1.jpg',
-  taille: { w: 1080, h: 1440 },
-  cadre:  { x: 110, y: 210, w: 880, h: 1080 },
-  visage: { gauche: 120, droite: 745, ligneYeux: 590 }
+  image: 'images/visages/lou.png',
+  taille: { w: 1400, h: 1753 },
+  cadre:  { x: -23, y: 87, w: 1482, h: 1430 },
+  visage: { gauche: 245, droite: 1178, ligneYeux: 830 }
 }
 ```
 
+- `nom` : le prénom **proposé** sur la carte. Chacun peut le remplacer par
+  celui de son enfant en touchant le prénom dans la galerie ; son choix reste
+  dans son navigateur à lui et ne change rien à ce fichier.
 - `taille` : les dimensions du fichier (clic droit sur l'image → Propriétés).
 - `cadre` : la zone de l'image à montrer. Ça recadre à l'écran **sans jamais
   modifier ton fichier**. `x` et `y` = le coin haut gauche, `w` et `h` = la
   largeur et la hauteur.
+  Si ton dessin touche déjà les bords de son fichier, le cadre a le droit de
+  **déborder** pour lui ménager une marge : `x` peut être négatif, et `w` plus
+  grand que la largeur du fichier. Ce qui dépasse est simplement du blanc.
+  C'est le cas de Lou ci-dessus : ses couettes vont d'un bord à l'autre du
+  PNG, donc le cadre part de -23 et fait 1482 de large pour 1400 d'image.
+  L'outil calcule ce cadre tout seul quand le dessin a un fond transparent.
 - `visage` : les repères qui donnent l'échelle. `gauche` et `droite` sont les
   tempes, `ligneYeux` la hauteur des yeux — **comptés depuis le coin du cadre**,
-  pas depuis le coin de l'image.
+  pas depuis le coin de l'image. Ce sont les seuls chiffres à relever à l'œil ;
+  `outils/echelle.html` sert à les vérifier.
+
+### Pourquoi passer par l'outil plutôt que déposer le dessin tel quel
+
+Un dessin prêt pour l'impression pèse 3 à 4 Mo. L'application charge **tous**
+les visages au démarrage, pour qu'on passe de l'un à l'autre sans attendre :
+chaque mégaoctet retarde donc l'ouverture de la page pour tout le monde, et
+ça empire à chaque visage ajouté.
+
+L'outil ramène le dessin à 1400 pixels de large — plus que ce que consomme la
+fiche PDF (1100) et que le plus grand écran affiche. Lou est ainsi passée de
+3 661 Ko à 517 Ko, sans différence visible : mesuré à la résolution de la
+fiche, l'écart avec l'original est de 0,3 sur 255.
+
+Il garde le PNG pour un dessin au trait (le JPEG bave autour des traits noirs,
+qui font justement la valeur de ces illustrations) et le JPEG pour une photo.
 
 ### Régler la taille des pochoirs
 
