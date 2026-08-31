@@ -321,6 +321,8 @@
             onTailleGomme=${setTailleGomme}
             echelle=${echelle}
             selection=${selection}
+            onMiroir=${function () { retourner(selectionId); }}
+            onSupprimer=${function () { supprimer(selectionId); }}
             aDuTravail=${aDuTravail}
             onToutEffacer=${function () { setDialogue('effacer'); }}/>
         </div>

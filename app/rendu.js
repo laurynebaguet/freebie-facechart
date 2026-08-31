@@ -357,7 +357,14 @@ var Rendu = (function () {
   /* `finesse` compense un éventuel agrandissement de la vue : les traits et
      les pastilles doivent garder la même taille à l'écran quel que soit le
      zoom, sinon ils deviennent énormes dès qu'on regarde de près. */
-  function selection(ctx, el, echelle, poigneeMm, finesse) {
+  /* Le cadre de la forme choisie, et — seulement si `avecPoignees` — les deux
+     boutons de rotation et d'agrandissement.
+
+     Au doigt on ne les dessine pas : deux doigts font tourner et grandir la
+     forme directement, comme un autocollant, ce qui est plus sûr que de viser
+     une pastille de 30 pixels. Retirer et retourner ont quitté la forme pour
+     le tiroir, où le doigt a de la place. */
+  function selection(ctx, el, echelle, poigneeMm, finesse, avecPoignees) {
     var f = Formes.get(el.setId, el.formeId);
     if (!f) return;
     var t = finesse || 1;
@@ -376,6 +383,8 @@ var Rendu = (function () {
     ctx.setLineDash([6 * t, 5 * t]);
     ctx.strokeRect(-w / 2 - m, -h / 2 - m, w + 2 * m, h + 2 * m);
     ctx.setLineDash([]);
+
+    if (!avecPoignees) { ctx.restore(); return; }
 
     // tige et bouton de rotation, au-dessus
     ctx.beginPath();
@@ -409,35 +418,6 @@ var Rendu = (function () {
       dessine(r * 0.3);
       ctx.restore();
     }
-
-    // suppression, au coin haut droit
-    pastille(w / 2 + m, -h / 2 - m, '#D9487E', function (b) {
-      ctx.beginPath();
-      ctx.moveTo(-b, -b); ctx.lineTo(b, b);
-      ctx.moveTo(b, -b); ctx.lineTo(-b, b);
-      ctx.stroke();
-    });
-
-    // tige du bouton miroir, en écho à celle de la rotation
-    ctx.strokeStyle = '#7B3FD3';
-    ctx.lineWidth = 2 * t;
-    ctx.beginPath();
-    ctx.moveTo(0, h / 2 + m);
-    ctx.lineTo(0, h / 2 + m + r);
-    ctx.stroke();
-
-    // miroir, sous la forme : deux chevrons de part et d'autre d'un axe
-    pastille(0, h / 2 + m + r, '#7B3FD3', function (b) {
-      ctx.beginPath();
-      ctx.moveTo(0, -b * 1.2); ctx.lineTo(0, b * 1.2);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(-b * 0.4, -b * 0.85); ctx.lineTo(-b * 1.25, 0);
-      ctx.lineTo(-b * 0.4, b * 0.85);
-      ctx.moveTo(b * 0.4, -b * 0.85); ctx.lineTo(b * 1.25, 0);
-      ctx.lineTo(b * 0.4, b * 0.85);
-      ctx.stroke();
-    });
 
     // agrandissement, au coin bas droit : double flèche en diagonale
     pastille(w / 2 + m, h / 2 + m, '#7B3FD3', function (b) {

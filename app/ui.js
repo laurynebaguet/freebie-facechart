@@ -4,6 +4,11 @@ var UI = (function () {
   var html = htm.bind(React.createElement);
   var useState = React.useState, useEffect = React.useEffect, useRef = React.useRef;
 
+  /* Vise-t-on au doigt ? Les explications et les commandes ne sont pas les
+     mêmes : au doigt, deux doigts remplacent les poignées. */
+  var AU_DOIGT = !!(window.matchMedia &&
+                    window.matchMedia('(pointer: coarse)').matches);
+
   /* ---------------------------------------------------------- icônes */
 
   var TRACES = {
@@ -332,9 +337,13 @@ var UI = (function () {
         ${sel
           ? html`
             <p class="aide" style=${{ marginBottom: 0 }}>
-              Fais glisser la forme pour la placer. Autour d'elle : le rond du
-              haut la fait pivoter, la pastille du coin bas droit l'agrandit ou
-              la réduit, celle du bas la retourne en miroir, la rose la retire.
+              ${AU_DOIGT
+                ? html`Fais glisser la forme pour la placer. À deux doigts posés
+                       dessus, tu la fais tourner et tu changes sa taille, comme
+                       un autocollant.`
+                : html`Fais glisser la forme pour la placer. Le rond du haut la
+                       fait pivoter, la pastille du coin bas droit l'agrandit ou
+                       la réduit.`}
             </p>`
           : html`
             <p class="aide">
@@ -362,6 +371,19 @@ var UI = (function () {
             <span>Tout effacer</span>
           </button>
         </div>
+        ${/* Retirer et retourner ont quitté la forme pour venir ici : sur un
+              téléphone, on visait ces pastilles à côté et on tamponnait un
+              motif de plus. La bande reste visible quel que soit l'outil,
+              parce qu'on vient de poser un pochoir et qu'il est déjà choisi. */''}
+        ${p.selection ? html`
+          <div class="boutons-forme">
+            <button class="btn btn-secondaire btn-petit" onClick=${p.onMiroir}>
+              <${Icone} nom="miroir"/> Retourner
+            </button>
+            <button class="btn btn-fantome btn-petit" onClick=${p.onSupprimer}>
+              <${Icone} nom="poubelle"/> Retirer
+            </button>
+          </div>` : null}
         <${Tiroir} ...${p}/>
         <${Palette} couleurId=${p.couleurId} onCouleur=${p.onCouleur}
                     surSelection=${!!p.selection}/>

@@ -77,8 +77,8 @@ Les références internes ne sont **jamais** affichées. Les noms de kits, si.
 
 - Posées d'un appui sur le visage, dans la couleur active.
 - **Taille réelle, ajustable à la marge** : elle correspond à la taille physique
-  du pochoir, rapportée à la largeur du visage. Une poignée au coin bas droit
-  permet de l'ajuster **de 0,7 à 1,5 fois**, et pas au-delà : entre 3 et 10 ans
+  du pochoir, rapportée à la largeur du visage. On l'ajuste **de 0,7 à 1,5
+  fois**, et pas au-delà : entre 3 et 10 ans
   la largeur d'un visage varie d'environ 20 %, mais tripler un pochoir donnerait
   un maquillage intamponnable. La taille réelle en millimètres s'affiche pendant
   qu'on tire — c'est elle qui compte pour maquiller pour de vrai.
@@ -86,11 +86,23 @@ Les références internes ne sont **jamais** affichées. Les noms de kits, si.
 - Restent **manipulables indéfiniment** : déplacement, rotation, miroir,
   changement de couleur, suppression.
 - Une seule couleur unie par forme (pas de dégradé en v1).
-- Une forme sélectionnée porte ses commandes sur elle : un bouton de rotation
-  au-dessus, une pastille de suppression au coin. La touche `Suppr` marche
-  aussi, `Échap` désélectionne.
-- Viser le cadre d'une forme sélectionnée la manipule, même si l'outil Pochoirs
-  est actif : on ne pose jamais un motif par-dessus par mégarde.
+- **Les commandes dépendent de ce avec quoi on vise**, parce qu'un doigt ne
+  vise pas comme une souris :
+  - *À la souris*, la forme choisie porte deux poignées : un bouton de rotation
+    au-dessus, une pastille d'agrandissement au coin bas droit.
+  - *Au doigt*, aucune poignée. **Deux doigts posés sur la forme la font tourner
+    et changent sa taille**, comme un autocollant ; deux doigts posés ailleurs
+    regardent le visage de plus près, comme avant.
+  - Dans les deux cas, **retourner** et **retirer** sont des boutons sous la
+    barre d'outils, jamais sur la forme. La touche `Suppr` marche aussi,
+    `Échap` désélectionne.
+
+  Les pastilles posées sur la forme faisaient 22 pixels sur un téléphone, et
+  l'appui qui les manquait tamponnait un motif de plus.
+  *(Revu le 31/08/2026.)*
+- Viser le cadre d'une forme sélectionnée — ou sa bordure immédiate — la
+  manipule, même si l'outil Pochoirs est actif : on ne pose jamais un motif
+  par-dessus par mégarde.
 
 Trois natures de motifs coexistent :
 
