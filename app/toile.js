@@ -537,21 +537,26 @@ var Toile = (function () {
         var angle0 = Math.atan2(b.y - a.y, b.x - a.x);
         var milieu = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
 
-        /* Deux doigts POSÉS SUR UN MOTIF le transforment, comme un
-           autocollant : on l'écarte pour l'agrandir, on tourne pour le faire
-           pivoter, on le promène avec le milieu des deux doigts. Ailleurs,
-           les deux doigts regardent le visage de plus près. */
-        var sansLePose = (enCours && enCours.idPose != null)
-          ? Modele.supprimer(q.dessin, enCours.idPose) : q.dessin;
-        var ctxP = c.getContext('2d');
-        var eP = vueRef.current.echelle;
-        var ma = pxEnMm(a), mb = pxEnMm(b);
-        var pris = Rendu.formeSous(ctxP, sansLePose, ma.x, ma.y, eP)
-                || Rendu.formeSous(ctxP, sansLePose, mb.x, mb.y, eP);
+        /* C'est LA SÉLECTION qui décide, pas l'endroit où les doigts se
+           posent : une forme choisie, et les deux doigts la transforment où
+           qu'ils soient. Viser un petit motif à deux doigts est impossible —
+           les doigts sont plus larges que le motif.
+
+           Aucune forme choisie, et les deux doigts regardent le visage de plus
+           près. Pour retrouver ce zoom-là quand une forme est choisie, il
+           suffit de toucher à côté pour la lâcher.
+
+           Cas particulier : si le premier doigt venait de tamponner, le motif
+           qu'il a posé vient d'être défait juste au-dessus. Il n'y a donc plus
+           rien à transformer, et on lâche la sélection. */
+        var pris = null;
+        if (q.selectionId != null && !(enCours && enCours.idPose === q.selectionId)) {
+          var choisie = Modele.trouver(q.dessin, q.selectionId);
+          if (choisie && choisie.type === 'forme') pris = choisie;
+        }
 
         if (pris) {
           if (q.outil !== 'modifier') p.onOutil('modifier');
-          p.onSelection(pris.id);
           p.appliquer(null, 'debut');
           glisseRef.current = {
             id: pris.id, x: pris.x, y: pris.y,
