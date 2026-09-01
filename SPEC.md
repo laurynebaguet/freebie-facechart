@@ -90,9 +90,12 @@ Les références internes ne sont **jamais** affichées. Les noms de kits, si.
   vise pas comme une souris :
   - *À la souris*, la forme choisie porte deux poignées : un bouton de rotation
     au-dessus, une pastille d'agrandissement au coin bas droit.
-  - *Au doigt*, aucune poignée. **Deux doigts posés sur la forme la font tourner
-    et changent sa taille**, comme un autocollant ; deux doigts posés ailleurs
-    regardent le visage de plus près, comme avant.
+  - *Au doigt*, aucune poignée. **C'est la sélection qui décide de ce que font
+    deux doigts** : une forme choisie, ils la font tourner et changent sa
+    taille, où qu'ils se posent ; aucune forme choisie, ils regardent le visage
+    de plus près, comme avant. On lâche la forme en touchant à côté.
+    Le lieu du pincement ne compte pas, parce qu'on ne peut pas poser deux
+    doigts sur un motif plus petit qu'eux.
   - Dans les deux cas, **retourner** et **retirer** sont des boutons sous la
     barre d'outils, jamais sur la forme. La touche `Suppr` marche aussi,
     `Échap` désélectionne.

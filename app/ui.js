@@ -338,9 +338,10 @@ var UI = (function () {
           ? html`
             <p class="aide" style=${{ marginBottom: 0 }}>
               ${AU_DOIGT
-                ? html`Fais glisser la forme pour la placer. À deux doigts posés
-                       dessus, tu la fais tourner et tu changes sa taille, comme
-                       un autocollant.`
+                ? html`Fais glisser la forme pour la placer. Tant qu'elle est
+                       choisie, deux doigts n'importe où sur le visage la font
+                       tourner et changent sa taille, comme un autocollant.
+                       Touche à côté pour la lâcher et retrouver le zoom.`
                 : html`Fais glisser la forme pour la placer. Le rond du haut la
                        fait pivoter, la pastille du coin bas droit l'agrandit ou
                        la réduit.`}
