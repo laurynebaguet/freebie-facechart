@@ -80,10 +80,17 @@ kits : mets-les tous dans son champ `kits`.
   nom: 'Lou',
   image: 'images/visages/lou.png',
   taille: { w: 1400, h: 1753 },
-  cadre:  { x: -23, y: 87, w: 1482, h: 1430 },
-  visage: { gauche: 245, droite: 1178, ligneYeux: 830 }
+  cadre:  { x: -21, y: 89, w: 1477, h: 1427 },
+  visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
 }
 ```
+
+**Tant que Pauline dessine sur la même base, recopie le `cadre` et le `visage`
+d'un visage existant sans y toucher.** Les trois dessins actuels les partagent,
+et c'est ce qui fait qu'un motif posé sur la joue de l'un retombe sur la joue
+de l'autre quand on change d'enfant. Il n'y a que `id`, `nom` et `image` à
+changer. Les deux points suivants ne servent que pour un dessin sur une
+**autre** base.
 
 - `nom` : le prénom **proposé** sur la carte. Chacun peut le remplacer par
   celui de son enfant en touchant le prénom dans la galerie ; son choix reste
@@ -96,7 +103,7 @@ kits : mets-les tous dans son champ `kits`.
   **déborder** pour lui ménager une marge : `x` peut être négatif, et `w` plus
   grand que la largeur du fichier. Ce qui dépasse est simplement du blanc.
   C'est le cas de Lou ci-dessus : ses couettes vont d'un bord à l'autre du
-  PNG, donc le cadre part de -23 et fait 1482 de large pour 1400 d'image.
+  PNG, donc le cadre part de -21 et fait 1477 de large pour 1400 d'image.
   L'outil calcule ce cadre tout seul quand le dessin a un fond transparent.
 - `visage` : les repères qui donnent l'échelle. `gauche` et `droite` sont les
   tempes, `ligneYeux` la hauteur des yeux — **comptés depuis le coin du cadre**,

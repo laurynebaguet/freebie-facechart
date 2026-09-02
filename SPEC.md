@@ -88,14 +88,18 @@ Les références internes ne sont **jamais** affichées. Les noms de kits, si.
 - Une seule couleur unie par forme (pas de dégradé en v1).
 - **Les commandes dépendent de ce avec quoi on vise**, parce qu'un doigt ne
   vise pas comme une souris :
-  - *À la souris*, la forme choisie porte deux poignées : un bouton de rotation
-    au-dessus, une pastille d'agrandissement au coin bas droit.
-  - *Au doigt*, aucune poignée. **C'est la sélection qui décide de ce que font
-    deux doigts** : une forme choisie, ils la font tourner et changent sa
-    taille, où qu'ils se posent ; aucune forme choisie, ils regardent le visage
-    de plus près, comme avant. On lâche la forme en touchant à côté.
-    Le lieu du pincement ne compte pas, parce qu'on ne peut pas poser deux
-    doigts sur un motif plus petit qu'eux.
+  - *Poignées* : la forme choisie porte un bouton de rotation au-dessus et une
+    pastille d'agrandissement au coin bas droit. Affichées à la souris et sur
+    tablette, pas sur téléphone où elles encombrent un petit écran.
+  - *Deux doigts* : **c'est la sélection qui décide** — une forme choisie, ils
+    la font tourner et changent sa taille, où qu'ils se posent ; aucune forme
+    choisie, ils regardent le visage de plus près. On lâche la forme en
+    touchant à côté. Le lieu du pincement ne compte pas, parce qu'on ne peut
+    pas poser deux doigts sur un motif plus petit qu'eux.
+  - Une **tablette a les deux** : le doigt y est aussi imprécis qu'au
+    téléphone, mais l'écran est assez grand pour porter les poignées, et on s'y
+    sert aussi du stylet. On la reconnaît au petit côté de son écran, à partir
+    de 600 points.
   - Dans les deux cas, **retourner** et **retirer** sont des boutons sous la
     barre d'outils, jamais sur la forme. La touche `Suppr` marche aussi,
     `Échap` désélectionne.

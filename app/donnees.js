@@ -60,24 +60,51 @@ var COULEURS = [
    visage  : repères anatomiques DANS LE CADRE, en pixels :
              gauche/droite = les tempes, hauteur = ligne des yeux.
              C'est ce qui donne l'échelle réelle des pochoirs. */
+/* CADRE ET REPÈRES COMMUNS — à garder identiques d'un visage à l'autre.
+
+   Pauline dessine tous les visages sur la même base : même taille de fichier,
+   tête au même endroit et à la même échelle. Vérifié le 02/09/2026, les yeux
+   tombent à trois pixels près sur les trois dessins.
+
+   On leur donne donc le MÊME cadre et les MÊMES repères, et ce n'est pas
+   qu'une question de propreté : le maquillage est un seul dessin, rangé en
+   millimètres depuis le coin du cadre, et il suit quand on change d'enfant.
+   Cadre commun = un motif posé sur la joue de l'un retombe sur la joue de
+   l'autre. Cadres différents = il se décale.
+
+   Le cadre ci-dessous contient les trois dessins réunis (x 44→1391,
+   y 154→1451) avec 65 pixels de marge. Un visage aux cheveux plus discrets
+   occupe donc moins de place dedans : c'est voulu, sa tête n'est pas plus
+   petite pour autant.
+
+   Si un jour un dessin arrive sur une AUTRE base, donne-lui son propre cadre
+   et ses propres repères plutôt que ceux-ci. */
 var VISAGES = [
   {
     id: 'lou',
     nom: 'Lou',
     image: 'images/visages/lou.png',
     taille: { w: 1400, h: 1753 },
-    /* Le dessin occupe x 44→1391 et y 154→1449 du fichier : ce cadre lui
-       laisse 67 pixels de marge tout autour, quitte à dépasser à droite. */
-    cadre:  { x: -23, y: 87, w: 1482, h: 1430 },
-    visage: { gauche: 245, droite: 1178, ligneYeux: 830 }
+    cadre:  { x: -21, y: 89, w: 1477, h: 1427 },
+    visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
   },
   {
     id: 'noe',
     nom: 'Noé',
-    image: 'images/visages/visage2.jpg',
-    taille: { w: 1080, h: 1440 },
-    cadre:  { x: 130, y: 250, w: 860, h: 1050 },
-    visage: { gauche: 65, droite: 720, ligneYeux: 490 }
+    image: 'images/visages/noe.png',
+    taille: { w: 1400, h: 1753 },
+    cadre:  { x: -21, y: 89, w: 1477, h: 1427 },
+    visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
+  },
+  {
+    /* `id` sert de clé aux prénoms que les gens enregistrent dans leur
+       navigateur : `nom` se change librement, `id` non. */
+    id: 'milo',
+    nom: 'Milo',
+    image: 'images/visages/milo.png',
+    taille: { w: 1400, h: 1753 },
+    cadre:  { x: -21, y: 89, w: 1477, h: 1427 },
+    visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
   }
 ];
 
