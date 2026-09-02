@@ -4,10 +4,35 @@ var UI = (function () {
   var html = htm.bind(React.createElement);
   var useState = React.useState, useEffect = React.useEffect, useRef = React.useRef;
 
-  /* Vise-t-on au doigt ? Les explications et les commandes ne sont pas les
-     mêmes : au doigt, deux doigts remplacent les poignées. */
+  /* Avec quoi vise-t-on ? Trois cas, parce qu'une tablette n'est ni un
+     téléphone ni un ordinateur :
+
+     - souris : les poignées, qu'on vise au pixel près ;
+     - téléphone : pas de poignées, elles encombrent un petit écran et on les
+       manque ; deux doigts font le travail ;
+     - tablette : les DEUX. Le doigt y est aussi imprécis qu'au téléphone, mais
+       l'écran est assez grand pour que les poignées ne gênent personne, et on
+       s'en sert aussi au stylet.
+
+     Une tablette se reconnaît à son petit côté d'écran : 600 points séparent
+     nettement les téléphones (400 à 440) des tablettes (740 et plus). On
+     interroge `screen` et non la fenêtre, parce que l'application vit dans un
+     cadre intégré dont la taille ne dit rien de l'appareil. */
   var AU_DOIGT = !!(window.matchMedia &&
                     window.matchMedia('(pointer: coarse)').matches);
+  /* Le petit côté de l'écran de l'APPAREIL. On interroge `screen` plutôt que
+     la fenêtre : dans un cadre intégré, la fenêtre ne dit rien de l'appareil.
+     Si `screen` ne répond pas, on se rabat sur la fenêtre, puis sur « grand » —
+     dans le doute, mieux vaut afficher des poignées inutiles que d'en priver
+     une tablette et de la laisser sans commandes. */
+  function petitCoteEcran() {
+    var e = window.screen || {};
+    var cote = Math.min(e.width || 0, e.height || 0);
+    if (cote > 0) return cote;
+    return Math.min(window.innerWidth || 0, window.innerHeight || 0) || 9999;
+  }
+
+  var AVEC_POIGNEES = !AU_DOIGT || petitCoteEcran() >= 600;
 
   /* ---------------------------------------------------------- icônes */
 
@@ -337,14 +362,17 @@ var UI = (function () {
         ${sel
           ? html`
             <p class="aide" style=${{ marginBottom: 0 }}>
+              Fais glisser la forme pour la placer.
+              ${AVEC_POIGNEES
+                ? html` Le rond du haut la fait pivoter, la pastille du coin
+                        bas droit l'agrandit ou la réduit.`
+                : null}
               ${AU_DOIGT
-                ? html`Fais glisser la forme pour la placer. Tant qu'elle est
-                       choisie, deux doigts n'importe où sur le visage la font
-                       tourner et changent sa taille, comme un autocollant.
-                       Touche à côté pour la lâcher et retrouver le zoom.`
-                : html`Fais glisser la forme pour la placer. Le rond du haut la
-                       fait pivoter, la pastille du coin bas droit l'agrandit ou
-                       la réduit.`}
+                ? html` Tant qu'elle est choisie, deux doigts n'importe où sur
+                        le visage la font tourner et changent sa taille, comme
+                        un autocollant. Touche à côté pour la lâcher et
+                        retrouver le zoom.`
+                : null}
             </p>`
           : html`
             <p class="aide">
@@ -460,6 +488,9 @@ var UI = (function () {
   }
 
   return {
+    /* Partagé avec la toile, pour que le dessin et l'explication ne puissent
+       pas dire deux choses différentes. */
+    avecPoignees: function () { return AVEC_POIGNEES; },
     Icone: Icone, VignetteForme: VignetteForme, Accueil: Accueil,
     Galerie: Galerie, BarreOutils: BarreOutils, Dialogue: Dialogue,
     Palette: Palette, Recap: Recap

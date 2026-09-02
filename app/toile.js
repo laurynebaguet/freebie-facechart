@@ -50,12 +50,10 @@ var Toile = (function () {
     return t === 'touch';
   }
 
-  /* Les poignées de rotation et d'agrandissement ne s'affichent que là où l'on
-     vise au pixel près, c'est-à-dire à la souris. Au doigt, deux doigts font le
-     même travail sans rien avoir à viser. */
-  function avecPoignees() {
-    return !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-  }
+  /* Souris et tablette montrent les poignées ; le téléphone non, faute de
+     place. Le choix est fait une fois pour toutes dans ui.js, pour que le
+     dessin et l'explication du tiroir ne se contredisent jamais. */
+  function avecPoignees() { return UI.avecPoignees(); }
 
   function couleurDe(id) {
     for (var i = 0; i < COULEURS.length; i++) {
