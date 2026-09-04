@@ -83,7 +83,7 @@ var VISAGES = [
   {
     id: 'lou',
     nom: 'Lou',
-    image: 'images/visages/lou.png',
+    image: 'images/visages/lou.jpg',
     taille: { w: 1400, h: 1753 },
     cadre:  { x: -21, y: 89, w: 1477, h: 1427 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
@@ -91,7 +91,7 @@ var VISAGES = [
   {
     id: 'noe',
     nom: 'Noé',
-    image: 'images/visages/noe.png',
+    image: 'images/visages/noe.jpg',
     taille: { w: 1400, h: 1753 },
     cadre:  { x: -21, y: 89, w: 1477, h: 1427 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
@@ -101,7 +101,7 @@ var VISAGES = [
        navigateur : `nom` se change librement, `id` non. */
     id: 'milo',
     nom: 'Milo',
-    image: 'images/visages/milo.png',
+    image: 'images/visages/milo.jpg',
     taille: { w: 1400, h: 1753 },
     cadre:  { x: -21, y: 89, w: 1477, h: 1427 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
