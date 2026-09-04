@@ -78,7 +78,7 @@ kits : mets-les tous dans son champ `kits`.
 {
   id: 'lou',
   nom: 'Lou',
-  image: 'images/visages/lou.png',
+  image: 'images/visages/lou.jpg',
   taille: { w: 1400, h: 1753 },
   cadre:  { x: -21, y: 89, w: 1477, h: 1427 },
   visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
@@ -122,8 +122,15 @@ fiche PDF (1100) et que le plus grand écran affiche. Lou est ainsi passée de
 3 661 Ko à 517 Ko, sans différence visible : mesuré à la résolution de la
 fiche, l'écart avec l'original est de 0,3 sur 255.
 
-Il garde le PNG pour un dessin au trait (le JPEG bave autour des traits noirs,
-qui font justement la valeur de ces illustrations) et le JPEG pour une photo.
+Il enregistre en **JPEG de qualité 92**. On avait d'abord gardé le PNG, de peur
+que le JPEG n'abîme les traits noirs. Vérification faite le 2 septembre 2026 en
+agrandissant quatre fois l'œil de chaque visage : aucune différence visible, pas
+même sur le trait franc de Lou — et le poids divisé par quatre. Les trois
+visages sont passés de 1 894 à 415 Ko.
+
+Le fond transparent devient blanc, ce qui ne change rien : la toile, la fiche et
+l'image à partager posent toutes du blanc dessous. Si un jour un dessin doit
+vraiment garder sa transparence, lance l'outil avec `-Png`.
 
 ### Régler la taille des pochoirs
 

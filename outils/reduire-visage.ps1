@@ -19,11 +19,20 @@ param(
   # Nom du fichier produit, sans extension : mets l'identifiant du visage
   # ("lou"). Reserve au traitement d'un seul fichier a la fois.
   [string] $Id = '',
-  [int]    $LargeurMax = 1400
+  [int]    $LargeurMax = 1400,
+  # Force le PNG sans perte. Ne sert que si un dessin doit garder sa
+  # transparence ; sinon le JPEG est quatre a cinq fois plus leger sans
+  # difference visible (voir plus bas).
+  [switch] $Png
 )
 
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
+
+# Qualite JPEG. 92 est le point ou l'on cesse de gagner en finesse tout en
+# continuant a payer : de 82 a 96, le poids double et l'ecart avec l'original
+# ne bouge presque pas.
+$QUALITE = 92
 
 $racine    = Split-Path -Parent $PSScriptRoot
 $visages   = Join-Path $racine 'images\visages'
@@ -67,12 +76,17 @@ foreach ($src in $sources) {
     $g.DrawImage($img, (New-Object System.Drawing.Rectangle(0, 0, $w, $h)))
     $g.Dispose()
 
-    # --- 2. Enregistrer, dans le format qui convient au dessin
-    # PNG pour un dessin au trait : le JPEG bave autour des traits noirs, et
-    # c'est le trait qui fait la valeur de ces illustrations. JPEG pour une
-    # photo, ou le PNG serait dix fois plus lourd sans rien apporter.
+    # --- 2. Enregistrer en JPEG de haute qualite
+    #
+    # On avait d'abord garde le PNG pour les dessins au trait, de peur que le
+    # JPEG ne bave autour des traits noirs. Mesure faite le 02/09/2026 sur les
+    # trois visages, agrandis quatre fois : aucune difference visible, y compris
+    # sur le trait noir franc de Lou. Le poids, lui, est divise par quatre.
+    #
+    # Le fond transparent devient blanc, ce qui ne change rien : la toile, la
+    # fiche et l'image a partager posent toutes du blanc dessous.
     $nom = if ($Id) { $Id } else { ($src.BaseName -replace '[^A-Za-z0-9]', '').ToLower() }
-    $enPng = $src.Extension -eq '.png'
+    $enPng = [bool]$Png
     $sortie = Join-Path $visages ($nom + $(if ($enPng) { '.png' } else { '.jpg' }))
 
     if ($enPng) {
@@ -87,7 +101,7 @@ foreach ($src in $sources) {
                Where-Object { $_.MimeType -eq 'image/jpeg' }
       $reglages = New-Object System.Drawing.Imaging.EncoderParameters(1)
       $reglages.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter(
-                             [System.Drawing.Imaging.Encoder]::Quality, [long]92)
+                             [System.Drawing.Imaging.Encoder]::Quality, [long]$QUALITE)
       $plat.Save($sortie, $codec, $reglages)
       $plat.Dispose()
     }
