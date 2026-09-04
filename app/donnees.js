@@ -57,9 +57,11 @@ var COULEURS = [
              DÉBORDER du fichier (x négatif, largeur plus grande que l'image) :
              c'est ainsi qu'on ménage une marge autour d'un dessin qui touche
              déjà les bords de son fichier. Le vide se remplit de blanc.
-   visage  : repères anatomiques DANS LE CADRE, en pixels :
-             gauche/droite = les tempes, hauteur = ligne des yeux.
-             C'est ce qui donne l'échelle réelle des pochoirs. */
+   visage  : repères anatomiques DANS LE CADRE, en pixels.
+             `gauche` et `droite` sont les tempes, et c'est le SEUL couple qui
+             compte : leur écart vaut LARGEUR_VISAGE_MM, ce qui règle la taille
+             de tous les pochoirs. `ligneYeux` ne sert qu'à s'y retrouver, le
+             code ne le lit pas. */
 /* CADRE ET REPÈRES COMMUNS — à garder identiques d'un visage à l'autre.
 
    Pauline dessine tous les visages sur la même base : même taille de fichier,
@@ -72,10 +74,18 @@ var COULEURS = [
    Cadre commun = un motif posé sur la joue de l'un retombe sur la joue de
    l'autre. Cadres différents = il se décale.
 
-   Le cadre ci-dessous contient les trois dessins réunis (x 44→1391,
-   y 154→1451) avec 65 pixels de marge. Un visage aux cheveux plus discrets
-   occupe donc moins de place dedans : c'est voulu, sa tête n'est pas plus
-   petite pour autant.
+   Le cadre ci-dessous contient les cinq dessins réunis, marge comprise. Sa
+   HAUTEUR est dictée par le plus encombrant : le foulard de Nour descend
+   jusqu'à y 1615, bien plus bas que les autres nuques (vers 1451). Les autres
+   visages ont donc un peu de blanc sous le menton — c'est le prix du cadre
+   commun, et il est modeste.
+
+   Un visage aux cheveux discrets occupe moins de place là-dedans qu'un visage
+   à grosses couettes : c'est voulu, sa tête n'est pas plus petite pour autant.
+
+   Si un jour un dessin déborde encore par le bas, il suffit d'augmenter `h`
+   partout : `x` et `y` NE DOIVENT PAS bouger, ce sont eux qui ancrent le
+   maquillage déjà enregistré chez les gens.
 
    Si un jour un dessin arrive sur une AUTRE base, donne-lui son propre cadre
    et ses propres repères plutôt que ceux-ci. */
@@ -85,7 +95,7 @@ var VISAGES = [
     nom: 'Lou',
     image: 'images/visages/lou.jpg',
     taille: { w: 1400, h: 1753 },
-    cadre:  { x: -21, y: 89, w: 1477, h: 1427 },
+    cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
   },
   {
@@ -93,7 +103,7 @@ var VISAGES = [
     nom: 'Noé',
     image: 'images/visages/noe.jpg',
     taille: { w: 1400, h: 1753 },
-    cadre:  { x: -21, y: 89, w: 1477, h: 1427 },
+    cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
   },
   {
@@ -103,7 +113,23 @@ var VISAGES = [
     nom: 'Milo',
     image: 'images/visages/milo.jpg',
     taille: { w: 1400, h: 1753 },
-    cadre:  { x: -21, y: 89, w: 1477, h: 1427 },
+    cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
+    visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
+  },
+  {
+    id: 'nour',
+    nom: 'Nour',
+    image: 'images/visages/nour.jpg',
+    taille: { w: 1400, h: 1753 },
+    cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
+    visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
+  },
+  {
+    id: 'jade',
+    nom: 'Jade',
+    image: 'images/visages/jade.jpg',
+    taille: { w: 1400, h: 1753 },
+    cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
   }
 ];
