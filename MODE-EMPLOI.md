@@ -80,7 +80,7 @@ kits : mets-les tous dans son champ `kits`.
   nom: 'Lou',
   image: 'images/visages/lou.jpg',
   taille: { w: 1400, h: 1753 },
-  cadre:  { x: -21, y: 89, w: 1477, h: 1427 },
+  cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
   visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
 }
 ```
@@ -105,10 +105,11 @@ changer. Les deux points suivants ne servent que pour un dessin sur une
   C'est le cas de Lou ci-dessus : ses couettes vont d'un bord à l'autre du
   PNG, donc le cadre part de -21 et fait 1477 de large pour 1400 d'image.
   L'outil calcule ce cadre tout seul quand le dessin a un fond transparent.
-- `visage` : les repères qui donnent l'échelle. `gauche` et `droite` sont les
-  tempes, `ligneYeux` la hauteur des yeux — **comptés depuis le coin du cadre**,
-  pas depuis le coin de l'image. Ce sont les seuls chiffres à relever à l'œil ;
-  `outils/echelle.html` sert à les vérifier.
+- `visage` : les repères qui donnent l'échelle, **comptés depuis le coin du
+  cadre** et non depuis le coin de l'image. Seul l'écart entre `gauche` et
+  `droite` (les tempes) compte vraiment : c'est lui qui règle la taille de tous
+  les pochoirs. `ligneYeux` n'est qu'un repère pour s'y retrouver, le code ne le
+  lit pas. `outils/echelle.html` sert à vérifier le tout.
 
 ### Pourquoi passer par l'outil plutôt que déposer le dessin tel quel
 
