@@ -34,6 +34,30 @@ Add-Type -AssemblyName System.Drawing
 # ne bouge presque pas.
 $QUALITE = 92
 
+# OneDrive verrouille le dossier quelques secondes le temps de synchroniser un
+# fichier qu'on vient d'y deposer, et GDI+ ne sait le dire que par une « erreur
+# generique ». On ecrit donc d'abord a l'ecart, puis on met en place en
+# reessayant : le calcul, lui, n'est fait qu'une fois.
+function Deplacer($de, $vers) {
+  # Jusqu'a une minute d'attente : OneDrive garde un fichier tout juste ecrit
+  # le temps de le televerser, et cela peut prendre de longues secondes sur une
+  # image de plusieurs centaines de kilo-octets. Quelques essais rapproches ne
+  # suffisent pas, l'attente s'allonge donc a chaque tentative.
+  $attente = 400
+  for ($i = 1; $i -le 14; $i++) {
+    try { Move-Item $de $vers -Force -ErrorAction Stop; return }
+    catch {
+      if ($i -eq 4) { Write-Host "      (le fichier est occupe, on patiente...)" -ForegroundColor DarkYellow }
+      Start-Sleep -Milliseconds $attente
+      $attente = [math]::Min(6000, [int]($attente * 1.5))
+    }
+  }
+  Remove-Item $de -Force -ErrorAction SilentlyContinue
+  throw ("Impossible d'ecrire " + $vers + " apres une minute d'essais. " +
+         "Ferme l'image si elle est ouverte quelque part, laisse OneDrive " +
+         "finir de synchroniser, et relance.")
+}
+
 $racine    = Split-Path -Parent $PSScriptRoot
 $visages   = Join-Path $racine 'images\visages'
 $originaux = Join-Path $visages 'originaux'
@@ -87,10 +111,12 @@ foreach ($src in $sources) {
     # fiche et l'image a partager posent toutes du blanc dessous.
     $nom = if ($Id) { $Id } else { ($src.BaseName -replace '[^A-Za-z0-9]', '').ToLower() }
     $enPng = [bool]$Png
-    $sortie = Join-Path $visages ($nom + $(if ($enPng) { '.png' } else { '.jpg' }))
+    $extension = if ($enPng) { '.png' } else { '.jpg' }
+    $sortie = Join-Path $visages ($nom + $extension)
+    $provisoire = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName() + $extension)
 
     if ($enPng) {
-      $petite.Save($sortie, [System.Drawing.Imaging.ImageFormat]::Png)
+      $petite.Save($provisoire, [System.Drawing.Imaging.ImageFormat]::Png)
     } else {
       $plat = New-Object System.Drawing.Bitmap($w, $h, [System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
       $g2 = [System.Drawing.Graphics]::FromImage($plat)
@@ -102,9 +128,10 @@ foreach ($src in $sources) {
       $reglages = New-Object System.Drawing.Imaging.EncoderParameters(1)
       $reglages.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter(
                              [System.Drawing.Imaging.Encoder]::Quality, [long]$QUALITE)
-      $plat.Save($sortie, $codec, $reglages)
+      $plat.Save($provisoire, $codec, $reglages)
       $plat.Dispose()
     }
+    Deplacer $provisoire $sortie
 
     # --- 3. Mesurer le dessin, pour en deduire le cadre
     # On cherche le rectangle des pixels qui ne sont pas transparents. Sur une
