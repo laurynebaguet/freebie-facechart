@@ -322,9 +322,28 @@ var Toile = (function () {
 
       var r = Rendu.repere(propsRef.current.visage);
       var ratio = r.largeurMm / r.hauteurMm;
-      var largeur = Math.min(dispoL, dispoH * ratio);
-      var hauteur = largeur / ratio;
       var dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+
+      /* ON COMPTE EN PIXELS D'ÉCRAN D'ABORD, et la taille en points s'en déduit.
+
+         C'est l'inverse de ce qui se fait spontanément, et c'est important. Une
+         toile a deux tailles : celle de son image (en pixels d'écran) et celle
+         de sa boîte (en points CSS). Si on choisit la boîte en premier, l'image
+         fait `boîte × densité`, un nombre qui tombe rarement juste — 779,5 ×
+         1,25 = 974,4 pixels, arrondis à 974. Le fond et la gomme, eux, sont
+         posés sur 974,4 : il reste alors une frange de pixel, au bord droit et
+         en bas, que le dessin ne couvre jamais tout à fait et où le navigateur
+         doit inventer une couleur en rééchantillonnant. C'est exactement là
+         qu'apparaissait le petit liseré de la couleur du pochoir, quand on
+         sortait un motif par la droite.
+
+         En partant du nombre entier de pixels d'écran, la boîte vaut
+         `pixels ÷ densité` et les deux tailles se correspondent AU PIXEL PRÈS.
+         Il n'y a plus de frange à inventer, ni à droite ni en bas. */
+      var devL = Math.floor(Math.min(dispoL, dispoH * ratio) * dpr);
+      var devH = Math.floor(devL / ratio);
+      var largeur = devL / dpr;
+      var hauteur = devH / dpr;
 
       vueRef.current = {
         largeur: largeur, hauteur: hauteur,
@@ -332,8 +351,8 @@ var Toile = (function () {
       };
 
       [c, horsRef.current, tamponRef.current].forEach(function (t) {
-        t.width = Math.round(largeur * dpr);
-        t.height = Math.round(hauteur * dpr);
+        t.width = devL;
+        t.height = devH;
       });
       c.style.width = largeur + 'px';
       c.style.height = hauteur + 'px';

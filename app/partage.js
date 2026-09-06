@@ -73,7 +73,7 @@ var Partage = (function () {
     x.fillStyle = '#7B3FD3';
     /* Dans la police des titres de la marque : c'est elle qu'on reconnaît en
        défilant un fil, bien avant de lire le logo. */
-    var titre = Fiche.titrePour(nom);
+    var titre = Fiche.titrePour(nom, visage);
     ajuster(x, titre, 62, L - 2 * MARGE, '"Luckiest Guy", Nunito, sans-serif');
     x.fillText(titre, L / 2, 116);
 

@@ -116,10 +116,14 @@ var UI = (function () {
   function Accueil(p) {
     return html`
       <div class="accueil">
-        <img class="logo" src="images/marque/logo-violet.svg" alt="La Baguette Maquille"/>
+        ${/* Le logo complet — pinceau, étoiles et fond jaune — et non le seul
+              lettrage violet : c'est la première image de la marque qu'on
+              donne, autant la donner entière. */''}
+        <img class="logo" src="images/marque/logo-principal.png"
+             width="800" height="321" alt="La Baguette Maquille"/>
         <h1>${TEXTES.titre}</h1>
-        <p>${TEXTES.accroche}</p>
-        <button class="btn btn-primaire" onClick=${p.onDemarrer}>${TEXTES.boutonDemarrer}</button>
+        <p>${TEXTES.accroche}<br/>${TEXTES.accrocheSuite}</p>
+        <button class="btn btn-rose" onClick=${p.onDemarrer}>${TEXTES.boutonDemarrer}</button>
         <p class="credit">${TEXTES.credit}</p>
       </div>`;
   }
@@ -133,17 +137,29 @@ var UI = (function () {
      celui de la pastille, ce qui donne pile `cadre.x / (taille - cadre)`. La
      formule reste juste quand le cadre déborde du fichier — les deux termes
      changent de signe ensemble ; seule l'égalité parfaite est à écarter, elle
-     diviserait par zéro. */
-  function cadrageFond(v) {
+     diviserait par zéro.
+
+     La toile vierge n'a pas de fichier, mais elle passe par la MÊME formule :
+     son « image » est un aplat de la teinte choisie, aux dimensions que
+     `taille` lui donne. Elle se cadre donc comme les visages, et se retrouve
+     exactement aussi large qu'eux, avec les mêmes marges blanches sur les
+     côtés. Un cas particulier ici la ferait mentir sur ce que l'atelier
+     montrera. */
+  function cadrageFond(v, peauHex) {
     var zx = v.taille.w / v.cadre.w * 100;
+    var zy = v.taille.h / v.cadre.h * 100;
     var px = v.cadre.w === v.taille.w ? 50 : v.cadre.x / (v.taille.w - v.cadre.w) * 100;
     var py = v.cadre.h === v.taille.h ? 50 : v.cadre.y / (v.taille.h - v.cadre.h) * 100;
     return {
       /* La pastille prend les proportions du cadre. Sans ça, elle resterait
          en portrait et rognerait un visage cadré plus large que haut. */
       aspectRatio: v.cadre.w + ' / ' + v.cadre.h,
-      backgroundImage: 'url("' + v.image + '")',
-      backgroundSize: zx + '% auto',
+      /* Un aplat n'a pas de proportions propres : il faut lui donner ses deux
+         dimensions, là où une photo se contente de sa largeur. */
+      backgroundImage: v.peau
+        ? 'linear-gradient(' + peauHex + ', ' + peauHex + ')'
+        : 'url("' + v.image + '")',
+      backgroundSize: v.peau ? zx + '% ' + zy + '%' : zx + '% auto',
       backgroundPosition: px + '% ' + py + '%',
       backgroundRepeat: 'no-repeat'
     };
@@ -203,20 +219,60 @@ var UI = (function () {
       </div>`;
   }
 
+  function peauHex(id) {
+    for (var i = 0; i < PEAUX.length; i++) if (PEAUX[i].id === id) return PEAUX[i].hex;
+    return PEAUX[0].hex;
+  }
+
+  /* La carte de la toile vierge. Elle ne se rebaptise pas — ce n'est le visage
+     de personne : sous la vignette, on choisit la teinte du fond au lieu d'un
+     prénom. Le choix se voit aussitôt sur la vignette, et il vaut ensuite pour
+     l'atelier, pour la fiche et pour l'image à partager.
+
+     Les pastilles sont dans la carte plutôt que dans la barre d'outils : à
+     côté des couleurs de fard, elles feraient croire à des fards de plus. */
+  function CartePeau(p) {
+    var v = p.visage;
+    return html`
+      <div class="carte-visage carte-peau">
+        ${/* Le nom seul suffit à nommer le bouton : « Maquiller Toile vierge »
+              ne se dirait pas, là où « Maquiller Lou » va de soi. */''}
+        <button class="choix" aria-label=${v.nom}
+                onClick=${function () { p.onChoisir(v.id); }}>
+          <span class="vignette" style=${cadrageFond(v, peauHex(p.peauId))}>
+            <span class="etiquette-peau">${v.nom}</span>
+            ${/* Le survol est fait à la main plutôt qu'avec un `title` : la
+                  bulle du navigateur met une seconde à venir, s'affiche dans
+                  sa police à lui, et on ne peut pas la mettre en forme. */''}
+            ${v.survol ? html`<span class="survol-peau">${v.survol}</span>` : null}
+          </span>
+        </button>
+
+        <div class="pied peaux" role="group" aria-label="Teinte de la toile vierge">
+          ${PEAUX.map(function (t) {
+            return html`
+              <button key=${t.id}
+                      class=${'teinte' + (t.id === p.peauId ? ' actif' : '')}
+                      style=${{ background: t.hex }}
+                      title=${t.nom} aria-label=${t.nom}
+                      aria-pressed=${t.id === p.peauId}
+                      onClick=${function () { p.onPeau(t.id); }}></button>`;
+          })}
+        </div>
+      </div>`;
+  }
+
   function Galerie(p) {
     return html`
       <div class="galerie">
-        <h2>${p.enCours ? 'Changer de visage' : 'Choisis un visage'}</h2>
-        <p class="sous">
-          ${p.enCours
-            ? 'Ton maquillage te suit : tu peux voir le même sur un autre enfant.'
-            : 'Tu pourras en changer à tout moment sans rien perdre.'}
-        </p>
-        <p class="sous astuce">
-          Touche le prénom sous une image pour y mettre celui de ton enfant.
-        </p>
+        <h2>${TEXTES.titreGalerie}</h2>
         <div class="grille-visages">
           ${VISAGES.map(function (v) {
+            if (v.peau) {
+              return html`
+                <${CartePeau} key=${v.id} visage=${v} peauId=${p.peauId}
+                              onPeau=${p.onPeau} onChoisir=${p.onChoisir}/>`;
+            }
             return html`
               <${CarteVisage} key=${v.id} visage=${v} noms=${p.noms}
                               onChoisir=${p.onChoisir} onRenommer=${p.onRenommer}/>`;
@@ -347,40 +403,15 @@ var UI = (function () {
     if (p.outil === 'gomme') {
       return html`
         <div class="tiroir">
-          <p class="aide">
-            Efface le maquillage sans toucher au visage. Pratique pour retirer
-            seulement quelques bulles.
-          </p>
           <${Curseur} libelle="Taille de la gomme" min="2" max="30" valeur=${p.tailleGomme}
                       echelle=${p.echelle} creux=${true} onChange=${p.onTailleGomme}/>
         </div>`;
     }
 
-    var sel = p.selection;
-    return html`
-      <div class="tiroir">
-        ${sel
-          ? html`
-            <p class="aide" style=${{ marginBottom: 0 }}>
-              Fais glisser la forme pour la placer.
-              ${AVEC_POIGNEES
-                ? html` Le rond du haut la fait pivoter, la pastille du coin
-                        bas droit l'agrandit ou la réduit.`
-                : null}
-              ${AU_DOIGT
-                ? html` Tant qu'elle est choisie, deux doigts n'importe où sur
-                        le visage la font tourner et changent sa taille, comme
-                        un autocollant. Touche à côté pour la lâcher et
-                        retrouver le zoom.`
-                : null}
-            </p>`
-          : html`
-            <p class="aide">
-              Touche une forme déjà posée pour la déplacer, la faire tourner,
-              la retourner ou changer sa couleur. À côté d'une forme, le geste
-              promène le visage — pratique une fois qu'on a zoomé.
-            </p>`}
-      </div>`;
+    /* Gomme et Modifier n'ont plus de mode d'emploi écrit. Ces deux outils se
+       comprennent en les touchant, et le pavé de texte encombrait la colonne
+       pour ne dire que l'évident. Retiré le 06/09/2026. */
+    return html`<div class="tiroir"></div>`;
   }
 
   function BarreOutils(p) {
@@ -421,10 +452,14 @@ var UI = (function () {
 
   /* ------------------------------------------------------ dialogues */
 
+  /* `etroite` resserre la boîte pour les questions courtes : une phrase de deux
+     lignes dans une boîte prévue pour la liste du matériel s'étale, et le
+     dernier mot se retrouve seul en début de ligne. */
   function Dialogue(p) {
     return html`
       <div class="voile" onClick=${p.onFermer}>
-        <div class="boite" onClick=${function (e) { e.stopPropagation(); }}>
+        <div class=${'boite' + (p.etroite ? ' etroite' : '')}
+             onClick=${function (e) { e.stopPropagation(); }}>
           <h3>${p.titre}</h3>
           <p>${p.texte}</p>
           ${p.enfants}
@@ -433,57 +468,54 @@ var UI = (function () {
       </div>`;
   }
 
-  function kitsDe(couleur) {
-    return (couleur.kits || []).map(function (k) {
-      for (var i = 0; i < KITS.length; i++) if (KITS[i].id === k) return KITS[i];
-      return null;
-    }).filter(Boolean);
+  /* Une colonne du récapitulatif : des groupes titrés, chacun suivi de ce
+     qu'il contient. Le titre porte le lien vers le kit ou la planche — c'est
+     lui qu'on va acheter, pas la couleur prise à part. */
+  function BlocRecap(p) {
+    return html`
+      <div class="recap-bloc">
+        <p class="tiroir-titre">${p.titre}</p>
+        ${p.groupes.map(function (g) {
+          return html`
+            <div class="recap-groupe" key=${g.titre}>
+              ${g.lien
+                ? html`<a class="ou" href=${g.lien} target="_blank" rel="noopener">${g.titre}</a>`
+                : html`<span class="ou">${g.titre}</span>`}
+              <ul>${g.articles.map(p.ligne)}</ul>
+            </div>`;
+        })}
+      </div>`;
   }
 
-  /* Le récapitulatif du matériel, montré à l'écran avant le téléchargement. */
+  /* Le récapitulatif du matériel, montré à l'écran avant le téléchargement.
+     Il est rangé comme la fiche imprimée, et pour la même raison : ce qu'on
+     achète ensemble se lit ensemble. */
   function Recap(p) {
-    if (!p.inventaire.couleurs.length && !p.inventaire.formes.length) {
+    var inv = p.inventaire;
+    if (!inv.parKit.length && !inv.parPlanche.length) {
       return html`<p class="recap-vide">Tu n'as encore rien posé sur le visage.</p>`;
     }
     return html`
       <div class="recap">
-        ${p.inventaire.couleurs.length ? html`
-          <div class="recap-bloc">
-            <p class="tiroir-titre">Les couleurs</p>
-            <ul>
-              ${p.inventaire.couleurs.map(function (c) {
-                var kits = kitsDe(c);
-                return html`
-                  <li key=${c.id}>
-                    <span class="puce" style=${{ background: c.hex }}></span>
-                    <span>
-                      ${c.nom}
-                      ${kits.length ? html`
-                        <a class="ou" href=${kits[0].lien} target="_blank" rel="noopener">
-                          ${'dans ' + kits.map(function (k) { return k.nom; }).join(', ')}
-                        </a>` : null}
-                    </span>
-                  </li>`;
-              })}
-            </ul>
-          </div>` : null}
+        ${inv.parKit.length ? html`
+          <${BlocRecap} titre="Les couleurs" groupes=${inv.parKit}
+            ligne=${function (c) {
+              return html`
+                <li key=${c.id}>
+                  <span class="puce" style=${{ background: c.hex }}></span>
+                  <span>${c.nom}</span>
+                </li>`;
+            }}/>` : null}
 
-        ${p.inventaire.formes.length ? html`
-          <div class="recap-bloc">
-            <p class="tiroir-titre">Les pochoirs</p>
-            <ul>
-              ${p.inventaire.formes.map(function (f) {
-                return html`
-                  <li key=${f.cle}>
-                    <span class="puce-forme"><${VignetteForme} forme=${f}/></span>
-                    <span>
-                      ${f.nom}
-                      <a class="ou" href=${f.setLien} target="_blank" rel="noopener">${f.setNom}</a>
-                    </span>
-                  </li>`;
-              })}
-            </ul>
-          </div>` : null}
+        ${inv.parPlanche.length ? html`
+          <${BlocRecap} titre="Les pochoirs" groupes=${inv.parPlanche}
+            ligne=${function (f) {
+              return html`
+                <li key=${f.cle}>
+                  <span class="puce-forme"><${VignetteForme} forme=${f}/></span>
+                  <span>${f.nom}</span>
+                </li>`;
+            }}/>` : null}
       </div>`;
   }
 

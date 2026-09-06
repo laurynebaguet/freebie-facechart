@@ -18,6 +18,11 @@
     return '#000';
   }
 
+  function peauHex(id) {
+    for (var i = 0; i < PEAUX.length; i++) if (PEAUX[i].id === id) return PEAUX[i].hex;
+    return PEAUX[0].hex;
+  }
+
   function App() {
     var e1 = useState('accueil'), ecran = e1[0], setEcran = e1[1];
     var e2 = useState(VISAGES[0].id), visageId = e2[0], setVisageId = e2[1];
@@ -37,10 +42,18 @@
     /* Les prénoms que la personne a donnés aux visages, par identifiant. */
     var e16 = useState({}), noms = e16[0], setNoms = e16[1];
     var e17 = useState(false), envoie = e17[0], setEnvoie = e17[1];
+    /* La teinte de la toile vierge. Elle ne concerne qu'elle : les visages
+       dessinés gardent la leur. */
+    var e18 = useState(PEAUX[0].id), peauId = e18[0], setPeauId = e18[1];
 
     var histoAvant = useRef(null);
     var dessin = histoire.present;
     var visage = visagePar(visageId);
+
+    /* Sur quoi le maquillage se pose : le dessin du visage, ou — pour la toile
+       vierge, qui n’a pas de fichier — la couleur choisie, écrite en toutes
+       lettres. Rendu.fond sait recevoir les deux. */
+    var support = visage.peau ? peauHex(peauId) : images[visageId];
 
     /* -------------------------------------------------- initialisation */
 
@@ -58,10 +71,12 @@
         setHistoire(Modele.histoNeuf(sauve.dessin));
         if (sauve.visageId) setVisageId(sauve.visageId);
         if (sauve.noms) setNoms(sauve.noms);
+        if (sauve.peauId) setPeauId(sauve.peauId);
         setTelecharge(sauve.telecharge !== false);
       }
 
-      Promise.all(VISAGES.map(function (v) {
+      /* La toile vierge n'a pas de fichier à charger : elle se peint. */
+      Promise.all(VISAGES.filter(function (v) { return v.image; }).map(function (v) {
         return Fiche.chargerImage(v.image).then(function (img) { return [v.id, img]; });
       })).then(function (paires) {
         var m = {};
@@ -75,19 +90,22 @@
 
     useEffect(function () {
       Modele.enregistrer({
-        visageId: visageId, telecharge: telecharge, noms: noms, dessin: dessin
+        visageId: visageId, telecharge: telecharge, noms: noms,
+        peauId: peauId, dessin: dessin
       });
-    }, [dessin, visageId, telecharge, noms]);
-
-    /* ------------------------------- rappel avant de quitter la page */
+    }, [dessin, visageId, telecharge, noms, peauId]);
 
     var aDuTravail = dessin.elements.length > 0;
-    useEffect(function () {
-      if (!aDuTravail || telecharge) return;
-      function avant(ev) { ev.preventDefault(); ev.returnValue = ''; return ''; }
-      window.addEventListener('beforeunload', avant);
-      return function () { window.removeEventListener('beforeunload', avant); };
-    }, [aDuTravail, telecharge]);
+
+    /* PAS d'avertissement avant de quitter la page. Il y en avait un, il a été
+       retiré le 06/09/2026 : le maquillage est enregistré dans le navigateur à
+       chaque geste et revient tout seul à la visite suivante, donc la question
+       « voulez-vous vraiment quitter ? » ne protégeait plus rien. Elle ne
+       faisait qu'ajouter une fenêtre grise, que le navigateur écrit dans sa
+       propre langue et qu'on ne peut ni habiller ni traduire.
+
+       Le rappel « N'oublie pas ta fiche » reste, lui : il ne bloque personne
+       et rend un vrai service. */
 
     /* ------------------------------------------------- modifications */
 
@@ -208,7 +226,7 @@
     function telecharger() {
       if (fabrique) return;
       setFabrique(true);
-      Fiche.generer(visage, images[visageId], dessin, Modele.nom(noms, visage))
+      Fiche.generer(visage, support, dessin, Modele.nom(noms, visage))
         .then(function () { setTelecharge(true); setDialogue(null); })
         .catch(function (err) {
           window.alert("La fiche n'a pas pu être créée : " + err.message);
@@ -223,7 +241,7 @@
       setEnvoie(true);
       var fini = function () { setEnvoie(false); };
       try {
-        Partage.envoyer(visage, images[visageId], dessin, Modele.nom(noms, visage))
+        Partage.envoyer(visage, support, dessin, Modele.nom(noms, visage))
           .then(function (issue) { if (issue !== 'annule') setDialogue(null); })
           .catch(function (err) {
             window.alert("L'image n'a pas pu être créée : " + err.message);
@@ -249,7 +267,8 @@
 
     if (ecran === 'galerie') {
       return html`
-        <${UI.Galerie} visageId=${visageId} enCours=${aDuTravail} noms=${noms}
+        <${UI.Galerie} visageId=${visageId} noms=${noms}
+                       peauId=${peauId} onPeau=${setPeauId}
                        onChoisir=${choisirVisage} onRenommer=${renommerVisage}/>`;
     }
 
@@ -265,26 +284,34 @@
           </button>
           <span class="titre-mini">${Modele.nom(noms, visage)}</span>
           <span class="espace"></span>
-          <button class="icone-btn" title="Annuler" disabled=${!Modele.peutAnnuler(histoire)}
-                  onClick=${function () { pasHistoire('annuler'); }}>
-            <${UI.Icone} nom="annuler"/>
-          </button>
-          <button class="icone-btn" title="Rétablir" disabled=${!Modele.peutRefaire(histoire)}
-                  onClick=${function () { pasHistoire('refaire'); }}>
-            <${UI.Icone} nom="refaire"/>
-          </button>
-          <button class="btn btn-primaire btn-petit"
+          ${/* Les deux flèches vont ensemble : elles font le même travail, dans
+                les deux sens. On les serre l'une contre l'autre et on les
+                écarte du bouton de la fiche, sans quoi la seconde semble
+                appartenir à celui-ci. */''}
+          <span class="histoire">
+            <button class="icone-btn" title="Annuler" disabled=${!Modele.peutAnnuler(histoire)}
+                    onClick=${function () { pasHistoire('annuler'); }}>
+              <${UI.Icone} nom="annuler"/>
+            </button>
+            <button class="icone-btn" title="Rétablir" disabled=${!Modele.peutRefaire(histoire)}
+                    onClick=${function () { pasHistoire('refaire'); }}>
+              <${UI.Icone} nom="refaire"/>
+            </button>
+          </span>
+          ${/* Sans icône : elle était invisible faute de taille, et son écart
+                poussait le texte à droite du milieu. Le libellé se suffit. */''}
+          <button class="btn btn-primaire btn-petit fiche"
                   onClick=${function () { setDialogue('recap'); }}>
-            <${UI.Icone} nom="telecharger"/> Ma fiche
+            Ma fiche récap
           </button>
         </div>
 
         <div class="corps">
-          ${pret && images[visageId]
+          ${pret && support
             ? html`
               <${Toile}
                 visage=${visage}
-                image=${images[visageId]}
+                image=${support}
                 dessin=${dessin}
                 outil=${outil}
                 couleurId=${couleurId}
@@ -300,9 +327,13 @@
                 onEchelle=${majEchelle}
                 enfants=${!telecharge && dessin.elements.length >= 5
                   ? html`
+                    ${/* Le lien est sur le mot « fiche » lui-même : une phrase
+                          courte suivie d'un « La récupérer » disait deux fois
+                          la même chose, et le rappel n'a pas de place à
+                          gaspiller au-dessus du dessin. */''}
                     <div class="rappel">
-                      <span>N'oublie pas ta fiche</span>
-                      <button onClick=${function () { setDialogue('recap'); }}>La récupérer</button>
+                      N'oublie pas ta ${' '}
+                      <button onClick=${function () { setDialogue('recap'); }}>fiche</button>
                     </div>`
                   : null}/>`
             : html`<div class="scene"><p class="aide">Chargement…</p></div>`}
@@ -331,7 +362,11 @@
           ? html`
             <${UI.Dialogue}
               titre="Tout effacer ?"
-              texte="Tout le maquillage sera retiré, et tu repartiras d'un visage nu."
+              etroite=${true}
+              ${/* « visage nu » est soudé par une espace insécable : même si la
+                    boîte changeait de largeur un jour, le « nu » ne se
+                    retrouverait pas seul en tête de ligne. */''}
+              texte="Tout le maquillage sera retiré, et tu repartiras d'un visage nu."
               onFermer=${function () { setDialogue(null); }}
               actions=${html`
                 <button class="btn btn-fantome" onClick=${function () { setDialogue(null); }}>Annuler</button>
@@ -343,8 +378,9 @@
             <${UI.Dialogue}
               titre="Ta fiche à imprimer"
               texte=${"Elle contient ton maquillage en grand, et la liste de ce qu'il te faut " +
-                      "pour le réaliser pour de vrai. Tu peux aussi repartir avec l'image seule, " +
-                      "à montrer autour de toi."}
+                      "pour le réaliser pour de vrai. Tu peux aussi enregistrer l'image pour la " +
+                      "partager sur tes réseaux. N'oublie pas de nous tagguer, ça nous fera " +
+                      "super plaisir de voir ton œuvre !"}
               enfants=${html`<${UI.Recap} inventaire=${inv}/>`}
               onFermer=${function () { setDialogue(null); }}
               actions=${html`

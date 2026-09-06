@@ -20,10 +20,35 @@ var Rendu = (function () {
     };
   }
 
+  /* `image` est le dessin du visage — ou, pour la toile vierge, une simple
+     couleur écrite en toutes lettres ('#EFC8A2'). Tout le reste de
+     l'application transporte cette valeur sans avoir à savoir laquelle des
+     deux c'est : c'est ici, au dernier moment, qu'on les distingue.
+
+     LA COULEUR SE DÉCOUPE COMME LE FERAIT UNE IMAGE de dimensions `taille` :
+     on ne peint que la partie du cadre où ce fichier imaginaire existe, tout
+     comme `drawImage` ne dessine que la partie du cadre couverte par un vrai
+     fichier. Aujourd'hui la toile vierge se donne une `taille` égale à son
+     cadre, donc la couleur le remplit bord à bord ; il suffit de rétrécir sa
+     `taille` dans donnees.js pour lui ménager des marges, sans toucher ici. */
   function fond(ctx, image, rep, largeurPx) {
-    var c = rep.visage.cadre;
+    var v = rep.visage, c = v.cadre;
     var e = largeurPx / rep.largeurMm;
-    ctx.drawImage(image, c.x, c.y, c.w, c.h, 0, 0, largeurPx, rep.hauteurMm * e);
+    var hauteurPx = rep.hauteurMm * e;
+    if (typeof image === 'string') {
+      /* Le même facteur vaut en largeur et en hauteur : le cadre et le rendu
+         ont, par construction, les mêmes proportions. */
+      var k = largeurPx / c.w;
+      var x0 = Math.max(0, -c.x);
+      var y0 = Math.max(0, -c.y);
+      var x1 = Math.min(c.w, v.taille.w - c.x);
+      var y1 = Math.min(c.h, v.taille.h - c.y);
+      if (x1 <= x0 || y1 <= y0) return;
+      ctx.fillStyle = image;
+      ctx.fillRect(x0 * k, y0 * k, (x1 - x0) * k, (y1 - y0) * k);
+      return;
+    }
+    ctx.drawImage(image, c.x, c.y, c.w, c.h, 0, 0, largeurPx, hauteurPx);
   }
 
   /* ------------------------------------------------------------ nacre */
@@ -306,6 +331,90 @@ var Rendu = (function () {
     ctx.restore();
   }
 
+  /* ------------------------------------------ ce qui reste après la gomme */
+
+  /* Un élément entièrement mangé par la gomme n'a plus rien à peindre : sa
+     couleur et son pochoir ne doivent plus figurer sur la fiche, sans quoi on
+     fait acheter du matériel pour un motif qui n'existe plus.
+
+     On ne peut pas le savoir en calculant : un coup de gomme est un trait
+     libre, pas une surface qu'on soustrairait proprement d'une autre. On refait
+     donc le rendu de l'élément SEUL, en tout petit, et on regarde s'il reste de
+     la matière. C'est la seule réponse qui ne puisse pas contredire ce que la
+     personne voit à l'écran, puisque c'est le même dessin.
+
+     Le cadre de travail entoure l'élément et lui seul : les coups de gomme ont
+     le droit de déborder très au large, on ne regarde que là où il y avait
+     quelque chose à manger. */
+  var DEF_RESTE = 4;         // points par millimètre : de quoi voir un cheveu
+  var COTE_MAX_RESTE = 1200; // garde-fou pour un trait qui traverse le visage
+  var ALPHA_RESTE = 128;     // en deçà, c'est le velouté d'un bord, pas du fard
+  var POINTS_RESTE = 2;      // deux points au moins : une poussière ne compte pas
+
+  function cadreElement(el) {
+    if (el.type === 'forme') {
+      var f = Formes.get(el.setId, el.formeId);
+      if (!f) return null;
+      var d = dimensions(el, f);
+      var r = Math.hypot(d.l, d.h) / 2;
+      return { x: el.x - r, y: el.y - r, w: 2 * r, h: 2 * r };
+    }
+    if (el.type === 'trait' && el.points && el.points.length) {
+      var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      el.points.forEach(function (p) {
+        if (p[0] < x0) x0 = p[0];
+        if (p[0] > x1) x1 = p[0];
+        if (p[1] < y0) y0 = p[1];
+        if (p[1] > y1) y1 = p[1];
+      });
+      var m = (el.taille || 0) / 2 + 1;
+      return { x: x0 - m, y: y0 - m, w: (x1 - x0) + 2 * m, h: (y1 - y0) + 2 * m };
+    }
+    return null;
+  }
+
+  function calculerReste(el) {
+    var c = cadreElement(el);
+    if (!c || c.w <= 0 || c.h <= 0) return true;
+    var L = Math.max(1, Math.min(COTE_MAX_RESTE, Math.ceil(c.w * DEF_RESTE)));
+    var H = Math.max(1, Math.min(COTE_MAX_RESTE, Math.ceil(c.h * DEF_RESTE)));
+    var e = Math.min(L / c.w, H / c.h);
+
+    var toile = document.createElement('canvas');
+    toile.width = L; toile.height = H;
+    var ctx = toile.getContext('2d', { willReadFrequently: true });
+    /* Le cadre vient se poser sur le coin de la toile ; `corps` et `morsures`
+       travaillent ensuite en millimètres réels, comme partout ailleurs. */
+    ctx.setTransform(1, 0, 0, 1, -c.x * e, -c.y * e);
+    /* La teinte n'entre pas en compte : on ne regarde que l'opacité. */
+    corps(ctx, el, e, function () { return '#000'; });
+    morsures(ctx, el, e);
+
+    var d = ctx.getImageData(0, 0, L, H).data;
+    var n = 0;
+    for (var i = 3; i < d.length; i += 4) {
+      if (d[i] >= ALPHA_RESTE && ++n >= POINTS_RESTE) return true;
+    }
+    return false;
+  }
+
+  /* La réponse est mise de côté, rangée sous la LISTE DE GOMMES de l'élément.
+
+     Ce choix de clé n'est pas anodin. Déplacer une forme, la tourner, la
+     redimensionner ou la repeindre fabrique un élément neuf à chaque image du
+     geste — mais sa liste de gommes, elle, reste le même tableau tant qu'on ne
+     gomme pas. Et comme les morsures sont rangées dans le repère PROPRE de
+     l'élément, aucun de ces gestes ne change ce qu'il en reste. La réponse
+     traverse donc tout un glissement sans être recalculée une seule fois. */
+  var restes = typeof WeakMap === 'function' ? new WeakMap() : null;
+
+  function resteVisible(el) {
+    if (!el || !el.gommes || !el.gommes.length) return true;
+    if (!restes) return calculerReste(el);
+    if (!restes.has(el.gommes)) restes.set(el.gommes, calculerReste(el));
+    return restes.get(el.gommes);
+  }
+
   /* Dessine tout le maquillage sur une toile transparente.
      `tampon` est une toile de travail de même taille, réutilisée. */
   function maquillage(ctx, dessin, echelle, couleurDe, apercu, tampon) {
@@ -505,6 +614,7 @@ var Rendu = (function () {
 
   return {
     repere: repere, fond: fond, maquillage: maquillage, corps: corps,
+    resteVisible: resteVisible,
     reglerGrain: reglerGrain, tuileEnImage: tuileEnImage, coteTuileMm: cotéTuileMm,
     selection: selection, poignees: poignees, dansCadre: dansCadre,
     formeSous: formeSous, transformeForme: transformeForme,

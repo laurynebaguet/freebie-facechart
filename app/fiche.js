@@ -27,28 +27,19 @@ var Fiche = (function () {
      tracer. Sans la mesure préalable, un maquillage qui emploie beaucoup de
      couleurs pousse le bloc d'appel hors de la page. */
   var L_TITRE_COL = 5.5;   // « Les couleurs » / « Les pochoirs »
+  var L_GROUPE    = 5.4;   // le nom d'un kit ou d'une planche, et son air
   var L_ENTREE    = 4.6;   // le nom d'une couleur ou d'un motif
-  var L_SOUS      = 5;     // la ligne « dans Kit A » en dessous
-  var L_SANS      = 1.2;   // l'écart quand cette ligne-là n'est pas répétée
   var L_VIDE      = 5;     // « Aucune couleur utilisée. »
 
   /* Hauteur qu'occupera la liste du matériel, colonne la plus haute. */
   function hauteurMateriel(inv) {
-    var g = L_TITRE_COL, d = L_TITRE_COL;
-
-    if (!inv.couleurs.length) g += L_VIDE;
-    inv.couleurs.forEach(function (c) {
-      g += L_ENTREE + (kitsDe(c).length ? L_SOUS : L_SANS);
-    });
-
-    if (!inv.formes.length) d += L_VIDE;
-    var vus = {};
-    inv.formes.forEach(function (f) {
-      d += L_ENTREE;
-      if (!vus[f.setId]) { vus[f.setId] = true; d += L_SOUS; } else { d += L_SANS; }
-    });
-
-    return Math.max(g, d);
+    function colonne(groupes) {
+      if (!groupes.length) return L_TITRE_COL + L_VIDE;
+      return groupes.reduce(function (h, g) {
+        return h + L_GROUPE + g.articles.length * L_ENTREE;
+      }, L_TITRE_COL);
+    }
+    return Math.max(colonne(inv.parKit), colonne(inv.parPlanche));
   }
 
   function chargerImage(src) {
@@ -72,23 +63,69 @@ var Fiche = (function () {
     }).filter(Boolean);
   }
 
-  /* Ce que la personne a réellement employé, dans l'ordre d'apparition. */
+  /* Ce que la personne a réellement employé, RANGÉ PAR CE QU'IL FAUT ACHETER :
+     les couleurs par kit, les motifs par planche.
+
+     Répéter « dans Kit A » sous chacune des trois couleurs du Kit A, c'est dire
+     trois fois la même chose et prendre trois fois la place. Un titre de kit
+     suivi de ses couleurs se lit d'un coup, et se retrouve en boutique de la
+     même façon. Sur une fiche qui doit tenir sur une page, ce regroupement rend
+     au dessin plusieurs centimètres.
+
+     L'ordre reste celui d'apparition : les groupes sont classés par leur
+     premier article, et chaque groupe garde ses articles dans l'ordre où on
+     les a posés.
+
+     Une couleur peut appartenir à PLUSIEURS kits. Elle ne figure pas deux fois
+     pour autant : son groupe est alors la liste entière, « Kit A ou Kit B »,
+     ce qui est justement la vérité de ce qu'on a à acheter — l'un OU l'autre.
+
+     Renvoie deux listes de groupes de même forme :
+       { titre, lien, articles: [...] } */
   function inventaire(dessin) {
-    var couleurs = [], formes = [], vusC = {}, vusF = {};
+    var parKit = [], indexK = {}, vusC = {};
+    var parPlanche = [], indexP = {}, vusF = {};
+
+    function ranger(liste, index, cle, titre, lien, article) {
+      if (!index[cle]) {
+        index[cle] = { titre: titre, lien: lien, articles: [] };
+        liste.push(index[cle]);
+      }
+      index[cle].articles.push(article);
+    }
+
     dessin.elements.forEach(function (el) {
+      /* Ce qui a été entièrement effacé à la gomme n'a plus rien à peindre :
+         on ne fait pas acheter le matériel d'un motif qui n'est plus là. */
+      if (!Rendu.resteVisible(el)) return;
+
       if (el.couleurId && !vusC[el.couleurId]) {
         var c = couleurDe(el.couleurId);
-        if (c) { vusC[el.couleurId] = true; couleurs.push(c); }
+        if (c) {
+          vusC[el.couleurId] = true;
+          var kits = kitsDe(c);
+          ranger(parKit, indexK,
+            kits.length ? kits.map(function (k) { return k.id; }).join('+') : '',
+            kits.length ? kits.map(function (k) { return k.nom; }).join(' ou ')
+                        : 'Autres couleurs',
+            kits.length ? kits[0].lien : null,
+            c);
+        }
       }
+
       if (el.type === 'forme') {
         var cle = el.setId + '/' + el.formeId;
         if (!vusF[cle]) {
           var f = Formes.get(el.setId, el.formeId);
-          if (f) { vusF[cle] = true; formes.push(f); }
+          if (f) {
+            vusF[cle] = true;
+            ranger(parPlanche, indexP, f.setId, f.setNom, f.setLien, f);
+          }
         }
       }
     });
-    return { couleurs: couleurs, formes: formes };
+
+    return { parKit: parKit, parPlanche: parPlanche };
   }
 
   /* Rend le facechart maquillé sur une toile haute définition. */
@@ -121,12 +158,20 @@ var Fiche = (function () {
   }
 
   /* Réduit une image avant de la glisser dans le PDF : sans ça, le logo y
-     entre en pleine résolution et fait grossir le fichier de plusieurs Mo. */
+     entre en pleine résolution et fait grossir le fichier de plusieurs Mo.
+
+     Le fond est peint en blanc d'abord. Le logo complet est un PNG à fond
+     transparent, et selon la façon dont le PDF est ouvert, une transparence
+     peut se retrouver rendue en noir. Sur une page blanche, ce carré blanc ne
+     se voit pas et nous met à l'abri. */
   function reduire(img, largeurPx) {
     var c = document.createElement('canvas');
     c.width = largeurPx;
     c.height = Math.round(largeurPx * (img.naturalHeight / img.naturalWidth));
-    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(img, 0, 0, c.width, c.height);
     return c;
   }
 
@@ -149,8 +194,13 @@ var Fiche = (function () {
      On élide devant une voyelle, et devant un h : dans les prénoms il est
      presque toujours muet (Hélène, Henri, Hortense). Le y est laissé de côté,
      parce qu'il sonne le plus souvent comme une consonne (Yann, Yasmine) et
-     que « de Yann » est alors la bonne forme. */
-  function titrePour(nom) {
+     que « de Yann » est alors la bonne forme.
+
+     Un support qui n'est le visage de personne — la toile vierge — porte son
+     propre titre, écrit dans donnees.js, au lieu du tour « Le maquillage
+     de… » qui appelle un prénom. */
+  function titrePour(nom, visage) {
+    if (visage && visage.titre) return visage.titre;
     var i = initiale(nom);
     return (/[aeiouh]/.test(i) ? TEXTES.titreElide : TEXTES.titreDe) + nom;
   }
@@ -223,21 +273,26 @@ var Fiche = (function () {
     var doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
     var inv = inventaire(dessin);
 
-    return chargerImage('images/marque/logo-violet.png').then(function (logo) {
-      var y = MARGE;
+    return chargerImage('images/marque/logo-principal.png').then(function (logo) {
+      /* --- en-tête : le titre à gauche, le logo dans le coin en haut à droite.
 
-      // --- en-tête
-      var logoL = 52;
+         Le lettrage prenait toute la largeur au-dessus du titre et disait deux
+         fois « La Baguette Maquille » — une fois en haut, une fois en pied de
+         page. Le logo complet, posé dans le coin, signe la feuille sans lui
+         prendre de hauteur : la place ainsi rendue revient au dessin. */
+      var logoL = 30;
       var logoH = logoL * (logo.naturalHeight / logo.naturalWidth);
-      doc.addImage(reduire(logo, 620), 'PNG', MARGE, y, logoL, logoH);
-      y += logoH + 6;
+      doc.addImage(reduire(logo, 420), 'PNG',
+                   PAGE_L - MARGE - logoL, MARGE, logoL, logoH);
+
+      var y = MARGE + 7;
 
       doc.setTextColor(123, 63, 211);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(19);
       /* Au prénom que la personne a donné au visage : une fiche qui porte le
          prénom de son enfant se garde, une fiche générique se jette. */
-      doc.text(titrePour(nom || visage.nom), MARGE, y);
+      doc.text(titrePour(nom || visage.nom, visage), MARGE, y);
       y += 7;
 
       doc.setTextColor(107, 100, 116);
@@ -280,63 +335,52 @@ var Fiche = (function () {
 
       var colL = MARGE;
       var colR = PAGE_L / 2 + 2;
-      var yG = y, yD = y;
 
       doc.setFontSize(10.5);
       doc.setTextColor(217, 72, 126);
-      doc.text('Les couleurs', colL, yG); yG += L_TITRE_COL;
-      doc.text('Les pochoirs', colR, yD); yD += L_TITRE_COL;
+      doc.text('Les couleurs', colL, y);
+      doc.text('Les pochoirs', colR, y);
 
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9.5);
-      doc.setTextColor(58, 52, 64);
+      /* Les deux colonnes se dessinent pareil : un titre de kit ou de planche,
+         puis ce qu'il contient, décalé sous lui. Seule la puce change — une
+         pastille de la vraie couleur à gauche, un point à droite. */
+      function colonne(groupes, x, motVide, puce) {
+        var yc = y + L_TITRE_COL;
+        if (!groupes.length) {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9.5);
+          doc.setTextColor(140, 134, 148);
+          doc.text(motVide, x, yc);
+          return;
+        }
+        groupes.forEach(function (g) {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(8.5);
+          doc.setTextColor(123, 63, 211);
+          if (g.lien) doc.textWithLink(g.titre, x, yc, { url: g.lien });
+          else doc.text(g.titre, x, yc);
+          yc += L_GROUPE;
 
-      if (!inv.couleurs.length) {
-        doc.setTextColor(140, 134, 148);
-        doc.text('Aucune couleur utilisée.', colL, yG); yG += L_VIDE;
-        doc.setTextColor(58, 52, 64);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9.5);
+          doc.setTextColor(58, 52, 64);
+          g.articles.forEach(function (a) {
+            puce(a, x, yc);
+            doc.text(a.nom, x + 6, yc);
+            yc += L_ENTREE;
+          });
+        });
       }
-      inv.couleurs.forEach(function (c) {
+
+      colonne(inv.parKit, colL, 'Aucune couleur utilisée.', function (c, x, yc) {
         var rgb = hexVersRgb(c.hex);
         doc.setFillColor(rgb[0], rgb[1], rgb[2]);
         doc.setDrawColor(200, 194, 208);
-        doc.circle(colL + 2, yG - 1.2, 2, 'FD');
-        doc.text(c.nom, colL + 6, yG);
-        yG += L_ENTREE;
-        var kits = kitsDe(c);
-        if (kits.length) {
-          doc.setFontSize(8);
-          doc.setTextColor(123, 63, 211);
-          var libelle = 'dans ' + kits.map(function (k) { return k.nom; }).join(', ');
-          doc.textWithLink(libelle, colL + 6, yG, { url: kits[0].lien });
-          doc.setFontSize(9.5);
-          doc.setTextColor(58, 52, 64);
-          yG += L_SOUS;
-        } else {
-          yG += L_SANS;
-        }
+        doc.circle(x + 2, yc - 1.2, 2, 'FD');
       });
 
-      if (!inv.formes.length) {
-        doc.setTextColor(140, 134, 148);
-        doc.text('Aucun pochoir utilisé.', colR, yD); yD += L_VIDE;
-        doc.setTextColor(58, 52, 64);
-      }
-      var setsVus = {};
-      inv.formes.forEach(function (f) {
-        doc.text('• ' + f.nom, colR, yD);
-        yD += L_ENTREE;
-        if (!setsVus[f.setId]) {
-          setsVus[f.setId] = true;
-          doc.setFontSize(8);
-          doc.setTextColor(123, 63, 211);
-          doc.textWithLink(f.setNom, colR + 3, yD, { url: f.setLien });
-          doc.setFontSize(9.5);
-          doc.setTextColor(58, 52, 64);
-          yD += L_SOUS;
-        } else {
-          yD += L_SANS;
-        }
+      colonne(inv.parPlanche, colR, 'Aucun pochoir utilisé.', function (f, x, yc) {
+        doc.text('•', x + 1, yc);
       });
 
       // --- le bloc d'appel, calé juste au-dessus du pied de page
