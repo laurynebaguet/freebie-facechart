@@ -379,7 +379,7 @@
               titre="Ta fiche à imprimer"
               texte=${"Elle contient ton maquillage en grand, et la liste de ce qu'il te faut " +
                       "pour le réaliser pour de vrai. Tu peux aussi enregistrer l'image pour la " +
-                      "partager sur tes réseaux. N'oublie pas de nous tagguer, ça nous fera " +
+                      "partager sur tes réseaux. N'oublie pas de nous taguer, ça nous fera " +
                       "super plaisir de voir ton œuvre !"}
               enfants=${html`<${UI.Recap} inventaire=${inv}/>`}
               onFermer=${function () { setDialogue(null); }}
