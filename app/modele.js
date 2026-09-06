@@ -143,6 +143,7 @@ var Modele = (function () {
           visageId: etat.visageId,
           telecharge: etat.telecharge,
           noms: etat.noms || {},
+          peauId: etat.peauId,
           dessin: etat.dessin
         }));
       } catch (e) { /* quota plein ou navigation privée : on continue sans */ }

@@ -107,19 +107,22 @@ var VISAGES = [
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
   },
   {
-    /* `id` sert de clé aux prénoms que les gens enregistrent dans leur
-       navigateur : `nom` se change librement, `id` non. */
-    id: 'milo',
-    nom: 'Milo',
-    image: 'images/visages/milo.jpg',
+    /* L'ORDRE DE CETTE LISTE est celui de la galerie. On alterne une fille et
+       un garçon, pour que personne n'ait l'impression que la page s'adresse
+       d'abord aux uns ou aux autres. */
+    id: 'nour',
+    nom: 'Nour',
+    image: 'images/visages/nour.jpg',
     taille: { w: 1400, h: 1753 },
     cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
   },
   {
-    id: 'nour',
-    nom: 'Nour',
-    image: 'images/visages/nour.jpg',
+    /* `id` sert de clé aux prénoms que les gens enregistrent dans leur
+       navigateur : `nom` se change librement, `id` non. */
+    id: 'milo',
+    nom: 'Milo',
+    image: 'images/visages/milo.jpg',
     taille: { w: 1400, h: 1753 },
     cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
@@ -131,6 +134,42 @@ var VISAGES = [
     taille: { w: 1400, h: 1753 },
     cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
+  },
+
+  /* LA TOILE VIERGE — une surface nue, pour s'entraîner comme on le ferait
+     sur son propre bras avant de maquiller un enfant.
+
+     Elle n'a pas de fichier image : `peau` dit au code de remplir le cadre
+     d'une couleur unie, choisie parmi PEAUX un peu plus bas.
+
+     Son cadre a exactement les MÊMES dimensions que celui des visages
+     (1477 × 1551) et les mêmes repères. C'est ce qui permet au maquillage de
+     passer d'un visage à la toile vierge sans se décaler ni changer de taille.
+     Si tu touches un jour au cadre commun des visages, touche à celui-ci de la
+     même façon.
+
+     `taille` vaut ici exactement le cadre, et c'est un CHOIX : la couleur
+     remplit alors tout le cadre, bord à bord. Un visage, lui, laisse un peu de
+     blanc sur les côtés, parce que son fichier est moins large que le cadre
+     commun. On a essayé de faire pareil pour la toile, le 06/09/2026 : une
+     toile vierge à laquelle il manque une bande n'est plus une toile vierge.
+     Si tu veux un jour ce retrait, remets `taille` à { w: 1400, h: 1551 } et
+     `cadre.x` à −21 : le moteur découpe la couleur comme il découperait un
+     fichier de cette taille-là.
+
+     `titre` remplace « Le maquillage de… » sur la fiche et sur l'image à
+     partager : « Le maquillage de Toile vierge » ne voudrait rien dire. */
+  {
+    id: 'essai',
+    nom: 'Toile vierge',
+    titre: 'Mon essai de maquillage',
+    /* Montré au survol, sur cette carte-là uniquement. */
+    survol: 'Une toile entièrement vierge pour ne laisser aucune limite à ' +
+            'ton imagination !',
+    peau: true,
+    taille: { w: 1477, h: 1551 },
+    cadre:  { x: 0, y: 0, w: 1477, h: 1551 },
+    visage: { gauche: 243, droite: 1176 }
   }
 ];
 
@@ -143,81 +182,63 @@ var VISAGES = [
    d'un coup, diminue-le pour les grossir. */
 var LARGEUR_VISAGE_MM = 180;
 
+/* ----------------------------------------------------------------- PEAUX */
+/* Les fonds proposés sous la carte « Toile vierge » de la galerie.
+
+   Le premier de la liste est celui qu'on voit en arrivant : le blanc, parce
+   qu'une page blanche est ce qu'on attend d'un essai, et parce que c'est là
+   que les couleurs se lisent le plus franchement.
+
+   Les autres sont des teintes de peau, de la plus claire à la plus foncée.
+   Ce sont des valeurs d'atelier, choisies pour couvrir l'éventail sans
+   prétendre à une charte : elles se retouchent librement ici, une par une,
+   sans toucher au reste du code. Un fard rendu sur ces fonds ne remplace pas
+   un vrai essai sur la peau, il donne une idée. */
+var PEAUX = [
+  { id: 'blanc',    nom: 'Blanc',      hex: '#FFFFFF' },
+  { id: 'porcelaine', nom: 'Porcelaine', hex: '#F6DFCD' },
+  { id: 'sable',    nom: 'Sable',      hex: '#EFC8A2' },
+  { id: 'miel',     nom: 'Miel',       hex: '#DFA871' },
+  { id: 'caramel',  nom: 'Caramel',    hex: '#C0824C' },
+  { id: 'cannelle', nom: 'Cannelle',   hex: '#8D5524' },
+  { id: 'ebene',    nom: 'Ébène',      hex: '#5B3A22' }
+];
+
 /* -------------------------------------------------------------- POCHOIRS */
 /* Un set = une planche physique. Une forme = un motif qu'on tamponne.
    « traces » liste les numéros de sous-chemins de la planche (voir
-   outils/diag2.html pour les visualiser et les numéroter). */
+   outils/diag2.html pour les visualiser et les numéroter).
+
+   L'ORDRE COMPTE, deux fois : celui des sets est celui des rubriques dans le
+   tiroir des pochoirs, celui des formes est celui des vignettes à l'intérieur.
+   On va donc du plus simple au plus thématique, et dans chaque planche du
+   motif qu'on pose le plus souvent au bord qu'on pose le moins.
+
+   `nom` est le titre affiché ; il se change librement. `id` non : c'est lui
+   qui relie un maquillage déjà enregistré à sa forme. */
 var POCHOIRS = [
   {
-    id: 'av1',
-    nom: 'Planche Av1',
-    lien: 'https://www.labaguettemaquille.fr',
-    planche: 'av1',
-    /* `rotBase` présente la forme dans le sens où on l'emploie, alors qu'elle
-       est couchée ou retournée sur la planche. En radians : Math.PI vaut un
-       demi-tour, et un angle positif tourne dans le sens des aiguilles. */
-    formes: [
-      { id: 'toile',    nom: "Toile d'araignée",   traces: [1],
-        rotBase: Math.PI },
-      { id: 'chapeau',  nom: 'Chapeau de sorcière', traces: [2],
-        rotBase: 66 * Math.PI / 180 },
-      { id: 'araignee', nom: 'Araignée',           traces: [8] },
-      { id: 'fiole',    nom: 'Fiole de potion',    traces: [10] },
-      { id: 'crane',    nom: 'Crâne',              traces: [4] },
-
-      /* Les yeux et le nez du crâne sont découpés à trois endroits éloignés de
-         la planche, pour que le plastique tienne. On les recompose ici dans la
-         position où on les emploie vraiment. Les deux yeux sont taillés en
-         amande, inclinés symétriquement : il faut donc les garder chacun de
-         son côté, sans les faire pivoter. */
-      { id: 'visage-crane', nom: 'Visage du crâne', traces: [
-          { t: 15, dx: 40.79, dy: 93.18 },   /* œil gauche, incliné à -57° */
-          { t: 13, dx: 47.59, dy: 85.08 },   /* œil droit,  incliné à +57° */
-          { t: 14, dx: 41.66, dy: 93.26,     /* nez, redressé d'un quart   */
-            rot: Math.PI / 2 }
-        ] },
-
-      { id: 'bulles',   nom: 'Bulles de chaudron', traces: [3, 5, 6, 7, 9, 11, 12] },
-
-      /* Bords de la planche : ce ne sont pas des motifs découpés, on pose le
-         bord et la peinture passe autour. « bande » délimite la fenêtre, et
-         ses limites sont choisies pour tomber dans le plastique, sinon on
-         fabrique des bords qui n'existent pas sur le vrai pochoir. */
-      { id: 'coulures', nom: 'Coulures', traces: [0],
-        /* le bord droit s'arrête à 172,5 : au-delà, le plastique s'incurve et
-           laissait passer un mince trait de peinture qui n'existe pas */
-        bande: { x: 92.5, y: 36, w: 80, h: 50 } },
-      { id: 'dents',    nom: 'Dents de scie', traces: [0],
-        /* pointes vers le bas ; seul le motif tourne, son cadre reste droit */
-        rotBase: Math.PI / 2,
-        /* Trois doubles montagnes, et rien de plus. Le bord alterne une grande
-           dent et une petite ; la fenêtre va d'un creux PROFOND à un creux
-           profond, calée au quart de millimètre sur le
-           point le plus bas de chacun (61,5 mm et 177 mm sur la planche).
-           Dépasser ne serait-ce que d'un millimètre fait repartir le bord vers
-           le haut et laisse une languette disgracieuse au bout. */
-        bande: { x: 52, y: 61.5, w: 17, h: 115.5 } }
-    ]
-  },
-
-  {
     id: '1v1',
-    nom: 'Planche 1v1',
+    nom: 'Basique',
     lien: 'https://www.labaguettemaquille.fr',
     planche: '1v1',
 
-    /* Ce fichier n'est pas à l'échelle, contrairement à celui de la Av1 : il
-       mesure 175,7 x 248,9 mm pour une planche qui en fait 120 x 170. On le
-       ramène donc à sa taille réelle. Le rapport est le même en largeur
+    /* Ce fichier n'est pas à l'échelle, contrairement à celui de la planche
+       av1 : il mesure 175,7 x 248,9 mm pour une planche qui en fait 120 x 170.
+       On le ramène donc à sa taille réelle. Le rapport est le même en largeur
        (120/175,7) et en hauteur (170/248,9), ce qui confirme un simple
        agrandissement du dessin. */
     echelle: 0.683,
 
-    /* Cette planche est plus grande que la Av1 : 175,7 x 248,9 mm.
+    /* Cette planche est la plus grande des deux : 175,7 x 248,9 mm.
 
        Plusieurs motifs y figurent en double ou en triple, à des tailles
        différentes : comme on peut redimensionner un tampon, on ne déclare que
        le plus grand exemplaire, qui a la meilleure définition. */
+
+    /* `rotBase` présente la forme dans le sens où on l'emploie, alors qu'elle
+       est couchée ou retournée sur la planche. En radians : Math.PI vaut un
+       demi-tour, et un angle positif tourne dans le sens des aiguilles. */
     formes: [
       /* Le cœur est découpé trois fois (morceaux 1, 3 et 4). L'échancrure de
          l'exemplaire retenu pointe vers la droite : on le redresse d'un quart
@@ -230,17 +251,17 @@ var POCHOIRS = [
       { id: 'etoile', nom: 'Étoile', traces: [2],
         rotBase: -20 * Math.PI / 180 },
 
-      /* Grand axe vertical sur la planche, couché ici. */
-      { id: 'ovale',  nom: 'Ovale',  traces: [5],
-        rotBase: Math.PI / 2 },
+      /* Huit étoiles de trois tailles, semées sur la planche. On garde leurs
+         positions les unes par rapport aux autres : c'est le semis qui fait le
+         motif, comme les bulles de chaudron de l'autre planche. */
+      { id: 'etincelles', nom: 'Étincelles',
+        traces: [6, 11, 8, 13, 15, 7, 10, 16] },
 
       { id: 'rond',   nom: 'Rond',   traces: [9] },
 
-      /* Huit étoiles de trois tailles, semées sur la planche. On garde leurs
-         positions les unes par rapport aux autres : c'est le semis qui fait le
-         motif, comme les bulles de chaudron de la Av1. */
-      { id: 'etincelles', nom: 'Étincelles',
-        traces: [6, 11, 8, 13, 15, 7, 10, 16] },
+      /* Grand axe vertical sur la planche, couché ici. */
+      { id: 'ovale',  nom: 'Ovale',  traces: [5],
+        rotBase: Math.PI / 2 },
 
       /* La fenêtre d'une bordure va d'un creux à un creux, pour que le motif
          se répète à l'identique sans morceau orphelin au bout. « arrondi »
@@ -266,6 +287,56 @@ var POCHOIRS = [
          Le moteur sait rendre les deux cas : une bande « positif: true »
          remplit le tracé lui-même au lieu de son pourtour. */
     ]
+  },
+
+  {
+    id: 'av1',
+    nom: 'Dans la cabane de la sorcière',
+    lien: 'https://www.labaguettemaquille.fr',
+    planche: 'av1',
+    formes: [
+      { id: 'chapeau',  nom: 'Chapeau de sorcière', traces: [2],
+        rotBase: 66 * Math.PI / 180 },
+      { id: 'fiole',    nom: 'Fiole de potion',    traces: [10] },
+      { id: 'crane',    nom: 'Crâne',              traces: [4] },
+
+      /* Les yeux et le nez du crâne sont découpés à trois endroits éloignés de
+         la planche, pour que le plastique tienne. On les recompose ici dans la
+         position où on les emploie vraiment. Les deux yeux sont taillés en
+         amande, inclinés symétriquement : il faut donc les garder chacun de
+         son côté, sans les faire pivoter. */
+      { id: 'visage-crane', nom: 'Visage du crâne', traces: [
+          { t: 15, dx: 40.79, dy: 93.18 },   /* œil gauche, incliné à -57° */
+          { t: 13, dx: 47.59, dy: 85.08 },   /* œil droit,  incliné à +57° */
+          { t: 14, dx: 41.66, dy: 93.26,     /* nez, redressé d'un quart   */
+            rot: Math.PI / 2 }
+        ] },
+
+      { id: 'toile',    nom: "Toile d'araignée",   traces: [1],
+        rotBase: Math.PI },
+      { id: 'araignee', nom: 'Araignée',           traces: [8] },
+
+      { id: 'bulles',   nom: 'Bulles de chaudron', traces: [3, 5, 6, 7, 9, 11, 12] },
+
+      /* Bords de la planche : ce ne sont pas des motifs découpés, on pose le
+         bord et la peinture passe autour. « bande » délimite la fenêtre, et
+         ses limites sont choisies pour tomber dans le plastique, sinon on
+         fabrique des bords qui n'existent pas sur le vrai pochoir. */
+      { id: 'coulures', nom: 'Coulures', traces: [0],
+        /* le bord droit s'arrête à 172,5 : au-delà, le plastique s'incurve et
+           laissait passer un mince trait de peinture qui n'existe pas */
+        bande: { x: 92.5, y: 36, w: 80, h: 50 } },
+      { id: 'dents',    nom: 'Dents de scie', traces: [0],
+        /* pointes vers le bas ; seul le motif tourne, son cadre reste droit */
+        rotBase: Math.PI / 2,
+        /* Trois doubles montagnes, et rien de plus. Le bord alterne une grande
+           dent et une petite ; la fenêtre va d'un creux PROFOND à un creux
+           profond, calée au quart de millimètre sur le
+           point le plus bas de chacun (61,5 mm et 177 mm sur la planche).
+           Dépasser ne serait-ce que d'un millimètre fait repartir le bord vers
+           le haut et laisse une languette disgracieuse au bout. */
+        bande: { x: 52, y: 61.5, w: 17, h: 115.5 } }
+    ]
   }
 ];
 
@@ -286,10 +357,32 @@ var APPEL_FICHE = {
 
 /* ----------------------------------------------------------------- TEXTES */
 var TEXTES = {
-  titre: 'Imagine le maquillage de ton enfant',
-  accroche: 'Choisis un visage, pose tes pochoirs, essaie tes couleurs. ' +
-            'Quand tu es content du résultat, repars avec ta fiche à imprimer.',
-  boutonDemarrer: "C'est parti",
+  /* Les espaces de « de la Baguette » sont INSÉCABLES (  et non un espace
+     ordinaire) : ces trois mots restent soudés, si bien que le seul endroit où
+     le titre peut se couper est juste avant eux. Il tient donc sur une ligne
+     quand la place le permet, et passe à deux en coupant entre « magique » et
+     « de », jamais ailleurs. La première moitié garde des espaces normaux : sur
+     un téléphone très étroit, elle a ainsi le droit de se replier à son tour
+     plutôt que de déborder de l'écran. */
+  titre: 'Le petit atelier magique de la Baguette',
+
+  /* Deux phrases, deux lignes : la première dit ce qu'on va faire, la seconde
+     ce qu'on en rapporte. */
+  accroche: 'Choisis un visage, pose tes pochoirs, joue avec les couleurs, ' +
+            "efface et recommence à l'infini !",
+  /* « Quand le résultat te plaît » plutôt que « quand tu es content » : rien
+     n'y porte de genre, et la phrase se lit aussi bien par une fille que par
+     un garçon. */
+  accrocheSuite: 'Quand le résultat te plaît, partage-nous ton œuvre ou ' +
+                 'imprime ta fiche mémo 😊',
+
+  /* Espace insécable avant le point d'exclamation : c'est la règle en
+     français, et ça empêche le « ! » de se retrouver seul en bout de ligne. */
+  boutonDemarrer: "C'est parti !",
+  /* Titre de la page des visages. Un seul, qu'on y vienne pour la première
+     fois ou qu'on revienne en changer : la phrase marche dans les deux cas,
+     et l'écran n'a plus besoin de s'expliquer. */
+  titreGalerie: 'Choisis ton visage à maquiller',
   /* Titre de la fiche et de l'image. Deux formes, parce que le « de » s'élide
      devant une voyelle : « Le maquillage d'Anna ». */
   titreDe: 'Le maquillage de ',

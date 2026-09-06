@@ -3,6 +3,9 @@
   --violet:   #7B3FD3;
   --violet-c: #9B5DE5;
   --rose:     #D9487E;
+  /* Le rose de la charte, éclairci, pour le survol — comme --violet-c l'est
+     pour le violet. Il ne remplace jamais --rose, il l'accompagne. */
+  --rose-c:   #E86395;
   --jaune:    #FFD166;
   --fond:     #FFF8F0;
   --encre:    #3A3440;
@@ -54,6 +57,7 @@ button:disabled { cursor: default; }
 .btn-secondaire { background: var(--blanc); color: var(--violet); box-shadow: var(--ombre); }
 .btn-secondaire:hover { background: #F6F0FF; }
 .btn-rose { background: var(--rose); color: #fff; box-shadow: var(--ombre); }
+.btn-rose:hover { background: var(--rose-c); }
 .btn-fantome { color: var(--encre-d); }
 .btn-fantome:hover { color: var(--violet); }
 .btn:disabled { opacity: .35; }
@@ -65,24 +69,70 @@ button:disabled { cursor: default; }
   text-align: center; padding: 2rem 1.4rem;
   background: radial-gradient(1200px 600px at 50% -10%, #fff 0%, var(--fond) 60%);
 }
-.accueil img.logo { width: min(440px, 82vw); height: auto; }
-.accueil h1 { font-size: clamp(1.7rem, 5.5vw, 2.9rem); color: var(--violet); max-width: 16em; }
-.accueil p { font-size: clamp(1rem, 2.6vw, 1.15rem); color: var(--encre-d); max-width: 34em; line-height: 1.6; margin: 0; }
+/* Le logo complet est bien plus haut que l'ancien lettrage (800 × 321 au lieu
+   de 10:1) : à 440 px de large il mangeait la moitié de l'écran d'accueil. On
+   le pose plus petit, et on lui donne aussi une limite en HAUTEUR, pour que
+   sur une fenêtre courte il cède la place au titre et au bouton. */
+.accueil img.logo {
+  width: min(340px, 72vw); max-height: 26vh; height: auto;
+  object-fit: contain;
+}
+/* 20 em : juste assez pour que le titre tienne sur UNE ligne quand l'écran est
+   large. En dessous il passe à deux, en se coupant à l'endroit prévu (voir la
+   note sur les espaces insécables dans donnees.js). */
+.accueil h1 { font-size: clamp(1.55rem, 5vw, 2.7rem); color: var(--violet); max-width: 20em; }
+/* Assez large pour que chacune des deux phrases tienne sur SA ligne quand
+   l'écran le permet : le retour du milieu sépare alors les deux idées, au lieu
+   de se perdre au milieu de quatre lignes coupées n'importe où. Sur un écran
+   plus étroit elles se replient normalement, et la coupure du milieu tient
+   toujours. */
+.accueil p { font-size: clamp(1rem, 2.6vw, 1.15rem); color: var(--encre-d); max-width: 50em; line-height: 1.6; margin: 0; }
+/* Au survol, le bouton se soulève comme les cartes de visages de l'écran
+   suivant : c'est le même geste qu'on annonce, autant le montrer pareil. Le
+   clic reprend la main juste après, d'où la règle `:active` qui suit. */
 .accueil .btn { font-size: 1.15rem; padding: .9em 2em; }
+.accueil .btn:hover { transform: translateY(-3px); box-shadow: var(--ombre-f); }
+.accueil .btn:active { transform: translateY(1px) scale(.985); }
 .accueil .credit { font-size: .85rem; color: var(--encre-d); opacity: .8; margin-top: -.4rem; }
 
 /* ------------------------------------------------------- galerie visages */
-.galerie { padding: 1.4rem 1.2rem 3rem; max-width: 1100px; margin: 0 auto; }
-.galerie h2 { font-size: clamp(1.4rem, 4vw, 2rem); color: var(--violet); text-align: center; margin-bottom: .4rem; }
-.galerie .sous { text-align: center; color: var(--encre-d); margin: 0 0 1.6rem; }
-/* en flex plutôt qu'en grille : les cartes restent centrées, même à deux */
-/* align-items en haut : les cartes ne sont plus étirées à la hauteur de la
-   plus grande, chacune suit les proportions de son propre cadrage. */
-.grille-visages {
-  display: flex; flex-wrap: wrap; gap: 1rem;
-  justify-content: center; align-items: flex-start;
+/* La rangée de visages descend au milieu de la page. Tant que les six cartes
+   tiennent sur une seule ligne, il reste beaucoup de vide en bas et la page
+   paraissait collée en haut.
+
+   À REVOIR le jour où elles ne tiendront plus sur une ligne : à deux rangées,
+   le centrage se justifie moins, et il vaudra mieux revenir en haut. Le `safe`
+   est là pour ce jour-là — il empêche le centrage de manger le haut de la
+   page quand le contenu devient plus grand que l'écran. */
+.galerie {
+  padding: 1.2rem 1.2rem 1.6rem; max-width: 1100px; margin: 0 auto;
+  min-height: 100%;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  justify-content: safe center;
 }
-.grille-visages .carte-visage { flex: 0 1 180px; }
+.galerie h2 { font-size: clamp(1.2rem, 3.2vw, 1.8rem); color: var(--violet); text-align: center; margin-bottom: .9rem; }
+/* en flex plutôt qu'en grille : les cartes restent centrées, même à deux */
+/* Toutes les cartes prennent la MÊME hauteur. Elles montrent toutes le même
+   cadre, aux mêmes proportions ; seuls leurs pieds diffèrent — un prénom d'un
+   côté, une rangée de teintes de l'autre. Sans cet alignement, la carte de la
+   toile vierge finissait huit points plus courte que ses voisines, et ça se
+   voyait. C'est le pied qui absorbe la différence, pas l'image. */
+.grille-visages {
+  display: flex; flex-wrap: wrap; gap: .8rem;
+  justify-content: center; align-items: stretch;
+}
+.carte-visage .pied { flex: 1 1 auto; }
+/* Les cartes s'ÉTIRENT au lieu d'avoir une largeur figée : dès que la place le
+   permet, les six tiennent sur une seule rangée et se partagent la largeur, au
+   lieu d'en remplir cinq et d'en renvoyer une seule à la ligne. Une rangée
+   plutôt que deux, c'est la moitié de la hauteur — c'est ce qui fait tenir
+   l'écran sur une fenêtre courte.
+
+   `flex-basis` petit et `max-width` à 180 : en dessous de la place nécessaire
+   elles repassent à la ligne d'elles-mêmes, et jamais elles ne grossissent
+   au-delà de leur taille de confort. */
+.grille-visages .carte-visage { flex: 1 1 130px; max-width: 180px; }
 .carte-visage {
   background: var(--blanc); border-radius: var(--r); overflow: hidden;
   box-shadow: var(--ombre);
@@ -121,7 +171,54 @@ button:disabled { cursor: default; }
   background: var(--violet); color: #fff;
 }
 .carte-visage .renomme .ok svg { width: 17px; height: 17px; color: #fff; opacity: 1; }
-.galerie .astuce { margin-top: -1.2rem; font-size: .92rem; }
+
+/* --- la toile vierge -------------------------------------------- */
+/* Sa vignette est un aplat : le nom s'y pose au centre, dans une pastille
+   blanche pour rester lisible aussi bien sur le blanc que sur l'ébène. */
+.carte-peau .vignette {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.carte-peau .etiquette-peau {
+  font-family: "Luckiest Guy", Nunito, sans-serif;
+  font-size: .92rem; letter-spacing: .3px; line-height: 1.2; text-align: center;
+  color: var(--violet);
+  background: rgba(255, 255, 255, .92); border-radius: 14px;
+  padding: .4em .8em; box-shadow: var(--ombre);
+  transition: opacity .16s ease;
+}
+/* Le mot d'accueil de cette carte-là, au survol. Il prend toute la vignette
+   plutôt que de flotter à côté : la carte est petite, et une bulle posée
+   dessus déborderait sur ses voisines. Il cède la place au nom dès que la
+   souris s'en va, et il ne gêne pas le clic. */
+.carte-peau .survol-peau {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  padding: .7rem; font-size: .76rem; font-weight: 700; line-height: 1.35;
+  color: var(--violet); background: rgba(255, 255, 255, .96);
+  opacity: 0; transition: opacity .16s ease; pointer-events: none;
+}
+.carte-peau .choix:hover .survol-peau,
+.carte-peau .choix:focus-visible .survol-peau { opacity: 1; }
+.carte-peau .choix:hover .etiquette-peau,
+.carte-peau .choix:focus-visible .etiquette-peau { opacity: 0; }
+.carte-peau .peaux {
+  flex-wrap: wrap; gap: .25rem; padding: .5rem .35rem .6rem;
+}
+/* 16 px et un écart serré : c'est ce qui laisse tenir les sept teintes sur un
+   seul rang, y compris quand les cartes se resserrent pour rentrer à six sur
+   une rangée. Sur une fenêtre vraiment étroite elles passent à la ligne, et
+   c'est très bien ainsi — rien ne casse. Le contour intérieur sert au blanc,
+   qui disparaîtrait sinon dans la carte. */
+.carte-peau .teinte {
+  width: 16px; height: 16px; border-radius: 50%; flex: 0 0 auto;
+  box-shadow: inset 0 0 0 1px rgba(58, 52, 64, .22);
+  transition: transform .12s ease;
+}
+.carte-peau .teinte:hover { transform: scale(1.15); }
+.carte-peau .teinte.actif {
+  box-shadow: 0 0 0 2px var(--blanc), 0 0 0 3.5px var(--violet);
+}
 
 /* --------------------------------------------------------------- atelier */
 .atelier { height: 100%; display: flex; flex-direction: column; }
@@ -137,6 +234,9 @@ button:disabled { cursor: default; }
 .entete .espace { flex: 1; }
 /* le libellé tient sur une ligne : plus large, mais bien moins haut */
 .entete .btn { white-space: nowrap; }
+/* Annuler et Rétablir forment un couple : collés l'un à l'autre, puis mis à
+   distance du bouton de la fiche, qui n'a rien à voir avec eux. */
+.entete .histoire { display: flex; align-items: center; margin-right: .5rem; }
 
 .icone-btn {
   width: 34px; height: 34px; border-radius: 10px;
@@ -334,7 +434,13 @@ button:disabled { cursor: default; }
   box-shadow: var(--ombre-f); display: flex; align-items: center; gap: .5rem;
   max-width: calc(100% - 1rem); white-space: nowrap;
 }
-.rappel button { color: var(--jaune); font-weight: 800; text-decoration: underline; }
+/* Le mot « fiche » EST le lien : même taille, même graisse que la phrase qui
+   le porte, seulement souligné et en jaune. */
+.rappel button {
+  font: inherit; font-weight: 800; padding: 0;
+  color: var(--jaune); text-decoration: underline;
+}
+.rappel button:hover { color: #fff; }
 
 .voile {
   position: fixed; inset: 0; background: rgba(58, 52, 64, .45);
@@ -344,6 +450,9 @@ button:disabled { cursor: default; }
   background: var(--blanc); border-radius: var(--r); padding: 1.5rem;
   max-width: 460px; width: 100%; box-shadow: var(--ombre-f);
 }
+/* Une question courte n'a pas besoin de la largeur prévue pour la liste du
+   matériel : plus étroite, la phrase se replie plus tôt et se lit d'un coup. */
+.boite.etroite { max-width: 350px; }
 .boite h3 { font-size: 1.3rem; color: var(--violet); margin-bottom: .6rem; }
 .boite p { color: var(--encre-d); line-height: 1.55; margin: 0 0 1.2rem; }
 .boite .actions { display: flex; gap: .6rem; justify-content: flex-end; flex-wrap: wrap; }
@@ -369,7 +478,13 @@ button:disabled { cursor: default; }
 }
 .recap .puce-forme { width: 22px; height: 22px; flex: 0 0 22px; color: var(--encre); }
 .recap .puce-forme svg { width: 100%; height: 100%; }
-.recap .ou { display: block; font-size: .74rem; font-weight: 700; color: var(--violet); text-decoration: none; }
+/* Le kit ou la planche titre son groupe : il passe devant ce qu'il contient,
+   au lieu de se répéter en petit sous chaque ligne. */
+.recap-groupe + .recap-groupe { margin-top: .8rem; }
+.recap .ou {
+  display: block; font-size: .8rem; font-weight: 800; color: var(--violet);
+  text-decoration: none; margin-bottom: .35rem;
+}
 .recap .ou:hover { text-decoration: underline; }
 .recap-vide { font-style: italic; }
 
@@ -399,4 +514,68 @@ button:disabled { cursor: default; }
   .outil { flex: 1 1 28%; max-width: none; }
   .tiroir { max-height: none; flex: 1; }
   .scene { order: 1; padding: 1.2rem; }
+}
+
+/* ------------------------------------- commandes de la forme, dans le beige */
+/* Sur un écran d'ordinateur assez large, les commandes de la forme choisie
+   quittent la colonne des outils pour venir se poser dans le beige, à gauche
+   de celle-ci.
+
+   Deux raisons. Elles apparaissent et disparaissent au gré de la sélection :
+   tant qu'elles étaient DANS la colonne, chaque clic sur une forme poussait
+   toute la planche de pochoirs vers le bas. Et elles agissent sur la forme
+   qu'on vient de toucher : les rapprocher du dessin, c'est les mettre là où
+   l'œil est déjà.
+
+   La scène leur RÉSERVE leur bande, au lieu de les laisser flotter par dessus.
+   Sans cette réserve, elles recouvrent le bord droit du dessin dès que la
+   fenêtre est haute : le dessin s'étale alors jusqu'au bord et il ne reste
+   plus de beige pour les accueillir. La bande est là en permanence, qu'une
+   forme soit choisie ou non — c'est ce qui fait que le dessin ne change JAMAIS
+   de taille en cours de route.
+
+   La bande est réservée DES DEUX CÔTÉS, alors qu'on ne se sert que de la
+   droite. C'est ce qui garde le visage au milieu du beige : une réserve d'un
+   seul côté le pousserait vers la gauche. La bande de gauche n'est pas perdue
+   pour autant, le taux de zoom vient s'y loger.
+
+   POURQUOI 1180 px et non 900 : en deçà, la réserve se paie sur le dessin, qui
+   est alors limité par sa largeur. Au-delà, sur les formats d'écran courants
+   (1280×800, 1440×900, 1536×864, 1920×1080), le dessin est limité par la
+   HAUTEUR et les deux bandes ne lui coûtent rien du tout — c'est pour ça que
+   la carte est étroite. Entre 900 et 1180, les deux boutons restent dans la
+   colonne, comme sur tablette. */
+@media (min-width: 1180px) {
+  /* `--commandes` est la largeur de la carte : elle sert DEUX fois, à la carte
+     et aux bandes que la scène réserve. D'où le réglage unique. */
+  .corps { position: relative; --commandes: 4.6rem; }
+  .scene {
+    padding-left: calc(2.4rem + var(--commandes));
+    padding-right: calc(2.4rem + var(--commandes));
+  }
+
+  /* En haut, à hauteur des premiers outils : c'est là que le regard va quand
+     il quitte la forme qu'il vient de poser.
+
+     `right` part du bord droit du corps : il faut donc franchir la colonne des
+     outils. Si tu changes ses 352 px plus haut, change aussi ce nombre-ci. */
+  .boutons-forme {
+    position: absolute; z-index: 3;
+    right: calc(352px + 1.2rem); top: 1.2rem;
+    flex-direction: column; align-items: stretch; width: var(--commandes);
+    padding: .3rem; gap: .25rem;
+    background: rgba(255, 255, 255, .94); border-radius: var(--r);
+    box-shadow: var(--ombre-f);
+  }
+  /* Taillés comme les boutons d'outils, icône au-dessus du mot : c'est le même
+     geste, ça se lit sans effort, et ça tient dans une bande étroite. */
+  .boutons-forme .btn {
+    flex-direction: column; gap: .1rem; padding: .4rem .15rem;
+    border-radius: 10px; font-size: .63rem; line-height: 1.2; text-align: center;
+  }
+  .boutons-forme .btn svg { width: 19px; height: 19px; }
+
+  /* Le taux de zoom passe à gauche : à droite, il se cognerait à la carte
+     ci-dessus, qui occupe désormais ce coin-là. */
+  .cmd-vue { left: 1rem; right: auto; }
 }
