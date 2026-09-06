@@ -356,7 +356,7 @@ var Toile = (function () {
       });
       c.style.width = largeur + 'px';
       c.style.height = hauteur + 'px';
-      if (propsRef.current.onEchelle) propsRef.current.onEchelle(vueRef.current.echelle);
+      signalerEchelle();
       redessiner();
     }
 
@@ -429,17 +429,29 @@ var Toile = (function () {
       lp.dy = Math.min(0, Math.max(v.hauteur * (1 - lp.k), lp.dy));
     }
 
+    /* Combien de pixels d'écran vaut un millimètre de peau, EN CE MOMENT —
+       grossissement de la loupe compris. C'est ce nombre qui sert à dessiner
+       l'aperçu du pinceau et de la gomme dans la barre d'outils : il doit donc
+       suivre le zoom, sans quoi l'aperçu annonce une taille qui n'est plus
+       celle qu'on pose sur le visage. */
+    function signalerEchelle() {
+      var f = propsRef.current.onEchelle;
+      if (f) f(vueRef.current.echelle * loupeRef.current.k);
+    }
+
     /* Le repère de grossissement n'apparaît qu'une fois la loupe engagée. */
     function majBoutons() {
       var k = loupeRef.current.k;
       setVueBoutons(function (ancien) {
         return Math.abs(ancien.k - k) < 0.01 ? ancien : { k: k };
       });
+      signalerEchelle();
     }
 
     function revenirVue() {
       loupeRef.current = { k: 1, dx: 0, dy: 0 };
       setVueBoutons({ k: 1 });
+      signalerEchelle();
       planifier();
     }
 
@@ -541,12 +553,7 @@ var Toile = (function () {
       var ids = Object.keys(doigtsRef.current);
       if (ids.length === 2) {
         var enCours = gesteRef.current;
-        if (enCours) {
-          var ne = enCours.idPose;
-          p.appliquer(ne == null ? null : function (d) {
-            return Modele.supprimer(d, ne);
-          }, 'annule');
-        }
+        if (enCours) p.appliquer(null, 'annule');
         onAnnuleGeste(true);
 
         var a = doigtsRef.current[ids[0]], b = doigtsRef.current[ids[1]];
@@ -555,19 +562,25 @@ var Toile = (function () {
         var milieu = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
 
         /* C'est LA SÉLECTION qui décide, pas l'endroit où les doigts se
-           posent : une forme choisie, et les deux doigts la transforment où
-           qu'ils soient. Viser un petit motif à deux doigts est impossible —
-           les doigts sont plus larges que le motif.
+           posent : dès qu'une forme est choisie, les deux doigts la
+           transforment, où qu'ils se posent. Viser un petit motif à deux
+           doigts est impossible — les doigts sont plus larges que le motif.
 
            Aucune forme choisie, et les deux doigts regardent le visage de plus
            près. Pour retrouver ce zoom-là quand une forme est choisie, il
            suffit de toucher à côté pour la lâcher.
 
-           Cas particulier : si le premier doigt venait de tamponner, le motif
-           qu'il a posé vient d'être défait juste au-dessus. Il n'y a donc plus
-           rien à transformer, et on lâche la sélection. */
+           Y COMPRIS le motif que le premier doigt vient de poser. Il l'était
+           auparavant retiré, au motif que le geste n'était finalement pas un
+           tamponnage mais le début d'un pincement. C'est vrai, mais le résultat
+           était pire : on posait un motif, on l'agrandissait à deux doigts, et
+           le motif disparaissait au lieu de grandir. Poser puis dimensionner
+           dans la foulée est le geste naturel — c'est lui qu'on sert.
+           (Contrepartie assumée : avec l'outil Pochoirs, un pincement laisse
+           toujours un motif derrière lui. Pour zoomer sans rien poser, on passe
+           par Modifier et on touche à côté.) */
         var pris = null;
-        if (q.selectionId != null && !(enCours && enCours.idPose === q.selectionId)) {
+        if (q.selectionId != null) {
           var choisie = Modele.trouver(q.dessin, q.selectionId);
           if (choisie && choisie.type === 'forme') pris = choisie;
         }
@@ -648,9 +661,7 @@ var Toile = (function () {
         };
         p.appliquer(function (d) { return Modele.ajouter(d, neuf); }, 'debut');
         p.onSelection(idPose);
-        // on retient le motif tout juste posé, pour pouvoir le retirer si le
-        // geste s'avérait être le début d'un pincement
-        gesteRef.current = { mode: 'deplacement', dx: 0, dy: 0, idPose: idPose };
+        gesteRef.current = { mode: 'deplacement', dx: 0, dy: 0 };
         glisseRef.current = { id: idPose, x: pt.x, y: pt.y, rot: 0, zoom: 1 };
         c.style.cursor = 'grabbing';
         return;
