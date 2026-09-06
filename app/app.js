@@ -282,7 +282,8 @@
                   onClick=${function () { setEcran('galerie'); }}>
             <${UI.Icone} nom="visages"/>
           </button>
-          <span class="titre-mini">${Modele.nom(noms, visage)}</span>
+          <${UI.TitreAtelier} visage=${visage} noms=${noms}
+                              onRenommer=${renommerVisage}/>
           <span class="espace"></span>
           ${/* Les deux flèches vont ensemble : elles font le même travail, dans
                 les deux sens. On les serre l'une contre l'autre et on les
@@ -382,9 +383,9 @@
                       "partager sur tes réseaux. N'oublie pas de nous taguer, ça nous fera " +
                       "super plaisir de voir ton œuvre !"}
               enfants=${html`<${UI.Recap} inventaire=${inv}/>`}
+              croix=${true}
               onFermer=${function () { setDialogue(null); }}
               actions=${html`
-                <button class="btn btn-fantome" onClick=${function () { setDialogue(null); }}>Plus tard</button>
                 <button class="btn btn-secondaire" disabled=${envoie || !aDuTravail}
                         onClick=${partagerImage}>
                   ${envoie ? 'Un instant…' : (Partage.peutPartager() ? "Partager l'image" : "Enregistrer l'image")}

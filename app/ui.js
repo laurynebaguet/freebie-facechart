@@ -224,6 +224,58 @@ var UI = (function () {
     return PEAUX[0].hex;
   }
 
+  /* Le prénom dans le bandeau de l'atelier, rebaptisable là aussi.
+
+     Même geste que sur la carte de la galerie — on touche le prénom, on tape
+     le sien — mais en tout petit, dans un bandeau qui n'a que 34 pixels de
+     haut : le crayon ne se montre qu'au survol, et le champ prend la place du
+     texte sans rien pousser.
+
+     La toile vierge n'est le visage de personne : elle garde son nom. */
+  function TitreAtelier(p) {
+    var v = p.visage;
+    var e1 = useState(false), edite = e1[0], setEdite = e1[1];
+    var e2 = useState(''), texte = e2[0], setTexte = e2[1];
+    var champ = useRef(null);
+    var affiche = Modele.nom(p.noms, v);
+
+    useEffect(function () {
+      if (edite && champ.current) champ.current.select();
+    }, [edite]);
+
+    if (v.peau) return html`<span class="titre-mini">${affiche}</span>`;
+
+    function ouvrir() { setTexte(affiche); setEdite(true); }
+    function garder() { p.onRenommer(v.id, texte); setEdite(false); }
+
+    if (edite) {
+      return html`
+        <form class="titre-renomme"
+              onSubmit=${function (ev) { ev.preventDefault(); garder(); }}>
+          <input ref=${champ} type="text" value=${texte}
+                 maxLength=${Modele.LIMITE_NOM}
+                 placeholder=${v.nom}
+                 aria-label=${'Prénom à la place de ' + v.nom}
+                 onChange=${function (ev) { setTexte(ev.target.value); }}
+                 onBlur=${garder}
+                 onKeyDown=${function (ev) {
+                   if (ev.key === 'Escape') { ev.preventDefault(); setEdite(false); }
+                 }}/>
+          <button type="submit" class="ok" title="Garder ce prénom">
+            <${Icone} nom="valider"/>
+          </button>
+        </form>`;
+    }
+
+    return html`
+      <button class="titre-mini modifiable"
+              title=${'Remplacer « ' + affiche + ' » par un autre prénom'}
+              onClick=${ouvrir}>
+        <span>${affiche}</span>
+        <${Icone} nom="crayon"/>
+      </button>`;
+  }
+
   /* La carte de la toile vierge. Elle ne se rebaptise pas — ce n'est le visage
      de personne : sous la vignette, on choisit la teinte du fond au lieu d'un
      prénom. Le choix se voit aussitôt sur la vignette, et il vaut ensuite pour
@@ -240,11 +292,10 @@ var UI = (function () {
         <button class="choix" aria-label=${v.nom}
                 onClick=${function () { p.onChoisir(v.id); }}>
           <span class="vignette" style=${cadrageFond(v, peauHex(p.peauId))}>
-            <span class="etiquette-peau">${v.nom}</span>
-            ${/* Le survol est fait à la main plutôt qu'avec un `title` : la
-                  bulle du navigateur met une seconde à venir, s'affiche dans
-                  sa police à lui, et on ne peut pas la mettre en forme. */''}
-            ${v.survol ? html`<span class="survol-peau">${v.survol}</span>` : null}
+            <span class="etiquette-peau">
+              <span class="nom-peau">${v.nom}</span>
+              ${v.sous ? html`<span class="sous-peau">${v.sous}</span>` : null}
+            </span>
           </span>
         </button>
 
@@ -278,6 +329,8 @@ var UI = (function () {
                               onChoisir=${p.onChoisir} onRenommer=${p.onRenommer}/>`;
           })}
         </div>
+        ${/* On ne promet pas de date : juste que la galerie n'est pas close. */''}
+        <p class="a-venir">Plus de visages à venir !</p>
       </div>`;
   }
 
@@ -349,6 +402,11 @@ var UI = (function () {
      La place réservée correspond au diamètre MAXIMAL de l'outil : l'aperçu
      n'est ainsi jamais à l'étroit, et la mise en page ne sursaute pas quand
      on fait glisser le curseur. */
+  /* `echelle` est le nombre de pixels d'écran que vaut un millimètre de peau,
+     GROSSISSEMENT COMPRIS. C'est ce qui rend l'aperçu honnête : quand on
+     s'approche du visage, le rond du pinceau grossit à l'écran, et celui de
+     l'aperçu grossit avec lui. Sans ça, l'aperçu annonçait une taille qui
+     n'était plus celle qu'on posait. */
   function Curseur(p) {
     var diametre = Math.max(3, p.valeur * p.echelle);
     var place = parseFloat(p.max) * p.echelle;
@@ -460,10 +518,23 @@ var UI = (function () {
       <div class="voile" onClick=${p.onFermer}>
         <div class=${'boite' + (p.etroite ? ' etroite' : '')}
              onClick=${function (e) { e.stopPropagation(); }}>
+          ${/* Une croix vaut mieux qu'un bouton « Plus tard » aligné avec les
+                autres : elle dit « fermer » sans se disputer la place avec ce
+                qu'on est venu faire, et libère la ligne du bas. */''}
+          ${p.onFermer && p.croix
+            ? html`
+              <button class="croix" title="Fermer" aria-label="Fermer"
+                      onClick=${p.onFermer}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6L6 18"></path>
+                </svg>
+              </button>`
+            : null}
           <h3>${p.titre}</h3>
           <p>${p.texte}</p>
           ${p.enfants}
-          <div class="actions">${p.actions}</div>
+          <div class=${'actions' + (p.croix ? ' centrees' : '')}>${p.actions}</div>
         </div>
       </div>`;
   }
@@ -525,6 +596,6 @@ var UI = (function () {
     avecPoignees: function () { return AVEC_POIGNEES; },
     Icone: Icone, VignetteForme: VignetteForme, Accueil: Accueil,
     Galerie: Galerie, BarreOutils: BarreOutils, Dialogue: Dialogue,
-    Palette: Palette, Recap: Recap
+    Palette: Palette, Recap: Recap, TitreAtelier: TitreAtelier
   };
 })();

@@ -280,10 +280,13 @@ var Fiche = (function () {
          fois « La Baguette Maquille » — une fois en haut, une fois en pied de
          page. Le logo complet, posé dans le coin, signe la feuille sans lui
          prendre de hauteur : la place ainsi rendue revient au dessin. */
-      var logoL = 30;
+      var logoL = 36;
       var logoH = logoL * (logo.naturalHeight / logo.naturalWidth);
-      doc.addImage(reduire(logo, 420), 'PNG',
-                   PAGE_L - MARGE - logoL, MARGE, logoL, logoH);
+      /* Il a sa propre marge, plus courte que celle du texte : une signature
+         se pose au bord de la feuille, elle ne s'aligne pas sur le corps. */
+      var logoM = 9;
+      doc.addImage(reduire(logo, 500), 'PNG',
+                   PAGE_L - logoM - logoL, logoM, logoL, logoH);
 
       var y = MARGE + 7;
 

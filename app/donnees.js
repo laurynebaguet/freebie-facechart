@@ -100,16 +100,18 @@ var VISAGES = [
   },
   {
     id: 'noe',
-    nom: 'Noé',
+    nom: 'Charlie',
     image: 'images/visages/noe.jpg',
     taille: { w: 1400, h: 1753 },
     cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
   },
   {
-    /* L'ORDRE DE CETTE LISTE est celui de la galerie. On alterne une fille et
-       un garçon, pour que personne n'ait l'impression que la page s'adresse
-       d'abord aux uns ou aux autres. */
+    /* L'ORDRE DE CETTE LISTE est celui de la galerie. Les dessins alternent
+       fille et garçon, pour que personne n'ait l'impression que la page
+       s'adresse d'abord aux uns ou aux autres. Charlie et Camille, eux, se
+       portent dans les deux sens — et ils se remplacent de toute façon par le
+       prénom de son enfant. */
     id: 'nour',
     nom: 'Nour',
     image: 'images/visages/nour.jpg',
@@ -121,7 +123,7 @@ var VISAGES = [
     /* `id` sert de clé aux prénoms que les gens enregistrent dans leur
        navigateur : `nom` se change librement, `id` non. */
     id: 'milo',
-    nom: 'Milo',
+    nom: 'Camille',
     image: 'images/visages/milo.jpg',
     taille: { w: 1400, h: 1753 },
     cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
@@ -163,9 +165,10 @@ var VISAGES = [
     id: 'essai',
     nom: 'Toile vierge',
     titre: 'Mon essai de maquillage',
-    /* Montré au survol, sur cette carte-là uniquement. */
-    survol: 'Une toile entièrement vierge pour ne laisser aucune limite à ' +
-            'ton imagination !',
+    /* Petite ligne sous le nom, sur cette carte-là uniquement. Elle est
+       TOUJOURS visible : au survol seulement, elle se déclenchait au doigt
+       dès qu'on faisait défiler la page en touchant la carte. */
+    sous: 'pour laisser libre cours à ton imagination',
     peau: true,
     taille: { w: 1477, h: 1551 },
     cadre:  { x: 0, y: 0, w: 1477, h: 1551 },
