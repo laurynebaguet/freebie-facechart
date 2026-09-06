@@ -29,6 +29,20 @@ html, body {
   color: var(--encre);
   font-family: Nunito, "Segoe UI", system-ui, sans-serif;
   overscroll-behavior: none;
+  /* LA PAGE ELLE-MÊME NE DÉFILE JAMAIS. C'est une application qui occupe
+     l'écran, pas un document qu'on parcourt : une barre de défilement sur la
+     page ne peut être qu'un accident.
+
+     Et l'accident arrivait. Sur un écran réglé à 150 %, la hauteur de fenêtre
+     tombe entre deux pixels ; toute boîte calée sur cette hauteur est arrondie
+     vers le haut, dépasse d'un pixel, et une barre verticale apparaît — qui,
+     en mangeant sa largeur, en fait surgir une horizontale à sa suite. Deux
+     barres pour un pixel.
+
+     Le défilement dont l'application a vraiment besoin — la galerie sur un
+     téléphone, quand les cartes passent à trois rangées — se produit dans
+     #racine, juste en dessous. */
+  overflow: hidden;
 }
 
 h1, h2, h3, .titre {
@@ -42,7 +56,7 @@ h1, h2, h3, .titre {
 button { font-family: inherit; font-size: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
 button:disabled { cursor: default; }
 
-#racine { height: 100%; }
+#racine { height: 100%; overflow-y: auto; }
 
 /* --------------------------------------------------------------- boutons */
 .btn {
@@ -64,7 +78,9 @@ button:disabled { cursor: default; }
 
 /* --------------------------------------------------------------- ecran 1 */
 .accueil {
-  min-height: 100%; display: flex; flex-direction: column;
+  /* Deux pixels de moins que son cadre, pour la même raison que la galerie :
+     voir la note sur l'arrondi, en haut de ce fichier. */
+  min-height: calc(100% - 2px); display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 1.4rem;
   text-align: center; padding: 2rem 1.4rem;
   background: radial-gradient(1200px 600px at 50% -10%, #fff 0%, var(--fond) 60%);
@@ -239,19 +255,31 @@ button:disabled { cursor: default; }
 }
 .entete .titre-mini { font-family: "Luckiest Guy", sans-serif; color: var(--violet); font-size: .95rem; }
 /* Le prénom se rebaptise ici comme sur sa carte. Le crayon reste effacé tant
-   qu'on ne s'y intéresse pas : le bandeau doit rester calme. */
+   qu'on ne s'y intéresse pas : le bandeau doit rester calme.
+
+   `line-height: 1` n'est pas cosmétique. Luckiest Guy réserve beaucoup de
+   place au-dessus et en dessous de ses lettres ; sans ça, la boîte du texte
+   est bien plus haute que les lettres visibles, et le crayon — centré sur la
+   boîte — se retrouve nettement plus bas que le prénom. */
 .entete .titre-mini.modifiable {
   display: inline-flex; align-items: center; gap: .3rem;
   padding: .1rem .35rem; border-radius: 8px;
+  line-height: 1;
 }
+.entete .titre-mini.modifiable span { line-height: 1; }
 .entete .titre-mini.modifiable svg { width: 13px; height: 13px; opacity: .35; }
 .entete .titre-mini.modifiable:hover { background: #F3EDFB; }
 .entete .titre-mini.modifiable:hover svg { opacity: 1; }
-.entete .titre-renomme { display: flex; align-items: center; gap: .25rem; }
+/* Le champ prend la place qui reste, il n'en réclame pas une fixe : sur un
+   téléphone, une largeur figée poussait « Ma fiche récap » hors de l'écran. */
+.entete .titre-renomme {
+  display: flex; align-items: center; gap: .25rem;
+  flex: 1 1 6em; min-width: 0; max-width: 11em;
+}
 .entete .titre-renomme input {
   font: inherit; font-weight: 700; color: var(--encre); background: var(--blanc);
   border: 2px solid var(--violet); border-radius: 8px; padding: .1rem .3rem;
-  width: 7.5em; min-width: 0;
+  flex: 1 1 auto; width: auto; min-width: 4.5em;
   /* 16 px au moins : en deçà, le téléphone zoome tout seul sur le champ. */
   font-size: 16px;
 }
@@ -332,12 +360,12 @@ button:disabled { cursor: default; }
 .btn-petit { padding: .42em .9em; font-size: .85rem; }
 
 /* aperçu du diamètre réel du pinceau ou de la gomme, posé à même le fond.
-   Aligné À GAUCHE, sous le libellé qui le nomme, plutôt qu'au milieu d'une
-   colonne où il flottait sans rien à quoi se rattacher. */
+   Centré dans les deux sens à l'intérieur de la place qui lui est réservée,
+   juste sous le libellé et son curseur. */
 .reglage-bloc { margin-top: .2rem; }
 .apercu-taille {
-  display: flex; align-items: center; justify-content: flex-start;
-  margin-top: .3rem; padding-left: .1rem;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: .3rem;
 }
 .apercu-taille span {
   display: block; border-radius: 50%;

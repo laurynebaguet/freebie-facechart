@@ -401,15 +401,23 @@ var UI = (function () {
   /* Réglage de taille, avec un aperçu du diamètre réel juste en dessous.
      La place réservée correspond au diamètre MAXIMAL de l'outil : l'aperçu
      n'est ainsi jamais à l'étroit, et la mise en page ne sursaute pas quand
-     on fait glisser le curseur. */
-  /* `echelle` est le nombre de pixels d'écran que vaut un millimètre de peau,
+     on fait glisser le curseur. Le rond y est centré dans les deux sens.
+
+     `echelle` est le nombre de pixels d'écran que vaut un millimètre de peau,
      GROSSISSEMENT COMPRIS. C'est ce qui rend l'aperçu honnête : quand on
      s'approche du visage, le rond du pinceau grossit à l'écran, et celui de
      l'aperçu grossit avec lui. Sans ça, l'aperçu annonçait une taille qui
-     n'était plus celle qu'on posait. */
+     n'était plus celle qu'on posait.
+
+     D'où le plafond : à fort grossissement, le diamètre réel dépasse ce que la
+     colonne peut montrer — la gomme la plus large vue à 600 % ferait près de
+     500 points. On s'arrête là où l'aperçu tient encore, plutôt que de laisser
+     un disque géant chasser la palette hors de l'écran. */
+  var COTE_MAX_APERCU = 90;
+
   function Curseur(p) {
-    var diametre = Math.max(3, p.valeur * p.echelle);
-    var place = parseFloat(p.max) * p.echelle;
+    var diametre = Math.min(COTE_MAX_APERCU, Math.max(3, p.valeur * p.echelle));
+    var place = Math.min(COTE_MAX_APERCU, parseFloat(p.max) * p.echelle);
     return html`
       <div class="reglage-bloc">
         <div class="reglage">
