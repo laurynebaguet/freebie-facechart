@@ -790,7 +790,21 @@ var Toile = (function () {
       }
     }
 
-    /* Range la trace de gomme dans chaque élément qu'elle entame. */
+    /* Range la trace de gomme dans chaque élément qu'elle entame.
+
+       LA LARGEUR CHANGE D'UNITÉ EN MÊME TEMPS QUE LES POINTS. La gomme se règle
+       en millimètres de PEAU, mais les points qu'on range ici viennent d'être
+       traduits dans le repère propre du motif, où une unité vaut `k`
+       millimètres de peau — `k` étant le grossissement du motif multiplié par
+       l'échelle de sa planche. Il faut donc y ramener aussi la largeur.
+
+       Sans cette division, la morsure rangée était plus étroite que celle qu'on
+       venait de voir se creuser : d'un facteur 0,683 sur la planche Basique,
+       dont le fichier n'est pas à l'échelle. Le motif semblait entièrement
+       effacé pendant le geste, puis réapparaissait en partie au relâchement.
+
+       Rangée dans le repère du motif, la morsure grandit ensuite avec lui quand
+       on le redimensionne — ce qui est bien ce qu'on veut d'un trou. */
     function poserGomme(brouillon) {
       var bg = boite({ type: 'trait', points: brouillon.points, taille: brouillon.taille });
       p.appliquer(function (d) {
@@ -798,8 +812,11 @@ var Toile = (function () {
           if (!seCroisent(bg, boite(el))) return null;
           var f = el.type === 'forme' ? Formes.get(el.setId, el.formeId) : null;
           if (el.type === 'forme' && !f) return null;
+          /* Un trait au pinceau est déjà rangé en millimètres de peau : rien
+             à convertir pour lui. */
+          var k = f ? (el.zoom || 1) * (f.echelleSet || 1) : 1;
           return {
-            taille: brouillon.taille,
+            taille: brouillon.taille / k,
             points: brouillon.points.map(function (pt) {
               var l = Rendu.versLocal(el, f, pt[0], pt[1]);
               return [l.x, l.y];
