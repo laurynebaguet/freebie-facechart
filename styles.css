@@ -396,8 +396,11 @@ button:disabled { cursor: default; }
   display: flex; gap: .28rem; overflow-x: auto;
   /* de quoi laisser respirer le halo de la pastille choisie, sur les quatre
      côtés : sans cette marge il serait rogné par le rognage latéral */
-  padding: 7px 6px; -webkit-overflow-scrolling: touch;
+  /* 11 points en bas, comme pour les pochoirs : de quoi loger la barre de
+     défilement de Firefox si jamais la rangée devient trop longue. */
+  padding: 7px 6px 11px; -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+  scrollbar-color: #D8CEC2 transparent;
 }
 .groupe .pastille { flex: 0 0 auto; }
 .groupe-apart { display: flex; align-items: center; gap: .55rem; min-width: 0; }
@@ -438,7 +441,15 @@ button:disabled { cursor: default; }
   display: flex; gap: .45rem;
   overflow-x: auto; overflow-y: hidden;
   scroll-snap-type: x proximity;
-  padding-bottom: .3rem;
+  /* La barre de défilement se loge DANS la boîte, tout en bas : il faut donc
+     lui réserver sa hauteur sous les vignettes, sinon elle leur mord dessus.
+     Les règles `::-webkit-scrollbar` plus bas ne valent que pour Chrome et
+     Safari ; Firefox les ignore et dessinait ici une barre épaisse, à
+     flèches, en travers de la rangée. `scrollbar-width` est le réglage qu'il
+     comprend, et 11 points suffisent à l'accueillir. */
+  scrollbar-width: thin;
+  scrollbar-color: #D8CEC2 transparent;
+  padding-bottom: 11px;
   -webkit-overflow-scrolling: touch;
 }
 .case-forme {
