@@ -74,7 +74,7 @@ var COULEURS = [
    Cadre commun = un motif posé sur la joue de l'un retombe sur la joue de
    l'autre. Cadres différents = il se décale.
 
-   Le cadre ci-dessous contient les cinq dessins réunis, marge comprise. Sa
+   Le cadre ci-dessous contient les six dessins réunis, marge comprise. Sa
    HAUTEUR est dictée par le plus encombrant : le foulard de Nour descend
    jusqu'à y 1615, bien plus bas que les autres nuques (vers 1451). Les autres
    visages ont donc un peu de blanc sous le menton — c'est le prix du cadre
@@ -133,6 +133,14 @@ var VISAGES = [
     id: 'jade',
     nom: 'Jade',
     image: 'images/visages/jade.jpg',
+    taille: { w: 1400, h: 1753 },
+    cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
+    visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
+  },
+  {
+    id: 'sacha',
+    nom: 'Sacha',
+    image: 'images/visages/sacha.jpg',
     taille: { w: 1400, h: 1753 },
     cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
