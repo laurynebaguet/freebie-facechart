@@ -878,6 +878,16 @@ var Toile = (function () {
       }
     }
 
+    /* Un clic dans le beige autour du dessin lâche la forme choisie, comme un
+       clic à côté de toute forme avec l'outil Modifier. Seul le beige lui-même
+       compte : les boutons et le rappel posés dessus gardent leurs clics. */
+    function onBeige(ev) {
+      if (ev.target !== boiteRef.current || gesteRef.current) return;
+      p.onSelection(null);
+      survolRef.current = null;
+      planifier();
+    }
+
     function onSortie() {
       if (gesteRef.current) return;
       survolRef.current = null;
@@ -914,7 +924,7 @@ var Toile = (function () {
     var zoome = vueBoutons.k > 1.01;
 
     return html`
-      <div class="scene" ref=${boiteRef}>
+      <div class="scene" ref=${boiteRef} onPointerDown=${onBeige}>
         <canvas
           ref=${canvasRef}
           onPointerDown=${onDown}

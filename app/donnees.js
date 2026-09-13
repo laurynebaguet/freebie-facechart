@@ -218,7 +218,7 @@ var PEAUX = [
 /* -------------------------------------------------------------- POCHOIRS */
 /* Un set = une planche physique. Une forme = un motif qu'on tamponne.
    « traces » liste les numéros de sous-chemins de la planche (voir
-   outils/diag2.html pour les visualiser et les numéroter).
+   outils/diag-planche.html?p=av2 pour les visualiser et les numéroter).
 
    L'ORDRE COMPTE, deux fois : celui des sets est celui des rubriques dans le
    tiroir des pochoirs, celui des formes est celui des vignettes à l'intérieur.
@@ -229,124 +229,137 @@ var PEAUX = [
    qui relie un maquillage déjà enregistré à sa forme. */
 var POCHOIRS = [
   {
-    id: '1v1',
-    nom: 'Basique',
+    id: 'av2',
+    /* Nom de travail, à remplacer par le vrai nom de la planche. */
+    nom: 'Planche Av2',
     lien: 'https://www.labaguettemaquille.fr',
-    planche: '1v1',
+    planche: 'av2',
 
-    /* Ce fichier n'est pas à l'échelle, contrairement à celui de la planche
-       av1 : il mesure 175,7 x 248,9 mm pour une planche qui en fait 120 x 170.
-       On le ramène donc à sa taille réelle. Le rapport est le même en largeur
-       (120/175,7) et en hauteur (170/248,9), ce qui confirme un simple
-       agrandissement du dessin. */
-    echelle: 0.683,
-
-    /* Cette planche est la plus grande des deux : 175,7 x 248,9 mm.
-
-       Plusieurs motifs y figurent en double ou en triple, à des tailles
-       différentes : comme on peut redimensionner un tampon, on ne déclare que
-       le plus grand exemplaire, qui a la meilleure définition. */
-
-    /* `rotBase` présente la forme dans le sens où on l'emploie, alors qu'elle
-       est couchée ou retournée sur la planche. En radians : Math.PI vaut un
-       demi-tour, et un angle positif tourne dans le sens des aiguilles. */
+    /* Pas d'`echelle` ici : le tracé de cette planche est déjà recomposé à la
+       bonne taille, forme par forme, par outils/recomposer.html?p=av2. Les
+       tailles y ont été relevées sur les maquillages d'essai de Lauryne sur
+       Jade (13/09/2026). Pour en retoucher une, c'est là-bas qu'on le fait. */
     formes: [
-      /* Le cœur est découpé trois fois (morceaux 1, 3 et 4). L'échancrure de
-         l'exemplaire retenu pointe vers la droite : on le redresse d'un quart
-         de tour à gauche pour la ramener en haut, pointe en bas. */
-      { id: 'coeur',  nom: 'Cœur',  traces: [4],
-        rotBase: -80 * Math.PI / 180 },
+      { id: 'chapeau',  nom: 'Chapeau de sorcière', traces: [0] },
+      { id: 'araignee', nom: 'Araignée',            traces: [1] },
 
-      /* Cinq branches, espacées de 72°. La plus haute est à 290° : on ramène
-         une branche à la verticale. */
-      { id: 'etoile', nom: 'Étoile', traces: [2],
-        rotBase: -20 * Math.PI / 180 },
+      /* Les sept écailles restent un seul tampon, comme sur le plastique :
+         chacun gomme ensuite celles qui sont en trop. */
+      { id: 'ecailles', nom: 'Écailles', traces: [2, 3, 4, 5, 6, 7, 8] },
 
-      /* Huit étoiles de trois tailles, semées sur la planche. On garde leurs
-         positions les unes par rapport aux autres : c'est le semis qui fait le
-         motif, comme les bulles de chaudron de l'autre planche. */
-      { id: 'etincelles', nom: 'Étincelles',
-        traces: [6, 11, 8, 13, 15, 7, 10, 16] },
+      /* Le même pochoir sert de croc et de corne. */
+      { id: 'croc',     nom: 'Croc ou corne',       traces: [9] },
 
-      { id: 'rond',   nom: 'Rond',   traces: [9] },
+      /* Quatre fleurs au choix pour la couronne (les deux dernières ajoutées
+         le 13/09/2026), et un rond pour leur cœur. */
+      { id: 'fleur',    nom: 'Fleur',               traces: [10] },
+      { id: 'fleur-2',  nom: 'Fleur festonnée',     traces: [11] },
+      { id: 'fleur-3',  nom: 'Fleur à huit pétales', traces: [22] },
+      { id: 'fleur-4',  nom: 'Marguerite',          traces: [23] },
+      { id: 'coeur-fleur', nom: 'Cœur de fleur',    traces: [25] },
 
-      /* Grand axe vertical sur la planche, couché ici. */
-      { id: 'ovale',  nom: 'Ovale',  traces: [5],
-        rotBase: Math.PI / 2 },
+      /* Ces deux feuilles sont découpées DROITES sur la planche, mais l'appli
+         les présente penchées de 45°, comme on les pose (`rotBase`, en
+         radians, sens des aiguilles). La fiche du fournisseur, elle, les
+         montre telles qu'elles sont découpées. */
+      { id: 'feuille',  nom: 'Feuille',             traces: [12],
+        rotBase: Math.PI / 4 },
+      { id: 'feuilles', nom: 'Feuille double',      traces: [13] },
+      { id: 'feuille-dentelee', nom: 'Feuille dentelée', traces: [24],
+        rotBase: Math.PI / 4 },
 
-      /* La fenêtre d'une bordure va d'un creux à un creux, pour que le motif
-         se répète à l'identique sans morceau orphelin au bout. « arrondi »
-         casse l'angle droit des extrémités, sans rien estomper.
-
-         Période 35 mm, creux à 62 / 97 / 132 / 166. */
-      { id: 'vagues', nom: 'Vagues', traces: [0],
-        /* Coupée aux creux (62 et 166), donc trois vagues entières.
-           « arrondi » adoucit toute la silhouette, pas seulement les coins de
-           la fenêtre : il n'y reste aucun angle vif, ni en haut ni en bas.
-           Le rayon vaut la moitié de l'épaisseur de matière aux extrémités
-           (6,8 mm) : le bout s'y arrondit donc en demi-cercle de lui-même,
-           en rognant, sans rien prolonger. */
-        bande: { x: 62, y: 268, w: 104, h: 12, arrondi: 3.4 } }
-
-      /* BORD DROIT — retiré volontairement, en attente d'une planche corrigée.
-         Il est découpé en arcs qui BOMBENT vers l'extérieur. Or la peinture
-         passe autour du plastique : ces bosses de plastique donnent donc des
-         pointes en V peintes, et non les collines voulues. Pour obtenir des
-         collines, il faut creuser des encoches arrondies DANS le bord, au lieu
-         d'y ajouter des bosses.
-
-         Le moteur sait rendre les deux cas : une bande « positif: true »
-         remplit le tracé lui-même au lieu de son pourtour. */
+      /* Huit étoiles en un seul tampon : deux grandes (pochoir 7a), trois
+         petites et trois très petites (pochoir 7b). Le semis est celui de la
+         joue gauche ; « Retourner » donne celui de la joue droite. */
+      { id: 'etoiles',  nom: 'Étincelles',          traces: [14, 15, 16, 17, 18, 19, 20, 21] }
     ]
   },
 
   {
-    id: 'av1',
-    nom: 'Dans la cabane de la sorcière',
+    id: 'bv2',
+    /* Nom de travail, à remplacer par le vrai nom de la planche. */
+    nom: 'Planche Bv2',
     lien: 'https://www.labaguettemaquille.fr',
-    planche: 'av1',
+    planche: 'bv2',
+
+    /* Comme av2 : tracé déjà à la bonne taille, recomposé par
+       outils/recomposer.html?p=bv2 d'après les essais sur Jade (13/09/2026). */
     formes: [
-      { id: 'chapeau',  nom: 'Chapeau de sorcière', traces: [2],
-        rotBase: 66 * Math.PI / 180 },
-      { id: 'fiole',    nom: 'Fiole de potion',    traces: [10] },
-      { id: 'crane',    nom: 'Crâne',              traces: [4] },
+      /* Le pirate. Le crâne, ses os et son visage se posent dans le chapeau ;
+         ils restent trois tampons pour autoriser trois couleurs. */
+      { id: 'chapeau-pirate', nom: 'Chapeau de pirate', traces: [1] },
+      { id: 'os',             nom: 'Os croisés',        traces: [2] },
+      { id: 'crane',          nom: 'Crâne',             traces: [3] },
+      { id: 'visage-crane',   nom: 'Visage du crâne',   traces: [4, 5, 6] },
+      { id: 'bandeau',        nom: 'Bandeau de pirate', traces: [0] },
 
-      /* Les yeux et le nez du crâne sont découpés à trois endroits éloignés de
-         la planche, pour que le plastique tienne. On les recompose ici dans la
-         position où on les emploie vraiment. Les deux yeux sont taillés en
-         amande, inclinés symétriquement : il faut donc les garder chacun de
-         son côté, sans les faire pivoter. */
-      { id: 'visage-crane', nom: 'Visage du crâne', traces: [
-          { t: 15, dx: 40.79, dy: 93.18 },   /* œil gauche, incliné à -57° */
-          { t: 13, dx: 47.59, dy: 85.08 },   /* œil droit,  incliné à +57° */
-          { t: 14, dx: 41.66, dy: 93.26,     /* nez, redressé d'un quart   */
-            rot: Math.PI / 2 }
-        ] },
+      /* Trois moustaches et deux boucs, pour personnaliser. Une moustache est
+         une moitié : « Retourner » donne l'autre. */
+      { id: 'moustache-1',    nom: 'Moustache bouclée', traces: [7] },
+      { id: 'moustache-2',    nom: 'Moustache effilée', traces: [8] },
+      { id: 'moustache-3',    nom: 'Moustache tombante', traces: [9] },
+      { id: 'bouc-1',         nom: 'Bouc',              traces: [10] },
+      { id: 'bouc-2',         nom: 'Bouc arrondi',      traces: [11] },
 
-      { id: 'toile',    nom: "Toile d'araignée",   traces: [1],
-        rotBase: Math.PI },
-      { id: 'araignee', nom: 'Araignée',           traces: [8] },
+      { id: 'nez-chat',       nom: 'Nez de chat',       traces: [12] },
 
-      { id: 'bulles',   nom: 'Bulles de chaudron', traces: [3, 5, 6, 7, 9, 11, 12] },
+      /* La nuit fantôme, choisie le 13/09/2026. Le fantôme est assez grand
+         pour recevoir le visage du crâne. Les deux chauves-souris et les
+         trois étoiles sont chacune un seul tampon. */
+      { id: 'lune',           nom: 'Lune',              traces: [13] },
+      { id: 'fantome',        nom: 'Fantôme',           traces: [14] },
+      { id: 'chauves-souris', nom: 'Chauves-souris',    traces: [15, 16] },
+      { id: 'trois-etoiles',  nom: 'Étoiles',           traces: [17, 18, 19] }
+    ]
+  },
 
-      /* Bords de la planche : ce ne sont pas des motifs découpés, on pose le
-         bord et la peinture passe autour. « bande » délimite la fenêtre, et
-         ses limites sont choisies pour tomber dans le plastique, sinon on
-         fabrique des bords qui n'existent pas sur le vrai pochoir. */
-      { id: 'coulures', nom: 'Coulures', traces: [0],
-        /* le bord droit s'arrête à 172,5 : au-delà, le plastique s'incurve et
-           laissait passer un mince trait de peinture qui n'existe pas */
-        bande: { x: 92.5, y: 36, w: 80, h: 50 } },
-      { id: 'dents',    nom: 'Dents de scie', traces: [0],
-        /* pointes vers le bas ; seul le motif tourne, son cadre reste droit */
-        rotBase: Math.PI / 2,
-        /* Trois doubles montagnes, et rien de plus. Le bord alterne une grande
-           dent et une petite ; la fenêtre va d'un creux PROFOND à un creux
-           profond, calée au quart de millimètre sur le
-           point le plus bas de chacun (61,5 mm et 177 mm sur la planche).
-           Dépasser ne serait-ce que d'un millimètre fait repartir le bord vers
-           le haut et laisse une languette disgracieuse au bout. */
-        bande: { x: 52, y: 61.5, w: 17, h: 115.5 } }
+  {
+    id: 'cv2',
+    /* Nom de travail, à remplacer par le vrai nom de la planche. */
+    nom: 'Planche Cv2',
+    lien: 'https://www.labaguettemaquille.fr',
+    planche: 'cv2',
+
+    /* Comme av2 : tracé déjà à la bonne taille, recomposé par
+       outils/recomposer.html?p=cv2 d'après les essais (13/09/2026). */
+    formes: [
+      /* La calavera. Le nez du crâne est le cœur de l'ancienne planche Basique,
+         retourné pointe en haut. La fleur et la feuille viennent d'av2, en
+         plus grand, comme sur le modèle de la calavera. */
+      { id: 'tour-oeil',      nom: "Tour de l'œil",   traces: [0] },
+      { id: 'nez-crane',      nom: 'Nez du crâne',    traces: [1] },
+      { id: 'fleur',          nom: 'Fleur',           traces: [2] },
+      { id: 'feuille',        nom: 'Feuille',         traces: [3] },
+      { id: 'feuille-triple', nom: 'Feuille triple',  traces: [4] },
+
+      /* La poupée patchwork : deux tailles de patch, et ses boutons. */
+      { id: 'patch-grand',    nom: 'Grand patch',     traces: [5] },
+      { id: 'patch',          nom: 'Patch',           traces: [6] },
+      { id: 'bouton',         nom: 'Bouton',          traces: [7] },
+
+      /* L'alien. L'étoile est celle de l'ancienne planche Basique ; les chevrons
+         sont deux traits en un seul tampon. */
+      { id: 'oeil',           nom: 'Œil',             traces: [8] },
+      { id: 'antenne',        nom: 'Antenne',         traces: [9] },
+      { id: 'etoile',         nom: 'Étoile',          traces: [10] },
+      { id: 'chevrons',       nom: 'Chevrons',        traces: [11, 12] }
+    ]
+  },
+
+  {
+    id: 'papillon',
+    /* Sortie de bv2 le 13/09/2026 : le papillon a sa propre planche,
+       rangée en dernier dans le tiroir. */
+    nom: 'Papillon',
+    lien: 'https://www.labaguettemaquille.fr',
+    planche: 'papillon',
+    formes: [
+      /* Une aile de chaque sorte, et son motif. Les motifs se découpent d'un
+         seul tenant, comme les écailles. « Retourner » donne l'autre côté. */
+      { id: 'aile-haut',       nom: 'Aile du haut',            traces: [0] },
+      { id: 'aile-bas',        nom: 'Aile du bas',             traces: [1] },
+      { id: 'motif-aile-haut', nom: "Motif de l'aile du haut", traces: [2, 3, 4, 5, 6, 7, 8, 9] },
+      { id: 'motif-aile-bas',  nom: "Motif de l'aile du bas",  traces: [10, 11, 12, 13, 14, 15, 16] }
     ]
   }
 ];
