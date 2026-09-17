@@ -1,19 +1,33 @@
-# Photos personnelles : elles servent seulement à caler les couleurs,
-# l'application n'en a pas besoin, et le dépôt est public.
-swatch*.jpg
-swatch*.jpeg
-images/references/
+# Ce dépôt est public, et tout ce qu'il contient est servi par GitHub Pages.
+# On n'y met donc QUE ce qui fait tourner l'application : tout est écarté par
+# défaut, puis chaque élément utile est réautorisé un par un, ci-dessous.
+#
+# Tout le reste (outils, tracés des pochoirs, modes d'emploi, photos,
+# dessins originaux…) vit sur l'ordinateur et dans OneDrive, jamais en ligne.
+# Un nouveau fichier ou dossier reste donc privé tant qu'on ne l'ajoute pas
+# ici explicitement.
 
-# Les dessins en haute resolution : plusieurs Mo chacun, inutiles en ligne.
-# L'application ne se sert que des copies allegees, posees dans
-# images/visages/ par outils/reduire-visage.ps1. Les originaux restent ici,
-# sur ton disque et dans OneDrive.
-images/visages/originaux/
+/*
+!/.gitignore
+!/index.html
+!/styles.css
+!/app/
+!/vendor/
 
-# Réglages locaux de l'éditeur
-.claude/
+# Images : seulement les visages allégés et les deux fichiers de marque
+# que l'appli charge. Les originaux (images/visages/originaux/) restent privés.
+!/images/
+/images/*
+!/images/visages/
+/images/visages/*
+!/images/visages/*.jpg
+!/images/visages/*.png
+!/images/marque/
+/images/marque/*
+!/images/marque/favicon.png
+!/images/marque/logo-principal.png
 
-# Fichiers créés par Windows et OneDrive
+# Fichiers créés par Windows et OneDrive, où qu'ils soient
 Thumbs.db
 desktop.ini
 *.tmp
