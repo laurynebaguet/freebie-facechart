@@ -168,9 +168,14 @@
       }, 'fin');
     }, [appliquer]);
 
-    /* La palette sert aussi à repeindre la forme sélectionnée. */
+    /* La palette sert aussi à repeindre la forme sélectionnée.
+
+       Depuis la gomme, toucher une couleur reprend le pinceau : on a gommé,
+       on veut repeindre, et la gomme n'a que faire d'une couleur. Demandé par
+       Lauryne le 26/09/2026. */
     function choisirCouleur(cid) {
       setCouleurId(cid);
+      if (outil === 'gomme') setOutil('pinceau');
       if (selectionId == null) return;
       var id = selectionId;
       appliquer(function (d) { return Modele.modifier(d, id, { couleurId: cid }); }, 'fin');
