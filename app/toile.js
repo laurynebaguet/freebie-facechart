@@ -33,30 +33,62 @@ var Toile = (function () {
 
   var PAS_MM = 0.35;       // distance minimale entre deux points d'un trait
 
-  /* STABILISATION du pinceau et de la gomme, à la façon du « StreamLine » de
-     Procreate (ajoutée le 26/09/2026). La pointe ne colle pas à la main : elle
-     la suit au bout d'une petite corde. Tant que la main tremble à l'intérieur
-     de la corde, la pointe ne bouge pas ; dès qu'elle s'éloigne, elle tire la
-     pointe derrière elle. Les petits tremblements disparaissent, les courbes
-     s'arrondissent, et au lever la pointe rattrape la main pour que le trait
-     finisse bien là où on l'a arrêté.
+  /* STABILISATION du pinceau et de la gomme (26/09/2026).
 
-     Longueur de la corde, en pixels d'ÉCRAN : la stabilisation se ressent
-     pareil qu'on ait zoomé ou non. 0 la supprime. Elle dépend de ce qui
-     dessine : un doigt tremble bien plus qu'une souris. Essayée par Lauryne
-     sur tablette le 26/09/2026, une corde de 6 pixels ne suffisait pas au
-     doigt ; d'où des valeurs plus longues pour le doigt et le stylet. */
-  var CORDE_PX = { souris: 6, stylet: 12, doigt: 16 };
+     On trie les mouvements par leur RYTHME, pas par leur taille. Un
+     tremblement fait des allers-retours rapides, autour de dix par seconde ;
+     un détail voulu — une verrue, un ruban qui suit le bord d'un chapeau — se
+     dessine bien plus lentement, même tout petit. Le filtre gomme donc ce qui
+     va et vient vite, et laisse passer ce qui se dessine posément.
 
-  /* Second étage, par-dessus la corde : chaque point du trait ne rejoint la
-     pointe qu'à moitié (LISSAGE = 0,5). Là où la corde laisse passer un
-     zigzag franc, ce lissage l'arrondit. Plus proche de 0, plus c'est lisse
-     mais plus ça traîne ; 1 le supprime. */
-  var LISSAGE = 0.5;
+     Première version, abandonnée le même jour : une « corde » à la StreamLine
+     de Procreate, où la pointe ne bougeait pas tant que la main restait
+     à quelques pixels. Elle triait par la TAILLE, et avalait tout détail plus
+     petit qu'elle : une verrue disparaissait entièrement, un ruban ondulé
+     perdait les cinq sixièmes de sa hauteur au doigt. À la souris comme sur
+     la tablette, Lauryne ne pouvait plus dessiner de petit détail sans zoomer.
 
-  function cordePx(ev) {
-    if (ev.pointerType === 'pen') return CORDE_PX.stylet;
-    return auDoigt(ev) ? CORDE_PX.doigt : CORDE_PX.souris;
+     Le filtre est le « filtre un euro » (Casiez, Roussel, Vogel, 2012),
+     classique pour les stylets. Mesuré sur un tracé simulé : le tremblement
+     est divisé par plus de deux, une verrue de 3 mm en garde 2,5, un ruban
+     de 5 mm de haut en garde 4,3.
+
+     `coupure` (en passages par seconde) : en dessous, le mouvement passe ; au
+     dessus, il est adouci. PLUS PETITE = PLUS STABLE mais plus mou. Un doigt
+     tremble plus qu'une souris, d'où un réglage plus fort. `elan` relève la
+     coupure quand la main va vite, pour que les grands traits ne traînent
+     pas derrière elle. */
+  var STABILISATION = {
+    souris: { coupure: 3, elan: 0.01 },
+    stylet: { coupure: 2, elan: 0.01 },
+    doigt:  { coupure: 2, elan: 0.01 }
+  };
+
+  function stabilisateur(ev, depart) {
+    var reglage = ev.pointerType === 'pen' ? STABILISATION.stylet
+                : auDoigt(ev) ? STABILISATION.doigt : STABILISATION.souris;
+    var pos = { x: depart.x, y: depart.y };
+    var vitesse = { x: 0, y: 0 };
+    var avant = ev.timeStamp;
+
+    // part du chemin qu'on accepte de faire vers la main, selon la coupure
+    function part(coupure, dt) {
+      var tau = 1 / (2 * Math.PI * coupure);
+      return 1 / (1 + tau / dt);
+    }
+
+    return function (pt, quand) {
+      var dt = Math.max(0.001, (quand - avant) / 1000);
+      avant = quand;
+      var a = part(1, dt);
+      vitesse.x += ((pt.x - pos.x) / dt - vitesse.x) * a;
+      vitesse.y += ((pt.y - pos.y) / dt - vitesse.y) * a;
+      var b = part(reglage.coupure +
+                   reglage.elan * Math.hypot(vitesse.x, vitesse.y), dt);
+      pos.x += (pt.x - pos.x) * b;
+      pos.y += (pt.y - pos.y) * b;
+      return pos;
+    };
   }
   /* Un pochoir ne se redimensionne pas : il a la taille de sa découpe, et les
      planches sont parties chez le fournisseur. La marge de 0,7 à 1,5 fois
@@ -706,10 +738,7 @@ var Toile = (function () {
         ? { type: 'gomme', taille: q.tailleGomme, points: [[pt.x, pt.y]] }
         : { type: 'trait', couleurId: q.couleurId, taille: q.taillePinceau,
             points: [[pt.x, pt.y]], gommes: [] };
-      gesteRef.current = {
-        mode: 'trace', corde: cordePx(ev),
-        pointe: { x: pt.x, y: pt.y }, lisse: { x: pt.x, y: pt.y }
-      };
+      gesteRef.current = { mode: 'trace', stable: stabilisateur(ev, pt) };
       planifier();
     }
 
@@ -770,18 +799,8 @@ var Toile = (function () {
       }
 
       if (g.mode === 'trace') {
-        // la main tire la pointe au bout de la corde (voir CORDE_PX)
-        var pointe = g.pointe;
-        var corde = g.corde * mmParPixel();
-        var ex = pt.x - pointe.x, ey = pt.y - pointe.y;
-        var ecart = Math.hypot(ex, ey);
-        if (ecart <= corde) return;
-        pointe.x = pt.x - ex / ecart * corde;
-        pointe.y = pt.y - ey / ecart * corde;
-        // puis le trait ne rejoint la pointe qu'à moitié (voir LISSAGE)
-        g.lisse.x += (pointe.x - g.lisse.x) * LISSAGE;
-        g.lisse.y += (pointe.y - g.lisse.y) * LISSAGE;
-        ajouterPoint(g.lisse);
+        // le tremblement est retiré ici (voir STABILISATION)
+        ajouterPoint(g.stable(pt, ev.timeStamp));
         return;
       }
 
@@ -876,15 +895,18 @@ var Toile = (function () {
       if (!g) return;
 
       if (g.mode === 'trace') {
-        /* Au lever, la pointe rattrape la main — en quelques pas qui
-           s'amenuisent, pour que la fin du trait reste arrondie au lieu de
-           filer tout droit vers le doigt. */
+        /* Au lever, le trait rejoint la main — le filtre a toujours un
+           soupçon de retard — en quelques pas qui s'amenuisent, pour que la
+           fin reste arrondie au lieu de filer tout droit vers le doigt. */
         if (brouillonRef.current) {
           var main = enMm(ev);
+          var fin = brouillonRef.current.points;
+          var l = fin[fin.length - 1];
+          l = { x: l[0], y: l[1] };
           for (var i = 0; i < 4; i++) {
-            g.lisse.x += (main.x - g.lisse.x) * LISSAGE;
-            g.lisse.y += (main.y - g.lisse.y) * LISSAGE;
-            ajouterPoint(g.lisse);
+            l.x += (main.x - l.x) * 0.5;
+            l.y += (main.y - l.y) * 0.5;
+            ajouterPoint(l);
           }
           ajouterPoint(main);
         }
