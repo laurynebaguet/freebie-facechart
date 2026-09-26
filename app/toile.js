@@ -32,6 +32,19 @@ var Toile = (function () {
   var LOUPE_ECART = 62;    // hauteur libre laissée entre le doigt et le disque
 
   var PAS_MM = 0.35;       // distance minimale entre deux points d'un trait
+
+  /* STABILISATION du pinceau et de la gomme, à la façon du « StreamLine » de
+     Procreate (ajoutée le 26/09/2026). La pointe ne colle pas à la main : elle
+     la suit au bout d'une petite corde. Tant que la main tremble à l'intérieur
+     de la corde, la pointe ne bouge pas ; dès qu'elle s'éloigne, elle tire la
+     pointe derrière elle. Les petits tremblements disparaissent, les courbes
+     s'arrondissent, et au lever la pointe rattrape la main pour que le trait
+     finisse bien là où on l'a arrêté.
+
+     Longueur de la corde, en pixels d'ÉCRAN : la stabilisation se ressent
+     pareil qu'on ait zoomé ou non. 0 la supprime ; au-delà de 10, le trait
+     traîne visiblement derrière la main et devient pénible à diriger. */
+  var CORDE_PX = 6;
   /* Un pochoir ne se redimensionne pas : il a la taille de sa découpe, et les
      planches sont parties chez le fournisseur. La marge de 0,7 à 1,5 fois
      qu'on laissait jusque-là a été retirée le 26/09/2026. */
@@ -680,7 +693,7 @@ var Toile = (function () {
         ? { type: 'gomme', taille: q.tailleGomme, points: [[pt.x, pt.y]] }
         : { type: 'trait', couleurId: q.couleurId, taille: q.taillePinceau,
             points: [[pt.x, pt.y]], gommes: [] };
-      gesteRef.current = { mode: 'trace' };
+      gesteRef.current = { mode: 'trace', pointe: { x: pt.x, y: pt.y } };
       planifier();
     }
 
@@ -741,12 +754,15 @@ var Toile = (function () {
       }
 
       if (g.mode === 'trace') {
-        var pts = brouillonRef.current.points;
-        var dernier = pts[pts.length - 1];
-        if (Math.hypot(pt.x - dernier[0], pt.y - dernier[1]) >= PAS_MM) {
-          pts.push([pt.x, pt.y]);
-          planifier();
-        }
+        // la main tire la pointe au bout de la corde (voir CORDE_PX)
+        var pointe = g.pointe;
+        var corde = CORDE_PX * mmParPixel();
+        var ex = pt.x - pointe.x, ey = pt.y - pointe.y;
+        var ecart = Math.hypot(ex, ey);
+        if (ecart <= corde) return;
+        pointe.x = pt.x - ex / ecart * corde;
+        pointe.y = pt.y - ey / ecart * corde;
+        ajouterPoint(pointe);
         return;
       }
 
@@ -762,6 +778,17 @@ var Toile = (function () {
         gl.rot = Math.atan2(pt.x - gl.x, gl.y - pt.y);
         planifier();
         return;
+      }
+    }
+
+    /* Ajoute un point au trait en cours, s'il s'est assez éloigné du
+       précédent pour que ça vaille la peine. */
+    function ajouterPoint(pt) {
+      var pts = brouillonRef.current.points;
+      var dernier = pts[pts.length - 1];
+      if (Math.hypot(pt.x - dernier[0], pt.y - dernier[1]) >= PAS_MM) {
+        pts.push([pt.x, pt.y]);
+        planifier();
       }
     }
 
@@ -830,6 +857,8 @@ var Toile = (function () {
       if (!g) return;
 
       if (g.mode === 'trace') {
+        // au lever, la pointe rattrape la main
+        if (brouillonRef.current) ajouterPoint(enMm(ev));
         var brouillon = brouillonRef.current;
         brouillonRef.current = null;
         if (brouillon && brouillon.points.length) {
