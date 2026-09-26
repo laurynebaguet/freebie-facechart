@@ -125,9 +125,15 @@ var Rendu = (function () {
 
      La rotation de présentation vient en DERNIER, donc au plus près du tracé :
      elle redresse le motif sans entraîner ni le cadre de sélection ni le
-     miroir, qui restent dans le repère de l'utilisateur. */
+     miroir, qui restent dans le repère de l'utilisateur.
+
+     UN POCHOIR N'A QU'UNE TAILLE, celle de sa découpe : les planches sont
+     parties chez le fournisseur, on ne peut plus l'agrandir ni le réduire
+     (retiré le 26/09/2026). Un ancien maquillage peut encore porter un `zoom`
+     enregistré du temps où c'était permis : il est ignoré, et le motif
+     reprend sa vraie taille. */
   function transformeForme(ctx, el, forme, echelle) {
-    var k = (el.zoom || 1) * (forme.echelleSet || 1);
+    var k = forme.echelleSet || 1;
     ctx.translate(el.x * echelle, el.y * echelle);
     ctx.rotate(el.rot || 0);
     if (el.miroir) ctx.scale(-1, 1);
@@ -140,10 +146,9 @@ var Rendu = (function () {
     }
   }
 
-  /* Dimensions d'une forme posée, agrandissement compris, en mm. */
+  /* Dimensions d'une forme posée, en mm. */
   function dimensions(el, forme) {
-    var k = el.zoom || 1;
-    return { l: forme.largeurMm * k, h: forme.hauteurMm * k };
+    return { l: forme.largeurMm, h: forme.hauteurMm };
   }
 
   /* Un point du visage (mm) vers le repère propre d'un élément : l'inverse
@@ -151,7 +156,7 @@ var Rendu = (function () {
   function versLocal(el, forme, xMm, yMm) {
     if (el.type !== 'forme') return { x: xMm, y: yMm };
     var a = -(el.rot || 0);
-    var k = (el.zoom || 1) * (forme.echelleSet || 1);
+    var k = forme.echelleSet || 1;
     var dx = xMm - el.x, dy = yMm - el.y;
     var lx = dx * Math.cos(a) - dy * Math.sin(a);
     var ly = dx * Math.sin(a) + dy * Math.cos(a);
@@ -400,8 +405,8 @@ var Rendu = (function () {
 
   /* La réponse est mise de côté, rangée sous la LISTE DE GOMMES de l'élément.
 
-     Ce choix de clé n'est pas anodin. Déplacer une forme, la tourner, la
-     redimensionner ou la repeindre fabrique un élément neuf à chaque image du
+     Ce choix de clé n'est pas anodin. Déplacer une forme, la tourner ou la
+     repeindre fabrique un élément neuf à chaque image du
      geste — mais sa liste de gommes, elle, reste le même tableau tant qu'on ne
      gomme pas. Et comme les morsures sont rangées dans le repère PROPRE de
      l'élément, aucun de ces gestes ne change ce qu'il en reste. La réponse
@@ -458,7 +463,6 @@ var Rendu = (function () {
       rotation: place(0, -h - poigneeMm),
       poubelle: place(w, -h),
       miroir: place(0, h + poigneeMm),
-      redim: place(w, h),
       demi: { w: w, h: h, a: a }
     };
   }
@@ -466,11 +470,12 @@ var Rendu = (function () {
   /* `finesse` compense un éventuel agrandissement de la vue : les traits et
      les pastilles doivent garder la même taille à l'écran quel que soit le
      zoom, sinon ils deviennent énormes dès qu'on regarde de près. */
-  /* Le cadre de la forme choisie, et — seulement si `avecPoignees` — les deux
-     boutons de rotation et d'agrandissement.
+  /* Le cadre de la forme choisie, et — seulement si `avecPoignees` — le
+     bouton de rotation. Il n'y a plus de pastille d'agrandissement depuis le
+     26/09/2026 : un pochoir garde la taille de sa découpe.
 
-     Au doigt on ne les dessine pas : deux doigts font tourner et grandir la
-     forme directement, comme un autocollant, ce qui est plus sûr que de viser
+     Au doigt on ne le dessine pas : deux doigts font tourner la forme
+     directement, comme un autocollant, ce qui est plus sûr que de viser
      une pastille de 30 pixels. Retirer et retourner ont quitté la forme pour
      le tiroir, où le doigt a de la place. */
   function selection(ctx, el, echelle, poigneeMm, finesse, avecPoignees) {
@@ -505,37 +510,6 @@ var Rendu = (function () {
     ctx.fillStyle = '#fff';
     ctx.fill();
     ctx.stroke();
-
-    /* Une pastille, avec son pictogramme redressé pour rester lisible même
-       quand la forme est de travers. */
-    function pastille(px, py, fond, dessine) {
-      ctx.beginPath();
-      ctx.arc(px, py, r * 0.6, 0, Math.PI * 2);
-      ctx.fillStyle = fond;
-      ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1.5 * t;
-      ctx.stroke();
-      ctx.save();
-      ctx.translate(px, py);
-      ctx.rotate(-a);
-      ctx.strokeStyle = '#fff';
-      // trait fin : à cette taille, un trait épais empâte le pictogramme
-      ctx.lineWidth = 1.2 * t;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      dessine(r * 0.3);
-      ctx.restore();
-    }
-
-    // agrandissement, au coin bas droit : double flèche en diagonale
-    pastille(w / 2 + m, h / 2 + m, '#7B3FD3', function (b) {
-      ctx.beginPath();
-      ctx.moveTo(-b, -b); ctx.lineTo(b, b);
-      ctx.moveTo(-b, -b * 0.1); ctx.lineTo(-b, -b); ctx.lineTo(-b * 0.1, -b);
-      ctx.moveTo(b, b * 0.1); ctx.lineTo(b, b); ctx.lineTo(b * 0.1, b);
-      ctx.stroke();
-    });
 
     ctx.restore();
   }

@@ -32,12 +32,9 @@ var Toile = (function () {
   var LOUPE_ECART = 62;    // hauteur libre laissée entre le doigt et le disque
 
   var PAS_MM = 0.35;       // distance minimale entre deux points d'un trait
-  /* Marge d'adaptation d'un pochoir au visage qu'on maquille. Volontairement
-     étroite : un pochoir a une taille physique, on l'ajuste d'un enfant à
-     l'autre — entre 3 et 10 ans l'écart réel est d'environ 20 % — mais on ne
-     le triple pas, ce serait irréalisable au tampon. */
-  var ZOOM_MIN = 0.7;
-  var ZOOM_MAX = 1.5;
+  /* Un pochoir ne se redimensionne pas : il a la taille de sa découpe, et les
+     planches sont parties chez le fournisseur. La marge de 0,7 à 1,5 fois
+     qu'on laissait jusque-là a été retirée le 26/09/2026. */
 
   /* Un doigt vise moins bien qu'une souris, et mérite des zones plus larges.
      Le stylet, lui, est précis : on le range du côté de la souris. */
@@ -66,7 +63,7 @@ var Toile = (function () {
   function boite(el) {
     if (el.type === 'forme') {
       var f = Formes.get(el.setId, el.formeId);
-      var r = f ? Math.hypot(f.largeurMm, f.hauteurMm) / 2 * (el.zoom || 1) : 0;
+      var r = f ? Math.hypot(f.largeurMm, f.hauteurMm) / 2 : 0;
       return { x1: el.x - r, y1: el.y - r, x2: el.x + r, y2: el.y + r };
     }
     var m = (el.taille || 0) / 2;
@@ -175,7 +172,7 @@ var Toile = (function () {
         elements = elements.map(function (el) {
           return el.id === glisse.id
             ? Object.assign({}, el, {
-                x: glisse.x, y: glisse.y, rot: glisse.rot, zoom: glisse.zoom
+                x: glisse.x, y: glisse.y, rot: glisse.rot
               })
             : el;
         });
@@ -483,7 +480,7 @@ var Toile = (function () {
       /* La poignée la PLUS PROCHE dans le rayon, et non la première de la
          liste : élargies pour le doigt, deux poignées voisines se recouvrent,
          et l'ordre de déclaration n'a rien à voir avec ce qu'on visait. */
-      var noms = avecPoignees() ? ['redim', 'rotation'] : [];
+      var noms = avecPoignees() ? ['rotation'] : [];
       var meilleure = null, plusCourt = Infinity;
       for (var i = 0; i < noms.length; i++) {
         var d = Math.hypot(pt.x - pg[noms[i]].x, pt.y - pg[noms[i]].y);
@@ -504,10 +501,7 @@ var Toile = (function () {
     function curseurPour(pt) {
       var q = propsRef.current;
       var c = cible(pt);
-      if (c) {
-        if (c.quoi === 'redim') return 'nwse-resize';
-        return 'grab';
-      }
+      if (c) return 'grab';
       // en Modifier, hors d'un tampon, le geste promène le visage
       if (q.outil === 'modifier') {
         var ctx = canvasRef.current.getContext('2d');
@@ -573,9 +567,13 @@ var Toile = (function () {
            Y COMPRIS le motif que le premier doigt vient de poser. Il l'était
            auparavant retiré, au motif que le geste n'était finalement pas un
            tamponnage mais le début d'un pincement. C'est vrai, mais le résultat
-           était pire : on posait un motif, on l'agrandissait à deux doigts, et
-           le motif disparaissait au lieu de grandir. Poser puis dimensionner
+           était pire : on posait un motif, on le tournait à deux doigts, et
+           le motif disparaissait au lieu de tourner. Poser puis ajuster
            dans la foulée est le geste naturel — c'est lui qu'on sert.
+
+           Les deux doigts DÉPLACENT et FONT TOURNER la forme, mais ne
+           changent plus sa taille (26/09/2026) : un pochoir a celle de sa
+           découpe. Écarter les doigts ne fait donc rien au motif.
            (Contrepartie assumée : avec l'outil Pochoirs, un pincement laisse
            toujours un motif derrière lui. Pour zoomer sans rien poser, on passe
            par Modifier et on touche à côté.) */
@@ -589,13 +587,12 @@ var Toile = (function () {
           if (q.outil !== 'modifier') p.onOutil('modifier');
           p.appliquer(null, 'debut');
           glisseRef.current = {
-            id: pris.id, x: pris.x, y: pris.y,
-            rot: pris.rot || 0, zoom: pris.zoom || 1
+            id: pris.id, x: pris.x, y: pris.y, rot: pris.rot || 0
           };
           pinceRef.current = {
             quoi: 'forme', ecart: ecart0, angle: angle0,
             milieu: pxEnMm(milieu),
-            depart: { x: pris.x, y: pris.y, rot: pris.rot || 0, zoom: pris.zoom || 1 }
+            depart: { x: pris.x, y: pris.y, rot: pris.rot || 0 }
           };
           planifier();
           return;
@@ -625,21 +622,9 @@ var Toile = (function () {
       if (vise) {
         p.appliquer(null, 'debut');
         var el = vise.sel.el;
-        glisseRef.current = {
-          id: el.id, x: el.x, y: el.y, rot: el.rot || 0, zoom: el.zoom || 1
-        };
+        glisseRef.current = { id: el.id, x: el.x, y: el.y, rot: el.rot || 0 };
         if (vise.quoi === 'rotation') {
           gesteRef.current = { mode: 'rotation' };
-        } else if (vise.quoi === 'redim') {
-          // on garde le rapport entre la distance au centre et la taille
-          var d0 = Math.hypot(pt.x - el.x, pt.y - el.y);
-          gesteRef.current = {
-            mode: 'redim',
-            reference: d0 > 0.5 ? d0 / (el.zoom || 1) : null
-          };
-          c.style.cursor = 'nwse-resize';
-          planifier();
-          return;
         } else {
           // manipuler la sélection prime sur l'outil courant
           if (q.outil !== 'modifier') p.onOutil('modifier');
@@ -657,12 +642,12 @@ var Toile = (function () {
         var neuf = {
           type: 'forme', setId: q.formeChoisie.setId, formeId: q.formeChoisie.id,
           couleurId: q.couleurId, x: pt.x, y: pt.y, rot: 0,
-          zoom: 1, miroir: false, gommes: []
+          miroir: false, gommes: []
         };
         p.appliquer(function (d) { return Modele.ajouter(d, neuf); }, 'debut');
         p.onSelection(idPose);
         gesteRef.current = { mode: 'deplacement', dx: 0, dy: 0 };
-        glisseRef.current = { id: idPose, x: pt.x, y: pt.y, rot: 0, zoom: 1 };
+        glisseRef.current = { id: idPose, x: pt.x, y: pt.y, rot: 0 };
         c.style.cursor = 'grabbing';
         return;
       }
@@ -676,8 +661,7 @@ var Toile = (function () {
           p.appliquer(null, 'debut');
           gesteRef.current = { mode: 'deplacement', dx: sous.x - pt.x, dy: sous.y - pt.y };
           glisseRef.current = {
-            id: sous.id, x: sous.x, y: sous.y,
-            rot: sous.rot || 0, zoom: sous.zoom || 1
+            id: sous.id, x: sous.x, y: sous.y, rot: sous.rot || 0
           };
         } else {
           var d = surToile(ev);
@@ -716,8 +700,6 @@ var Toile = (function () {
           var gp = glisseRef.current;
           if (gp) {
             var mi = pxEnMm(centre);
-            gp.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN,
-                        pince.depart.zoom * (ecart / pince.ecart)));
             gp.rot = pince.depart.rot
                    + (Math.atan2(b.y - a.y, b.x - a.x) - pince.angle);
             gp.x = pince.depart.x + (mi.x - pince.milieu.x);
@@ -781,13 +763,6 @@ var Toile = (function () {
         planifier();
         return;
       }
-
-      if (g.mode === 'redim' && g.reference) {
-        var gz = glisseRef.current;
-        var d = Math.hypot(pt.x - gz.x, pt.y - gz.y);
-        gz.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, d / g.reference));
-        planifier();
-      }
     }
 
     /* Range la trace de gomme dans chaque élément qu'elle entame.
@@ -795,16 +770,15 @@ var Toile = (function () {
        LA LARGEUR CHANGE D'UNITÉ EN MÊME TEMPS QUE LES POINTS. La gomme se règle
        en millimètres de PEAU, mais les points qu'on range ici viennent d'être
        traduits dans le repère propre du motif, où une unité vaut `k`
-       millimètres de peau — `k` étant le grossissement du motif multiplié par
-       l'échelle de sa planche. Il faut donc y ramener aussi la largeur.
+       millimètres de peau — `k` étant l'échelle de sa planche (1 pour les
+       planches actuelles, déjà tracées en vrais millimètres). Il faut donc y
+       ramener aussi la largeur.
 
        Sans cette division, la morsure rangée était plus étroite que celle qu'on
-       venait de voir se creuser : d'un facteur 0,683 sur la planche Basique,
-       dont le fichier n'est pas à l'échelle. Le motif semblait entièrement
-       effacé pendant le geste, puis réapparaissait en partie au relâchement.
-
-       Rangée dans le repère du motif, la morsure grandit ensuite avec lui quand
-       on le redimensionne — ce qui est bien ce qu'on veut d'un trou. */
+       venait de voir se creuser : d'un facteur 0,683 sur l'ancienne planche
+       Basique, dont le fichier n'était pas à l'échelle. Le motif semblait
+       entièrement effacé pendant le geste, puis réapparaissait en partie au
+       relâchement. */
     function poserGomme(brouillon) {
       var bg = boite({ type: 'trait', points: brouillon.points, taille: brouillon.taille });
       p.appliquer(function (d) {
@@ -814,7 +788,7 @@ var Toile = (function () {
           if (el.type === 'forme' && !f) return null;
           /* Un trait au pinceau est déjà rangé en millimètres de peau : rien
              à convertir pour lui. */
-          var k = f ? (el.zoom || 1) * (f.echelleSet || 1) : 1;
+          var k = f ? (f.echelleSet || 1) : 1;
           return {
             taille: brouillon.taille / k,
             points: brouillon.points.map(function (pt) {
@@ -842,9 +816,7 @@ var Toile = (function () {
           glisseRef.current = null;
           if (gp) {
             p.appliquer(function (d) {
-              return Modele.modifier(d, gp.id, {
-                x: gp.x, y: gp.y, rot: gp.rot, zoom: gp.zoom
-              });
+              return Modele.modifier(d, gp.id, { x: gp.x, y: gp.y, rot: gp.rot });
             }, 'fin');
           }
         }
@@ -871,9 +843,7 @@ var Toile = (function () {
       glisseRef.current = null;
       if (gl) {
         p.appliquer(function (d) {
-          return Modele.modifier(d, gl.id, {
-            x: gl.x, y: gl.y, rot: gl.rot, zoom: gl.zoom
-          });
+          return Modele.modifier(d, gl.id, { x: gl.x, y: gl.y, rot: gl.rot });
         }, 'fin');
       }
     }

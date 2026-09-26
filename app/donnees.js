@@ -7,11 +7,18 @@
 
 /* ------------------------------------------------------------------ KITS */
 /* Un kit = un produit vendu contenant plusieurs couleurs.
-   Une couleur peut appartenir à plusieurs kits. */
+   Une couleur peut appartenir à plusieurs kits.
+
+   Chaque kit porte LE MÊME NOM que sa planche de pochoirs, plus bas dans
+   POCHOIRS (A = av2, B = bv2, C = cv2) : c'est un seul produit en boutique.
+   Si tu en renommes un, renomme l'autre. Noms posés le 26/09/2026.
+
+   Les liens mènent encore à l'accueil du site : à remplacer par la page de
+   chaque kit quand la boutique sera en ligne. */
 var KITS = [
-  { id: 'A', nom: 'Kit A', lien: 'https://www.labaguettemaquille.fr' },
-  { id: 'B', nom: 'Kit B', lien: 'https://www.labaguettemaquille.fr' },
-  { id: 'C', nom: 'Kit C', lien: 'https://www.labaguettemaquille.fr' }
+  { id: 'A', nom: 'Dans la forêt enchantée', lien: 'https://www.labaguettemaquille.fr' },
+  { id: 'B', nom: 'Les petits farceurs',     lien: 'https://www.labaguettemaquille.fr' },
+  { id: 'C', nom: 'Festival de couleurs',    lien: 'https://www.labaguettemaquille.fr' }
 ];
 
 /* -------------------------------------------------------------- COULEURS */
@@ -230,8 +237,8 @@ var PEAUX = [
 var POCHOIRS = [
   {
     id: 'av2',
-    /* Nom de travail, à remplacer par le vrai nom de la planche. */
-    nom: 'Planche Av2',
+    /* Même nom que le kit A. */
+    nom: 'Dans la forêt enchantée',
     lien: 'https://www.labaguettemaquille.fr',
     planche: 'av2',
 
@@ -277,8 +284,8 @@ var POCHOIRS = [
 
   {
     id: 'bv2',
-    /* Nom de travail, à remplacer par le vrai nom de la planche. */
-    nom: 'Planche Bv2',
+    /* Même nom que le kit B. */
+    nom: 'Les petits farceurs',
     lien: 'https://www.labaguettemaquille.fr',
     planche: 'bv2',
 
@@ -315,8 +322,8 @@ var POCHOIRS = [
 
   {
     id: 'cv2',
-    /* Nom de travail, à remplacer par le vrai nom de la planche. */
-    nom: 'Planche Cv2',
+    /* Même nom que le kit C. */
+    nom: 'Festival de couleurs',
     lien: 'https://www.labaguettemaquille.fr',
     planche: 'cv2',
 
