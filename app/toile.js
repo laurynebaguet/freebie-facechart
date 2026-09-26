@@ -42,9 +42,22 @@ var Toile = (function () {
      finisse bien là où on l'a arrêté.
 
      Longueur de la corde, en pixels d'ÉCRAN : la stabilisation se ressent
-     pareil qu'on ait zoomé ou non. 0 la supprime ; au-delà de 10, le trait
-     traîne visiblement derrière la main et devient pénible à diriger. */
-  var CORDE_PX = 6;
+     pareil qu'on ait zoomé ou non. 0 la supprime. Elle dépend de ce qui
+     dessine : un doigt tremble bien plus qu'une souris. Essayée par Lauryne
+     sur tablette le 26/09/2026, une corde de 6 pixels ne suffisait pas au
+     doigt ; d'où des valeurs plus longues pour le doigt et le stylet. */
+  var CORDE_PX = { souris: 6, stylet: 12, doigt: 16 };
+
+  /* Second étage, par-dessus la corde : chaque point du trait ne rejoint la
+     pointe qu'à moitié (LISSAGE = 0,5). Là où la corde laisse passer un
+     zigzag franc, ce lissage l'arrondit. Plus proche de 0, plus c'est lisse
+     mais plus ça traîne ; 1 le supprime. */
+  var LISSAGE = 0.5;
+
+  function cordePx(ev) {
+    if (ev.pointerType === 'pen') return CORDE_PX.stylet;
+    return auDoigt(ev) ? CORDE_PX.doigt : CORDE_PX.souris;
+  }
   /* Un pochoir ne se redimensionne pas : il a la taille de sa découpe, et les
      planches sont parties chez le fournisseur. La marge de 0,7 à 1,5 fois
      qu'on laissait jusque-là a été retirée le 26/09/2026. */
@@ -693,7 +706,10 @@ var Toile = (function () {
         ? { type: 'gomme', taille: q.tailleGomme, points: [[pt.x, pt.y]] }
         : { type: 'trait', couleurId: q.couleurId, taille: q.taillePinceau,
             points: [[pt.x, pt.y]], gommes: [] };
-      gesteRef.current = { mode: 'trace', pointe: { x: pt.x, y: pt.y } };
+      gesteRef.current = {
+        mode: 'trace', corde: cordePx(ev),
+        pointe: { x: pt.x, y: pt.y }, lisse: { x: pt.x, y: pt.y }
+      };
       planifier();
     }
 
@@ -756,13 +772,16 @@ var Toile = (function () {
       if (g.mode === 'trace') {
         // la main tire la pointe au bout de la corde (voir CORDE_PX)
         var pointe = g.pointe;
-        var corde = CORDE_PX * mmParPixel();
+        var corde = g.corde * mmParPixel();
         var ex = pt.x - pointe.x, ey = pt.y - pointe.y;
         var ecart = Math.hypot(ex, ey);
         if (ecart <= corde) return;
         pointe.x = pt.x - ex / ecart * corde;
         pointe.y = pt.y - ey / ecart * corde;
-        ajouterPoint(pointe);
+        // puis le trait ne rejoint la pointe qu'à moitié (voir LISSAGE)
+        g.lisse.x += (pointe.x - g.lisse.x) * LISSAGE;
+        g.lisse.y += (pointe.y - g.lisse.y) * LISSAGE;
+        ajouterPoint(g.lisse);
         return;
       }
 
@@ -857,8 +876,18 @@ var Toile = (function () {
       if (!g) return;
 
       if (g.mode === 'trace') {
-        // au lever, la pointe rattrape la main
-        if (brouillonRef.current) ajouterPoint(enMm(ev));
+        /* Au lever, la pointe rattrape la main — en quelques pas qui
+           s'amenuisent, pour que la fin du trait reste arrondie au lieu de
+           filer tout droit vers le doigt. */
+        if (brouillonRef.current) {
+          var main = enMm(ev);
+          for (var i = 0; i < 4; i++) {
+            g.lisse.x += (main.x - g.lisse.x) * LISSAGE;
+            g.lisse.y += (main.y - g.lisse.y) * LISSAGE;
+            ajouterPoint(g.lisse);
+          }
+          ajouterPoint(main);
+        }
         var brouillon = brouillonRef.current;
         brouillonRef.current = null;
         if (brouillon && brouillon.points.length) {
