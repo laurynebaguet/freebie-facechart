@@ -248,7 +248,9 @@ var Formes = (function () {
         entree.formes.push(forme);
       });
 
-      parSet.push(entree);
+      /* Une planche cachée garde ses formes au catalogue (les maquillages
+         déjà faits s'affichent toujours), mais quitte le tiroir. */
+      if (!set.cachee) parSet.push(entree);
     });
 
     svg.parentNode.removeChild(svg);

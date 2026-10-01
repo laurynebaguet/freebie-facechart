@@ -288,7 +288,7 @@ var UI = (function () {
     return html`
       <div class="carte-visage carte-peau">
         ${/* Le nom seul suffit à nommer le bouton : « Maquiller Toile vierge »
-              ne se dirait pas, là où « Maquiller Lou » va de soi. */''}
+              ne se dirait pas, là où « Maquiller Zoé » va de soi. */''}
         <button class="choix" aria-label=${v.nom}
                 onClick=${function () { p.onChoisir(v.id); }}>
           <span class="vignette" style=${cadrageFond(v, peauHex(p.peauId))}>
@@ -558,7 +558,7 @@ var UI = (function () {
           return html`
             <div class="recap-groupe" key=${g.titre}>
               ${g.lien
-                ? html`<a class="ou" href=${g.lien} target="_blank" rel="noopener">${g.titre}</a>`
+                ? html`<a class="ou" href=${g.lien} target="_top">${g.titre}</a>`
                 : html`<span class="ou">${g.titre}</span>`}
               <ul>${g.articles.map(p.ligne)}</ul>
             </div>`;
@@ -569,6 +569,52 @@ var UI = (function () {
   /* Le récapitulatif du matériel, montré à l'écran avant le téléchargement.
      Il est rangé comme la fiche imprimée, et pour la même raison : ce qu'on
      achète ensemble se lit ensemble. */
+
+  /* Ce qu'il faut acheter pour refaire ce maquillage — le même panier que
+     celui du QR code de la fiche : chaque kit ou flacon avec de quoi le
+     découvrir, puis UN seul bouton qui met tout au panier. Un bouton par
+     article obligerait à revenir dans l'atelier après chaque ajout, puisque
+     chacun mène à la page panier.
+
+     Les liens s'ouvrent dans la page ENTIÈRE (target="_top") : dans la page
+     « L'atelier » de la boutique, l'appli vit dans un cadre, et la boutique
+     ne doit pas s'ouvrir coincée à l'intérieur. */
+  function MaterielRecap(p) {
+    var articles = p.kits.map(function (k) {
+      return { cle: 'kit-' + k.id, nom: 'Kit « ' + k.nom + ' »', lien: k.lien };
+    }).concat(p.flacons.map(function (c) {
+      return {
+        cle: 'flacon-' + c.id, nom: 'Flacon « ' + c.nom + ' »', hex: c.hex,
+        lien: FLACONS + '?variant=' + c.variante
+      };
+    }));
+    if (!articles.length) return null;
+
+    var seul = articles.length === 1;
+    var quoi = !seul ? 'tout' : (p.kits.length ? 'ce kit' : 'ce flacon');
+    var verbe = BOUTIQUE.precommande
+      ? 'Je précommande ' + quoi
+      : (seul ? 'Ajouter au panier' : 'Tout ajouter au panier');
+
+    return html`
+      <div class="recap-kits">
+        <p class="tiroir-titre">Pour le refaire à la maison</p>
+        ${articles.map(function (a) {
+          return html`
+            <div class="recap-kit" key=${a.cle}>
+              ${a.hex ? html`<span class="puce" style=${{ background: a.hex }}></span>` : null}
+              <span class="recap-kit-nom">${a.nom}</span>
+              <a class="recap-kit-voir" href=${a.lien} target="_top">Découvrir</a>
+            </div>`;
+        })}
+        <a class="btn btn-rose recap-panier" target="_top"
+           href=${Panier.adresseAjout({
+             kits: p.kits.map(function (k) { return k.id; }),
+             flacons: p.flacons.map(function (c) { return c.id; })
+           })}>${verbe}</a>
+      </div>`;
+  }
+
   function Recap(p) {
     var inv = p.inventaire;
     if (!inv.parKit.length && !inv.parPlanche.length) {
@@ -595,7 +641,8 @@ var UI = (function () {
                   <span>${f.nom}</span>
                 </li>`;
             }}/>` : null}
-      </div>`;
+      </div>
+      <${MaterielRecap} kits=${inv.kits} flacons=${inv.flacons}/>`;
   }
 
   return {

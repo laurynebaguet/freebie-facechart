@@ -10,6 +10,9 @@
 /*
 !/.gitignore
 !/index.html
+# La page relais du QR code de la fiche : elle doit être en ligne pour que
+# les fiches imprimées mènent au panier.
+!/panier.html
 !/styles.css
 !/app/
 !/vendor/

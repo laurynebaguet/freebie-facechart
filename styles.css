@@ -585,6 +585,23 @@ button:disabled { cursor: default; }
 .recap .ou:hover { text-decoration: underline; }
 .recap-vide { font-style: italic; }
 
+/* Ce qu'il faut acheter pour refaire le maquillage, sous la liste : une ligne
+   par kit ou flacon, avec son lien « Découvrir », puis un seul bouton pour
+   tout mettre au panier. */
+.recap-kits { margin: 0 0 1.2rem; }
+.recap-kit {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .55rem .8rem; border-radius: 12px; background: #F8F3FF;
+}
+.recap-kit + .recap-kit { margin-top: .4rem; }
+.recap-kit .puce {
+  width: 18px; height: 18px; border-radius: 50%; flex: 0 0 18px;
+  box-shadow: 0 0 0 1px var(--trait);
+}
+.recap-kit-nom { flex: 1 1 auto; min-width: 0; font-weight: 800; font-size: .9rem; color: var(--encre); }
+.recap-kit-voir { flex: 0 0 auto; font-size: .82rem; font-weight: 800; color: var(--violet); }
+.recap-panier { display: flex; width: 100%; margin-top: .7rem; text-decoration: none; box-sizing: border-box; }
+
 /* Sur un écran court, le dessin cède un peu de place : sinon la planche de
    pochoirs se réduit à une bande et devient pénible à parcourir. */
 @media (max-height: 720px) {

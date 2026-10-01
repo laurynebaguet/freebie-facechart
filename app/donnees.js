@@ -10,16 +10,65 @@
    Une couleur peut appartenir à plusieurs kits.
 
    Chaque kit porte LE MÊME NOM que sa planche de pochoirs, plus bas dans
-   POCHOIRS (A = av2, B = bv2, C = cv2) : c'est un seul produit en boutique.
-   Si tu en renommes un, renomme l'autre. Noms posés le 26/09/2026.
+   POCHOIRS (A = av2, B = bv2, C = cv2). Si tu en renommes un, renomme
+   l'autre. Noms posés le 26/09/2026, « Petits farceurs » corrigé le
+   30/09/2026 pour suivre la boutique.
 
-   Les liens mènent encore à l'accueil du site : à remplacer par la page de
-   chaque kit quand la boutique sera en ligne. */
+   lien     : la fiche du kit sur la boutique. Tant que la boutique est
+              protégée par mot de passe, ces liens ouvrent la page de mot de
+              passe. Toujours en .store : le .fr mène encore à la page
+              d'attente systeme.io.
+   variante : le numéro de variante Shopify, celui que le QR code met au
+              panier. ATTENTION : supprimer puis recréer un produit dans
+              Shopify lui donne un nouveau numéro — il faut alors le reporter
+              ici. */
 var KITS = [
-  { id: 'A', nom: 'Dans la forêt enchantée', lien: 'https://www.labaguettemaquille.fr' },
-  { id: 'B', nom: 'Les petits farceurs',     lien: 'https://www.labaguettemaquille.fr' },
-  { id: 'C', nom: 'Festival de couleurs',    lien: 'https://www.labaguettemaquille.fr' }
+  { id: 'A', nom: 'Dans la forêt enchantée',
+    lien: 'https://labaguettemaquille.store/products/kit-dans-la-foret-enchantee',
+    variante: '55488833225033' },
+  { id: 'B', nom: 'Petits farceurs',
+    lien: 'https://labaguettemaquille.store/products/kit-petits-farceurs',
+    variante: '55488833651017' },
+  { id: 'C', nom: 'Festival de couleurs',
+    lien: 'https://labaguettemaquille.store/products/kit-festival-de-couleurs',
+    variante: '55488833782089' }
 ];
+
+/* ------------------------------------------------------------- BOUTIQUE */
+/* Les réglages du panier que remplit le QR code de la fiche.
+
+   Le QR code ne contient PAS l'adresse Shopify : il mène à la page relais
+   (`relais`, le fichier panier.html de cette appli), qui fabrique le panier
+   AU MOMENT DU SCAN avec les réglages ci-dessous. Changer un réglage ici
+   corrige donc aussi les fiches déjà imprimées.
+
+   precommande : le numéro du « plan de vente » STOQ (« Précommande
+                 Halloween »). Chaque article du panier le porte : sans lui,
+                 la cliente serait débitée tout de suite au lieu de
+                 précommander.
+                 Quand l'offre est désactivée dans STOQ, mets null LE JOUR
+                 MÊME : un numéro de plan qui n'existe plus fait échouer le
+                 panier. Et après toute modification de l'offre dans STOQ,
+                 fais revérifier le numéro (il change si l'offre est
+                 supprimée puis recréée).
+
+   Le pochoir Papillon n'est plus mis au panier (01/10/2026) : il est glissé
+   en surprise dans le colis.
+
+   CE QUI VA AU PANIER (choisi le 01/10/2026) :
+     1. le kit de chaque planche dont on a posé un motif ;
+     2. pour les autres couleurs, le kit dès que `kitDes` de ses couleurs
+        sont employées (2 : deux couleurs du même kit valent bien le kit,
+        qui apporte en plus sa planche et ses pinceaux) ;
+     3. sinon, chaque couleur en flacon à l'unité.
+   Un maquillage fait sans aucun pochoir ne reçoit donc que des flacons, sauf
+   s'il emploie `kitDes` couleurs d'un même kit. */
+var BOUTIQUE = {
+  adresse: 'https://labaguettemaquille.store',
+  relais: 'https://laurynebaguet.github.io/freebie-facechart/panier.html',
+  precommande: '692492239177',
+  kitDes: 2
+};
 
 /* -------------------------------------------------------------- COULEURS */
 /* hex   : la teinte telle qu'elle rend UNE FOIS APPLIQUÉE sur la peau.
@@ -27,6 +76,8 @@ var KITS = [
            dans la palette et reçoivent un reflet, à l'écran comme sur la fiche.
    kits  : les kits dans lesquels on trouve cette couleur.
    ref   : usage interne, jamais affiché à l'utilisateur.
+   variante : le numéro Shopify du flacon vendu à l'unité (page FLACONS,
+           ci-dessous), mis au panier quand le kit n'est pas proposé.
 
    L'ordre de cette liste est celui de la palette.
 
@@ -38,19 +89,33 @@ var KITS = [
      - le noir, que la lumière du jour surexpose et éclaircit à tort ;
      - le doré, dont le flacon n'était pas encore livré : valeur estimée. */
 var COULEURS = [
-  { id: 'noir',    nom: "Noir d'encre",     hex: '#2B2A2C', ref: '10',   kits: ['B'] },
-  { id: 'blanc',   nom: 'Blanc de lune',    hex: '#F2EFE8', ref: '21',   kits: ['B'] },
+  { id: 'noir',    nom: "Noir d'encre",     hex: '#2B2A2C', ref: '10',   kits: ['B'],
+    variante: '55447496261961' },
+  { id: 'blanc',   nom: 'Blanc de lune',    hex: '#F2EFE8', ref: '21',   kits: ['B'],
+    variante: '55447496294729' },
 
-  { id: 'rouge',   nom: 'Rouge coquelicot', hex: '#E9401D', ref: '159',  kits: ['C'] },
-  { id: 'jaune',   nom: 'Jaune soleil',     hex: '#EAAE01', ref: '58',   kits: ['C'] },
-  { id: 'bleu',    nom: 'Bleu océan',       hex: '#11439B', ref: '28',   kits: ['C'] },
+  { id: 'rouge',   nom: 'Rouge coquelicot', hex: '#E9401D', ref: '159',  kits: ['C'],
+    variante: '55447496327497' },
+  { id: 'jaune',   nom: 'Jaune soleil',     hex: '#EAAE01', ref: '58',   kits: ['C'],
+    variante: '55447496360265' },
+  { id: 'bleu',    nom: 'Bleu océan',       hex: '#11439B', ref: '28',   kits: ['C'],
+    variante: '55447496393033' },
 
-  { id: 'violet',  nom: 'Violet lavande',   hex: '#9A5CA8', ref: '27',   kits: ['A'] },
-  { id: 'vert',    nom: 'Vert grenouille',  hex: '#769469', ref: '49',   kits: ['A'] },
+  { id: 'violet',  nom: 'Violet lavande',   hex: '#9A5CA8', ref: '27',   kits: ['A'],
+    variante: '55447496425801' },
+  { id: 'vert',    nom: 'Vert grenouille',  hex: '#769469', ref: '49',   kits: ['A'],
+    variante: '55447496458569' },
 
-  { id: 'bronze',  nom: 'Bronze ancien',    hex: '#7A6244', ref: '8008', kits: ['A'], nacre: true },
-  { id: 'or',      nom: "Paille d'or",      hex: '#D9B463', ref: '09',   kits: ['B'], nacre: true }
+  { id: 'bronze',  nom: 'Bronze ancien',    hex: '#7A6244', ref: '8008', kits: ['A'], nacre: true,
+    variante: '55447496491337' },
+  /* « Or paille », comme en boutique (anciennement « Paille d'or »). */
+  { id: 'or',      nom: 'Or paille',        hex: '#D9B463', ref: '09',   kits: ['B'], nacre: true,
+    variante: '55447496524105' }
 ];
+
+/* La page des flacons vendus à l'unité : `?variant=` suivi du numéro d'une
+   couleur l'ouvre directement sur elle. */
+var FLACONS = 'https://labaguettemaquille.store/products/flacon-de-maquillage';
 
 
 /* --------------------------------------------------------------- VISAGES */
@@ -82,7 +147,7 @@ var COULEURS = [
    l'autre. Cadres différents = il se décale.
 
    Le cadre ci-dessous contient les six dessins réunis, marge comprise. Sa
-   HAUTEUR est dictée par le plus encombrant : le foulard de Nour descend
+   HAUTEUR est dictée par le plus encombrant : le foulard de Yasmine descend
    jusqu'à y 1615, bien plus bas que les autres nuques (vers 1451). Les autres
    visages ont donc un peu de blanc sous le menton — c'est le prix du cadre
    commun, et il est modeste.
@@ -98,17 +163,17 @@ var COULEURS = [
    et ses propres repères plutôt que ceux-ci. */
 var VISAGES = [
   {
-    id: 'lou',
-    nom: 'Lou',
-    image: 'images/visages/lou.jpg',
+    id: 'zoe',
+    nom: 'Zoé',
+    image: 'images/visages/zoe.jpg',
     taille: { w: 1400, h: 1753 },
     cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
   },
   {
-    id: 'noe',
-    nom: 'Charlie',
-    image: 'images/visages/noe.jpg',
+    id: 'elliott',
+    nom: 'Elliott',
+    image: 'images/visages/elliott.jpg',
     taille: { w: 1400, h: 1753 },
     cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
@@ -116,12 +181,11 @@ var VISAGES = [
   {
     /* L'ORDRE DE CETTE LISTE est celui de la galerie. Les dessins alternent
        fille et garçon, pour que personne n'ait l'impression que la page
-       s'adresse d'abord aux uns ou aux autres. Charlie et Camille, eux, se
-       portent dans les deux sens — et ils se remplacent de toute façon par le
-       prénom de son enfant. */
-    id: 'nour',
-    nom: 'Nour',
-    image: 'images/visages/nour.jpg',
+       s'adresse d'abord aux uns ou aux autres. Chacun se remplace de toute
+       façon par le prénom de son enfant. */
+    id: 'yasmine',
+    nom: 'Yasmine',
+    image: 'images/visages/yasmine.jpg',
     taille: { w: 1400, h: 1753 },
     cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
@@ -129,9 +193,9 @@ var VISAGES = [
   {
     /* `id` sert de clé aux prénoms que les gens enregistrent dans leur
        navigateur : `nom` se change librement, `id` non. */
-    id: 'milo',
-    nom: 'Camille',
-    image: 'images/visages/milo.jpg',
+    id: 'gabriel',
+    nom: 'Gabriel',
+    image: 'images/visages/gabriel.jpg',
     taille: { w: 1400, h: 1753 },
     cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
@@ -145,9 +209,9 @@ var VISAGES = [
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
   },
   {
-    id: 'sacha',
-    nom: 'Sacha',
-    image: 'images/visages/sacha.jpg',
+    id: 'noah',
+    nom: 'Noah',
+    image: 'images/visages/noah.jpg',
     taille: { w: 1400, h: 1753 },
     cadre:  { x: -21, y: 89, w: 1477, h: 1551 },
     visage: { gauche: 243, droite: 1176, ligneYeux: 828 }
@@ -237,9 +301,11 @@ var PEAUX = [
 var POCHOIRS = [
   {
     id: 'av2',
-    /* Même nom que le kit A. */
+    /* Même nom que le kit A, et vendue dedans : `kit` la fait mettre au
+       panier par le QR code de la fiche. */
+    kit: 'A',
     nom: 'Dans la forêt enchantée',
-    lien: 'https://www.labaguettemaquille.fr',
+    lien: 'https://labaguettemaquille.store/products/pochoir?variant=55281667080521',
     planche: 'av2',
 
     /* Pas d'`echelle` ici : le tracé de cette planche est déjà recomposé à la
@@ -284,9 +350,10 @@ var POCHOIRS = [
 
   {
     id: 'bv2',
-    /* Même nom que le kit B. */
-    nom: 'Les petits farceurs',
-    lien: 'https://www.labaguettemaquille.fr',
+    /* Même nom que le kit B, et vendue dedans. */
+    kit: 'B',
+    nom: 'Petits farceurs',
+    lien: 'https://labaguettemaquille.store/products/pochoir?variant=55281667113289',
     planche: 'bv2',
 
     /* Comme av2 : tracé déjà à la bonne taille, recomposé par
@@ -322,9 +389,10 @@ var POCHOIRS = [
 
   {
     id: 'cv2',
-    /* Même nom que le kit C. */
+    /* Même nom que le kit C, et vendue dedans. */
+    kit: 'C',
     nom: 'Festival de couleurs',
-    lien: 'https://www.labaguettemaquille.fr',
+    lien: 'https://labaguettemaquille.store/products/pochoir?variant=55281667146057',
     planche: 'cv2',
 
     /* Comme av2 : tracé déjà à la bonne taille, recomposé par
@@ -356,9 +424,16 @@ var POCHOIRS = [
   {
     id: 'papillon',
     /* Sortie de bv2 le 13/09/2026 : le papillon a sa propre planche,
-       rangée en dernier dans le tiroir. */
+       rangée en dernier dans le tiroir.
+
+       CACHÉE depuis le 01/10/2026 : le Papillon n'est plus vendu, il est
+       glissé en surprise dans les colis. Pour la remettre dans le tiroir
+       quand les colis seront arrivés, retire la ligne `cachee: true`.
+       Cachée ne veut pas dire effacée : un maquillage déjà fait avec ses
+       motifs les garde. */
+    cachee: true,
     nom: 'Papillon',
-    lien: 'https://www.labaguettemaquille.fr',
+    lien: null,
     planche: 'papillon',
     formes: [
       /* Une aile de chaque sorte, et son motif. Les motifs se découpent d'un
@@ -376,14 +451,13 @@ var POCHOIRS = [
    commerciale du freebie : la fiche reste affichée plusieurs jours, et c'est
    le seul endroit du projet qui sort de l'écran.
 
-   `qr` attend l'adresse que le code renverra. Tant qu'elle vaut null, la fiche
-   imprime un emplacement réservé à la bonne taille : la mise en page est déjà
-   celle qu'on aura, sans promettre un code qui ne marche pas encore. */
+   Le QR code se fabrique tout seul, fiche par fiche : il met au panier les
+   kits et les flacons dont ce maquillage a besoin (voir BOUTIQUE, plus
+   haut). */
 var APPEL_FICHE = {
   titre: 'Tout le matériel en un scan',
-  texte: 'Scanne ce code pour retrouver sur la boutique les couleurs et les ' +
-         'pochoirs de ce maquillage.',
-  qr: null
+  texte: 'Scanne ce code pour retrouver dans ton panier tout le matériel de ' +
+         'ce maquillage.'
 };
 
 /* ----------------------------------------------------------------- TEXTES */
@@ -421,8 +495,8 @@ var TEXTES = {
   /* Les visages sont son travail : le crédit apparaît sur l'accueil et sur la
      fiche imprimée. Ajoute son adresse si elle en veut une. */
   credit: 'Visages illustrés par Pauline Dussert',
-  siteNom: 'labaguettemaquille.fr',
-  siteLien: 'https://www.labaguettemaquille.fr',
+  siteNom: 'labaguettemaquille.store',
+  siteLien: 'https://labaguettemaquille.store',
   /* Gravé dans l'image à partager : c'est la seule chose qui voyage avec elle,
      puisque les réseaux ne reprennent pas la légende qu'on leur propose. */
   instagram: '@labaguettemaquille'

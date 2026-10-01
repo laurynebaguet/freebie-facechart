@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Ton panier La Baguette Maquille</title>
+<link rel="icon" href="images/marque/favicon.png">
+<!-- La page relais du QR code de la fiche : elle ne fait que passer.
+     Tout le travail est dans app/panier.js, les réglages dans app/donnees.js. -->
+<style>
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center;
+    justify-content: center; padding: 0 16px; box-sizing: border-box;
+    background: #FFF8F0; color: #3A3440; text-align: center;
+    font: 17px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  img { width: 140px; height: auto; }
+  a { color: #7B3FD3; font-weight: 700; }
+</style>
+</head>
+<body>
+<main>
+  <img src="images/marque/logo-principal.png" alt="La Baguette Maquille">
+  <p>On prépare ton panier…</p>
+  <!-- Filet de sécurité : si le téléphone bloque le renvoi automatique,
+       il reste ce lien à toucher. -->
+  <p><a id="lien" href="https://labaguettemaquille.store">Si rien ne se passe, touche ici</a></p>
+</main>
+<script src="app/donnees.js"></script>
+<script src="app/panier.js"></script>
+<script>
+  var cible = Panier.adresse(Panier.demandeDansAdresse());
+  document.getElementById('lien').href = cible;
+  window.location.replace(cible);
+</script>
+</body>
+</html>

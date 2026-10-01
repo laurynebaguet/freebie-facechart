@@ -101,7 +101,7 @@ var Modele = (function () {
   /* ------------------------------------------------------------ prénoms */
   /* Chacun peut rebaptiser un visage pour y mettre le prénom de son enfant.
      Ces prénoms sont rangés à part du dessin, par identifiant de visage
-     ({ lou: 'Camille' }), et ne quittent jamais le navigateur. */
+     ({ zoe: 'Léonie' }), et ne quittent jamais le navigateur. */
 
   /* De quoi loger un prénom composé sans que la carte déborde. */
   var LIMITE_NOM = 18;

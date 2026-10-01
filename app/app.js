@@ -69,7 +69,11 @@
       var sauve = Modele.charger();
       if (sauve) {
         setHistoire(Modele.histoNeuf(sauve.dessin));
-        if (sauve.visageId) setVisageId(sauve.visageId);
+        /* Un visage qui n'existe plus (renommé depuis) est laissé de côté :
+           on repart du premier de la galerie. */
+        if (sauve.visageId && visagePar(sauve.visageId).id === sauve.visageId) {
+          setVisageId(sauve.visageId);
+        }
         if (sauve.noms) setNoms(sauve.noms);
         if (sauve.peauId) setPeauId(sauve.peauId);
         setTelecharge(sauve.telecharge !== false);

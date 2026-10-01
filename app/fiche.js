@@ -10,7 +10,7 @@ var Fiche = (function () {
   /* Taille du dessin sur la page. Volontairement en deçà des 182 mm
      disponibles : au-delà, la tête devient envahissante et surtout très
      gourmande en encre couleur — le dessin est une grande surface pleine, et
-     l'agrandir coûte au carré. À 132 mm, un visage large comme celui de Lou
+     l'agrandir coûte au carré. À 132 mm, un visage large comme celui de Zoé
      consomme environ un quart d'encre de plus qu'à 118, ce qui reste
      raisonnable pour une impression maison. Baisse ces deux nombres si les
      retours parlent d'impressions trop chargées. */
@@ -81,7 +81,9 @@ var Fiche = (function () {
      ce qui est justement la vérité de ce qu'on a à acheter — l'un OU l'autre.
 
      Renvoie deux listes de groupes de même forme :
-       { titre, lien, articles: [...] } */
+       { titre, lien, articles: [...] }
+     et, dans `kits` et `flacons`, ce qu'il faut acheter pour le refaire (le
+     même panier que celui du QR code). */
   function inventaire(dessin) {
     var parKit = [], indexK = {}, vusC = {};
     var parPlanche = [], indexP = {}, vusF = {};
@@ -125,7 +127,12 @@ var Fiche = (function () {
       }
     });
 
-    return { parKit: parKit, parPlanche: parPlanche };
+    var panier = panierDe(dessin);
+    return {
+      parKit: parKit, parPlanche: parPlanche,
+      kits: KITS.filter(function (k) { return panier.kits.indexOf(k.id) >= 0; }),
+      flacons: COULEURS.filter(function (c) { return panier.flacons.indexOf(c.id) >= 0; })
+    };
   }
 
   /* Rend le facechart maquillé sur une toile haute définition. */
@@ -215,9 +222,90 @@ var Fiche = (function () {
       .toLowerCase() || 'facechart';
   }
 
+  /* Ce qu'il faut mettre au panier pour refaire ce maquillage, selon la règle
+     écrite au-dessus de BOUTIQUE dans donnees.js :
+       { kits: ['A', ...], flacons: ['rouge', ...] }
+     Les kits dans l'ordre de KITS, les flacons dans celui de la palette. */
+  function panierDe(dessin) {
+    var kits = [];
+    var couleurs = [];
+    var visibles = dessin.elements.filter(Rendu.resteVisible);
+
+    // 1. le kit de chaque planche employée
+    visibles.forEach(function (el) {
+      if (el.type !== 'forme') return;
+      for (var i = 0; i < POCHOIRS.length; i++) {
+        var k = POCHOIRS[i].id === el.setId && POCHOIRS[i].kit;
+        if (k && kits.indexOf(k) < 0) kits.push(k);
+      }
+    });
+
+    // les couleurs employées que ces kits ne contiennent pas encore
+    visibles.forEach(function (el) {
+      var c = el.couleurId && couleurDe(el.couleurId);
+      if (!c || couleurs.indexOf(c) >= 0) return;
+      if ((c.kits || []).some(function (k) { return kits.indexOf(k) >= 0; })) return;
+      couleurs.push(c);
+    });
+
+    // 2. le kit, dès que `kitDes` de ses couleurs restent à acheter
+    KITS.forEach(function (kit) {
+      var siennes = couleurs.filter(function (c) {
+        return (c.kits || []).indexOf(kit.id) >= 0;
+      });
+      if (siennes.length >= BOUTIQUE.kitDes) kits.push(kit.id);
+    });
+
+    // 3. le reste, en flacons
+    var flacons = couleurs.filter(function (c) {
+      return !(c.kits || []).some(function (k) { return kits.indexOf(k) >= 0; });
+    });
+
+    return {
+      kits: KITS.filter(function (k) { return kits.indexOf(k.id) >= 0; })
+                .map(function (k) { return k.id; }),
+      flacons: COULEURS.filter(function (c) { return flacons.indexOf(c) >= 0; })
+                       .map(function (c) { return c.id; })
+    };
+  }
+
+  /* L'adresse que porte le QR code : la page relais, les kits et les
+     flacons, par leurs noms courts. Elle reste courte exprès — un code court
+     a de gros carrés, qui se lisent bien même sortis d'une imprimante
+     fatiguée. */
+  function adresseQr(dessin) {
+    var p = panierDe(dessin);
+    var morceaux = [];
+    if (p.kits.length) morceaux.push('kits=' + p.kits.join(','));
+    if (p.flacons.length) morceaux.push('flacons=' + p.flacons.join(','));
+    return BOUTIQUE.relais + (morceaux.length ? '?' + morceaux.join('&') : '');
+  }
+
+  /* Le QR code tracé en carrés vectoriels, net à toutes les tailles
+     d'impression. Niveau de correction « M » : le code se lit encore s'il est
+     un peu abîmé ou taché. */
+  function dessinerQr(doc, texte, x, y, cote) {
+    var qr = qrcode(0, 'M');
+    qr.addData(texte);
+    qr.make();
+    var n = qr.getModuleCount();
+    /* Une marge blanche de deux modules autour : sans elle, le téléphone
+       confond le bord du code avec le fond lilas du bloc. */
+    var m = cote / (n + 4);
+
+    doc.setFillColor(255, 255, 255);
+    doc.rect(x, y, cote, cote, 'F');
+    doc.setFillColor(0, 0, 0);
+    for (var r = 0; r < n; r++) {
+      for (var c = 0; c < n; c++) {
+        if (qr.isDark(r, c)) doc.rect(x + (c + 2) * m, y + (r + 2) * m, m, m, 'F');
+      }
+    }
+  }
+
   /* Bloc d'appel du bas de page : le QR code à gauche, l'invitation à droite.
      Renvoie la hauteur occupée. */
-  function appel(doc, y) {
+  function appel(doc, y, dessin) {
     var largeur = PAGE_L - 2 * MARGE;
     var hauteur = QR_COTE + 12;
 
@@ -229,26 +317,11 @@ var Fiche = (function () {
     var qrX = MARGE + 6;
     var qrY = y + 6;
 
-    if (APPEL_FICHE.qr) {
-      doc.addImage(APPEL_FICHE.qr, 'PNG', qrX, qrY, QR_COTE, QR_COTE);
-    } else {
-      /* Emplacement réservé : on imprime le cadre à sa taille définitive pour
-         que la mise en page soit déjà la bonne, sans faire croire à un code
-         scannable. */
-      doc.setFillColor(255, 255, 255);
-      doc.setDrawColor(196, 176, 228);
-      doc.setLineWidth(0.5);
-      doc.roundedRect(qrX, qrY, QR_COTE, QR_COTE, 2, 2, 'FD');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
-      doc.setTextColor(150, 130, 185);
-      doc.text('QR CODE', qrX + QR_COTE / 2, qrY + QR_COTE / 2 - 1,
-               { align: 'center' });
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.5);
-      doc.text('à venir', qrX + QR_COTE / 2, qrY + QR_COTE / 2 + 3.5,
-               { align: 'center' });
-    }
+    var adresse = adresseQr(dessin);
+    dessinerQr(doc, adresse, qrX, qrY, QR_COTE);
+    /* Sur un écran, le code se touche aussi : la fiche ouverte sur le
+       téléphone mène au même panier que la fiche imprimée. */
+    doc.link(qrX, qrY, QR_COTE, QR_COTE, { url: adresse });
 
     var texteX = qrX + QR_COTE + 8;
     var texteL = PAGE_L - MARGE - 6 - texteX;
@@ -389,7 +462,7 @@ var Fiche = (function () {
       // --- le bloc d'appel, calé juste au-dessus du pied de page
       /* Calé au-dessus du pied de page, à une place fixe : le dessin a déjà
          cédé ce qu'il fallait pour que la liste s'arrête avant. */
-      appel(doc, basDeZone);
+      appel(doc, basDeZone, dessin);
 
       // --- pied de page
       doc.setDrawColor(232, 223, 212);
@@ -420,6 +493,7 @@ var Fiche = (function () {
   return {
     generer: generer, construire: construire, inventaire: inventaire,
     rendre: rendre, chargerImage: chargerImage, limace: limace,
+    panierDe: panierDe, adresseQr: adresseQr,
     titrePour: titrePour
   };
 })();
