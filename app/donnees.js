@@ -66,7 +66,7 @@ var KITS = [
 var BOUTIQUE = {
   adresse: 'https://labaguettemaquille.store',
   relais: 'https://laurynebaguet.github.io/freebie-facechart/panier.html',
-  precommande: '692492239177',
+  precommande: '',
   kitDes: 2
 };
 
