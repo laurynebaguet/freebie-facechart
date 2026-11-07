@@ -24,14 +24,14 @@
               ici. */
 var KITS = [
   { id: 'A', nom: 'Dans la forêt enchantée',
-    lien: 'https://labaguettemaquille.store/products/kit-dans-la-foret-enchantee',
-    variante: '55488833225033' },
+    lien: 'https://labaguettemaquille.fr/products/kit-dans-la-foret-enchantee',
+    variante: '55449745817929' },
   { id: 'B', nom: 'Petits farceurs',
-    lien: 'https://labaguettemaquille.store/products/kit-petits-farceurs',
-    variante: '55488833651017' },
+    lien: 'https://labaguettemaquille.fr/products/kit-petits-farceurs',
+    variante: '55453018095945' },
   { id: 'C', nom: 'Festival de couleurs',
-    lien: 'https://labaguettemaquille.store/products/kit-festival-de-couleurs',
-    variante: '55488833782089' }
+    lien: 'https://labaguettemaquille.fr/products/kit-festival-de-couleurs',
+    variante: '55453018685769' }
 ];
 
 /* ------------------------------------------------------------- BOUTIQUE */
@@ -64,7 +64,7 @@ var KITS = [
    Un maquillage fait sans aucun pochoir ne reçoit donc que des flacons, sauf
    s'il emploie `kitDes` couleurs d'un même kit. */
 var BOUTIQUE = {
-  adresse: 'https://labaguettemaquille.store',
+  adresse: 'https://labaguettemaquille.fr',
   relais: 'https://laurynebaguet.github.io/freebie-facechart/panier.html',
   precommande: '',
   kitDes: 2
@@ -115,7 +115,7 @@ var COULEURS = [
 
 /* La page des flacons vendus à l'unité : `?variant=` suivi du numéro d'une
    couleur l'ouvre directement sur elle. */
-var FLACONS = 'https://labaguettemaquille.store/products/flacon-de-maquillage';
+var FLACONS = 'https://labaguettemaquille.fr/products/flacon-de-maquillage';
 
 
 /* --------------------------------------------------------------- VISAGES */
@@ -305,7 +305,7 @@ var POCHOIRS = [
        panier par le QR code de la fiche. */
     kit: 'A',
     nom: 'Dans la forêt enchantée',
-    lien: 'https://labaguettemaquille.store/products/pochoir?variant=55281667080521',
+    lien: 'https://labaguettemaquille.fr/products/pochoir?variant=55281667080521',
     planche: 'av2',
 
     /* Pas d'`echelle` ici : le tracé de cette planche est déjà recomposé à la
@@ -353,7 +353,7 @@ var POCHOIRS = [
     /* Même nom que le kit B, et vendue dedans. */
     kit: 'B',
     nom: 'Petits farceurs',
-    lien: 'https://labaguettemaquille.store/products/pochoir?variant=55281667113289',
+    lien: 'https://labaguettemaquille.fr/products/pochoir?variant=55281667113289',
     planche: 'bv2',
 
     /* Comme av2 : tracé déjà à la bonne taille, recomposé par
@@ -392,7 +392,7 @@ var POCHOIRS = [
     /* Même nom que le kit C, et vendue dedans. */
     kit: 'C',
     nom: 'Festival de couleurs',
-    lien: 'https://labaguettemaquille.store/products/pochoir?variant=55281667146057',
+    lien: 'https://labaguettemaquille.fr/products/pochoir?variant=55281667146057',
     planche: 'cv2',
 
     /* Comme av2 : tracé déjà à la bonne taille, recomposé par
@@ -495,8 +495,8 @@ var TEXTES = {
   /* Les visages sont son travail : le crédit apparaît sur l'accueil et sur la
      fiche imprimée. Ajoute son adresse si elle en veut une. */
   credit: 'Visages illustrés par Pauline Dussert',
-  siteNom: 'labaguettemaquille.store',
-  siteLien: 'https://labaguettemaquille.store',
+  siteNom: 'labaguettemaquille.fr',
+  siteLien: 'https://labaguettemaquille.fr',
   /* Gravé dans l'image à partager : c'est la seule chose qui voyage avec elle,
      puisque les réseaux ne reprennent pas la légende qu'on leur propose. */
   instagram: '@labaguettemaquille'
