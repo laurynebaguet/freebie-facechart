@@ -160,6 +160,9 @@ var Toile = (function () {
     var loupeRef = useRef({ k: 1, dx: 0, dy: 0 });
     var doigtsRef = useRef({});        // pointeurs posés, pour le pincement
     var pinceRef = useRef(null);
+    /* La forme qu'un geste à deux doigts doit prendre, décidée dès le PREMIER
+       doigt (voir `poser`). */
+    var choixDeuxDoigtsRef = useRef(null);
     var loupeDoigtRef = useRef(null);  // position du doigt sous la loupe
 
     var rep = Rendu.repere(p.visage);
@@ -603,7 +606,18 @@ var Toile = (function () {
          qu'il a commencé, et on bascule sur Modifier pour que la suite du
          pincement ne tamponne pas non plus. */
       var ids = Object.keys(doigtsRef.current);
+
+      /* Le premier doigt se pose rarement sur la forme choisie : il tombe à
+         côté (sur la peau, ce qui la lâchait) ou sur une forme voisine (qui
+         devenait la forme choisie). Le second doigt arrivait ensuite et
+         zoomait le visage, ou faisait tourner la voisine (08/11/2026, une
+         araignée près d'une aile de papillon). On retient donc, AVANT que ce
+         premier doigt ne change quoi que ce soit, la forme qui était choisie :
+         c'est elle que deux doigts feront tourner, où qu'ils se posent. */
+      if (ids.length === 1) choixDeuxDoigtsRef.current = q.selectionId;
+
       if (ids.length === 2) {
+        var glisseAvant = glisseRef.current;
         var enCours = gesteRef.current;
         if (enCours) p.appliquer(null, 'annule');
         onAnnuleGeste(true);
@@ -636,12 +650,19 @@ var Toile = (function () {
            toujours un motif derrière lui. Pour zoomer sans rien poser, on passe
            par Modifier et on touche à côté.) */
         var pris = null;
-        if (q.selectionId != null) {
-          var choisie = Modele.trouver(q.dessin, q.selectionId);
+        var voulu = choixDeuxDoigtsRef.current;
+        if (voulu != null) {
+          var choisie = Modele.trouver(q.dessin, voulu);
           if (choisie && choisie.type === 'forme') pris = choisie;
+          /* Un motif tout juste posé par le premier doigt n'est peut-être pas
+             encore dans `q.dessin` : on le reprend où le doigt le tenait. */
+          else if (glisseAvant && glisseAvant.id === voulu) {
+            pris = { id: voulu, x: glisseAvant.x, y: glisseAvant.y, rot: glisseAvant.rot };
+          }
         }
 
         if (pris) {
+          if (q.selectionId !== pris.id) p.onSelection(pris.id);
           if (q.outil !== 'modifier') p.onOutil('modifier');
           p.appliquer(null, 'debut');
           glisseRef.current = {
@@ -704,6 +725,7 @@ var Toile = (function () {
         };
         p.appliquer(function (d) { return Modele.ajouter(d, neuf); }, 'debut');
         p.onSelection(idPose);
+        choixDeuxDoigtsRef.current = idPose;  // poser puis tourner dans la foulée
         gesteRef.current = { mode: 'deplacement', dx: 0, dy: 0 };
         glisseRef.current = { id: idPose, x: pt.x, y: pt.y, rot: 0 };
         c.style.cursor = 'grabbing';
@@ -715,6 +737,8 @@ var Toile = (function () {
       if (q.outil === 'modifier') {
         var sous = Rendu.formeSous(ctx, q.dessin, pt.x, pt.y, e);
         p.onSelection(sous ? sous.id : null);
+        // rien n'était choisi : la forme touchée devient celle des deux doigts
+        if (sous && choixDeuxDoigtsRef.current == null) choixDeuxDoigtsRef.current = sous.id;
         if (sous) {
           p.appliquer(null, 'debut');
           gesteRef.current = { mode: 'deplacement', dx: sous.x - pt.x, dy: sous.y - pt.y };

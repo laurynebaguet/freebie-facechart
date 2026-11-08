@@ -599,6 +599,34 @@ button:disabled { cursor: default; }
   .outil svg { width: 17px; height: 17px; }
 }
 
+/* --------------------------------------------------------------- téléphone */
+/* 08/11/2026 : sur un téléphone, « Enregistrer / Imprimer » sortait de
+   l'écran. Tout le bandeau se resserre un peu (icônes, écarts, prénom,
+   bouton) plutôt que de raccourcir le libellé, qui doit rester clair.
+   Et les pastilles rapetissent : avec leur taille d'ordinateur, la palette
+   mangeait la place du tiroir, et on ne voyait plus qu'il y avait d'autres
+   planches de pochoirs sous la première. */
+@media (max-width: 520px) {
+  .entete { gap: .15rem; padding: .2rem .35rem; }
+  .entete .icone-btn { width: 30px; height: 30px; }
+  .entete .icone-btn svg { width: 19px; height: 19px; }
+  .entete .histoire { margin-right: .2rem; }
+  .entete .titre-mini {
+    font-size: .85rem; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .entete .titre-mini.modifiable { padding: .1rem .2rem; min-width: 0; }
+  .entete .titre-mini.modifiable span {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 7em;
+  }
+  .entete .btn-petit { padding: .4em .65em; font-size: .76rem; }
+
+  .palette { padding: .1rem .5rem .15rem; }
+  .pastille { width: 28px; height: 28px; }
+  .groupe { gap: .22rem; padding: 5px 5px 7px; }
+  .rangs { gap: 0; }
+}
+
 /* ----------------------------------------------------------- grand ecran */
 @media (min-width: 900px) {
   .corps { flex-direction: row; }
