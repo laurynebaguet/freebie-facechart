@@ -580,24 +580,26 @@ var UI = (function () {
      « L'atelier » de la boutique, l'appli vit dans un cadre, et la boutique
      ne doit pas s'ouvrir coincée à l'intérieur. */
   function MaterielRecap(p) {
-    var articles = p.kits.map(function (k) {
+    var articles = p.coffrets.map(function (c) {
+      return { cle: 'coffret-' + c.id, nom: c.nom, lien: c.lien };
+    }).concat(p.kits.map(function (k) {
       return { cle: 'kit-' + k.id, nom: 'Kit « ' + k.nom + ' »', lien: k.lien };
-    }).concat(p.planches.map(function (s) {
+    })).concat(p.planches.map(function (s) {
       return { cle: 'planche-' + s.id, nom: 'Planche « ' + s.nom + ' »', lien: s.lien };
     })).concat(p.flacons.map(function (c) {
       return {
         cle: 'flacon-' + c.id, nom: 'Flacon « ' + c.nom + ' »', hex: c.hex,
         lien: FLACONS + '?variant=' + c.variante
       };
-    }));
+    })).concat(p.pinceaux
+      ? [{ cle: 'pinceaux', nom: PINCEAUX.nom, lien: PINCEAUX.lien }]
+      : []);
     if (!articles.length) return null;
 
     var seul = articles.length === 1;
-    var quoi = !seul ? 'tout'
-      : (p.kits.length ? 'ce kit' : (p.planches.length ? 'cette planche' : 'ce flacon'));
-    var verbe = BOUTIQUE.precommande
-      ? 'Je précommande ' + quoi
-      : (seul ? 'Ajouter au panier' : 'Tout ajouter au panier');
+    var verbe = (BOUTIQUE.precommande ? 'Je précommande ' : '') +
+      (seul ? (BOUTIQUE.precommande ? 'cet article' : 'Ajouter au panier')
+            : (BOUTIQUE.precommande ? 'tout' : 'Tout ajouter au panier'));
 
     return html`
       <div class="recap-kits">
@@ -613,8 +615,10 @@ var UI = (function () {
         <a class="btn btn-rose recap-panier" target="_top"
            href=${Panier.adresseAjout({
              kits: p.kits.map(function (k) { return k.id; }),
+             coffrets: p.coffrets.map(function (c) { return c.id; }),
              planches: p.planches.map(function (s) { return s.id; }),
-             flacons: p.flacons.map(function (c) { return c.id; })
+             flacons: p.flacons.map(function (c) { return c.id; }),
+             pinceaux: p.pinceaux
            })}>${verbe}</a>
       </div>`;
   }
@@ -646,7 +650,8 @@ var UI = (function () {
                 </li>`;
             }}/>` : null}
       </div>
-      <${MaterielRecap} kits=${inv.kits} planches=${inv.planches} flacons=${inv.flacons}/>`;
+      <${MaterielRecap} kits=${inv.kits} coffrets=${inv.coffrets} planches=${inv.planches}
+                       flacons=${inv.flacons} pinceaux=${inv.pinceaux}/>`;
   }
 
   return {

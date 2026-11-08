@@ -131,6 +131,8 @@ var Fiche = (function () {
     return {
       parKit: parKit, parPlanche: parPlanche,
       kits: KITS.filter(function (k) { return panier.kits.indexOf(k.id) >= 0; }),
+      coffrets: COFFRETS.filter(function (c) { return panier.coffrets.indexOf(c.id) >= 0; }),
+      pinceaux: panier.pinceaux,
       planches: POCHOIRS.filter(function (s) { return panier.planches.indexOf(s.id) >= 0; }),
       flacons: COULEURS.filter(function (c) { return panier.flacons.indexOf(c.id) >= 0; })
     };
@@ -225,54 +227,108 @@ var Fiche = (function () {
 
   /* Ce qu'il faut mettre au panier pour refaire ce maquillage, selon la règle
      écrite au-dessus de BOUTIQUE dans donnees.js :
-       { kits: ['A', ...], planches: ['papillon'], flacons: ['rouge', ...] }
-     Les kits dans l'ordre de KITS, les planches dans celui de POCHOIRS, les
-     flacons dans celui de la palette. */
+       { kits: ['A'], coffrets: ['noel'], planches: ['papillon'],
+         flacons: ['rouge', ...], pinceaux: true }
+     Chaque liste dans l'ordre de sa source (KITS, COFFRETS, POCHOIRS, la
+     palette). `pinceaux` dit si le duo vendu seul s'y ajoute.
+
+     Le catalogue est petit : on essaie toutes les façons de prendre ou non
+     chaque kit et chaque coffret (5 offres, 32 essais), on complète chacune
+     avec des flacons, la planche Papillon et les pinceaux s'il en manque, et
+     on garde la moins chère. */
   function panierDe(dessin) {
-    var kits = [];
-    var planches = [];
-    var couleurs = [];
     var visibles = dessin.elements.filter(Rendu.resteVisible);
 
-    // 1. le kit de chaque planche employée, ou la planche seule si elle
-    //    n'est dans aucun kit (le Papillon)
+    // Ce que le maquillage emploie : ses couleurs, ses planches.
+    var couleurs = [], planches = [];
     visibles.forEach(function (el) {
-      if (el.type !== 'forme') return;
-      POCHOIRS.forEach(function (s) {
-        if (s.id !== el.setId) return;
-        if (s.kit) { if (kits.indexOf(s.kit) < 0) kits.push(s.kit); }
-        else if (s.variante && planches.indexOf(s.id) < 0) planches.push(s.id);
+      if (el.couleurId && couleurDe(el.couleurId) && couleurs.indexOf(el.couleurId) < 0) {
+        couleurs.push(el.couleurId);
+      }
+      if (el.type === 'forme' && planches.indexOf(el.setId) < 0) planches.push(el.setId);
+    });
+    var vide = { kits: [], coffrets: [], planches: [], flacons: [], pinceaux: false };
+    if (!couleurs.length && !planches.length) return vide;
+
+    // Les offres groupées, toutes décrites pareil. Les prix en centimes :
+    // additionner des euros à virgule donne des 54,900000001.
+    function centimes(p) { return Math.round((p || 0) * 100); }
+    var offres = KITS.map(function (k) {
+      return {
+        sorte: 'kits', id: k.id, prix: centimes(k.prix),
+        couleurs: COULEURS.filter(function (c) { return (c.kits || []).indexOf(k.id) >= 0; })
+                          .map(function (c) { return c.id; }),
+        planches: POCHOIRS.filter(function (s) { return s.kit === k.id; })
+                          .map(function (s) { return s.id; })
+      };
+    }).concat(COFFRETS.map(function (c) {
+      return { sorte: 'coffrets', id: c.id, prix: centimes(c.prix),
+               couleurs: c.couleurs, planches: c.planches };
+    }));
+
+    // Toutes les façons de réunir le matériel, chacune avec son prix et ce
+    // qu'elle donne (nombre de couleurs, planches et pinceaux).
+    var paniers = [];
+    for (var masque = 0; masque < (1 << offres.length); masque++) {
+      var prises = offres.filter(function (o, i) { return masque & (1 << i); });
+      var aCouleurs = {}, aPlanches = {}, donne = 0, prix = 0;
+      prises.forEach(function (o) {
+        prix += o.prix;
+        o.couleurs.forEach(function (id) { aCouleurs[id] = true; });
+        o.planches.forEach(function (id) { aPlanches[id] = true; });
       });
-    });
+      // Une couleur apportée deux fois ne compte qu'une ; chaque kit ou
+      // coffret compte en plus pour ses pinceaux et son tuto.
+      donne = Object.keys(aCouleurs).length + Object.keys(aPlanches).length + prises.length;
 
-    // les couleurs employées que ces kits ne contiennent pas encore
-    visibles.forEach(function (el) {
-      var c = el.couleurId && couleurDe(el.couleurId);
-      if (!c || couleurs.indexOf(c) >= 0) return;
-      if ((c.kits || []).some(function (k) { return kits.indexOf(k) >= 0; })) return;
-      couleurs.push(c);
-    });
-
-    // 2. le kit, dès que `kitDes` de ses couleurs restent à acheter
-    KITS.forEach(function (kit) {
-      var siennes = couleurs.filter(function (c) {
-        return (c.kits || []).indexOf(kit.id) >= 0;
+      // Une planche posée que rien n'apporte vient seule.
+      var seules = [];
+      planches.forEach(function (id) {
+        if (aPlanches[id]) return;
+        var s = null;
+        for (var i = 0; i < POCHOIRS.length; i++) if (POCHOIRS[i].id === id) s = POCHOIRS[i];
+        if (s && s.variante) { seules.push(id); prix += centimes(s.prix); donne += 1; }
       });
-      if (siennes.length >= BOUTIQUE.kitDes) kits.push(kit.id);
-    });
 
-    // 3. le reste, en flacons
-    var flacons = couleurs.filter(function (c) {
-      return !(c.kits || []).some(function (k) { return kits.indexOf(k) >= 0; });
-    });
+      var flacons = couleurs.filter(function (id) { return !aCouleurs[id]; });
+      flacons.forEach(function (id) {
+        var c = couleurDe(id);
+        prix += centimes(c.nacre ? BOUTIQUE.flacon.nacre : BOUTIQUE.flacon.mat);
+        donne += 1;
+      });
 
+      var pinceaux = !prises.length;
+      if (pinceaux) { prix += centimes(PINCEAUX.prix); donne += 1; }
+
+      paniers.push({ prix: prix, donne: donne, prises: prises, seules: seules,
+                     flacons: flacons, pinceaux: pinceaux });
+    }
+
+    // Le moins cher, à la tolérance près : parmi les paniers qui coûtent au
+    // plus `tolerance` de plus que le moins cher, celui qui donne le plus
+    // (un kit plutôt que ses morceaux) ; à égalité, le moins cher.
+    var plusBas = Math.min.apply(null, paniers.map(function (p) { return p.prix; }));
+    var plafond = plusBas + centimes(BOUTIQUE.tolerance);
+    var meilleur = null;
+    paniers.forEach(function (p) {
+      if (p.prix > plafond) return;
+      if (!meilleur || p.donne > meilleur.donne ||
+          (p.donne === meilleur.donne && p.prix < meilleur.prix)) meilleur = p;
+    });
+    if (!meilleur) return vide;
+
+    function ids(sorte) {
+      return meilleur.prises.filter(function (o) { return o.sorte === sorte; })
+                            .map(function (o) { return o.id; });
+    }
     return {
-      kits: KITS.filter(function (k) { return kits.indexOf(k.id) >= 0; })
-                .map(function (k) { return k.id; }),
-      planches: POCHOIRS.filter(function (s) { return planches.indexOf(s.id) >= 0; })
+      kits: ids('kits'),
+      coffrets: ids('coffrets'),
+      planches: POCHOIRS.filter(function (s) { return meilleur.seules.indexOf(s.id) >= 0; })
                         .map(function (s) { return s.id; }),
-      flacons: COULEURS.filter(function (c) { return flacons.indexOf(c) >= 0; })
-                       .map(function (c) { return c.id; })
+      flacons: COULEURS.filter(function (c) { return meilleur.flacons.indexOf(c.id) >= 0; })
+                       .map(function (c) { return c.id; }),
+      pinceaux: meilleur.pinceaux
     };
   }
 
@@ -284,8 +340,10 @@ var Fiche = (function () {
     var p = panierDe(dessin);
     var morceaux = [];
     if (p.kits.length) morceaux.push('kits=' + p.kits.join(','));
+    if (p.coffrets.length) morceaux.push('coffrets=' + p.coffrets.join(','));
     if (p.planches.length) morceaux.push('planches=' + p.planches.join(','));
     if (p.flacons.length) morceaux.push('flacons=' + p.flacons.join(','));
+    if (p.pinceaux) morceaux.push('pinceaux=1');
     return BOUTIQUE.relais + (morceaux.length ? '?' + morceaux.join('&') : '');
   }
 

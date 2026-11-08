@@ -2,7 +2,7 @@
 
    - la page relais du QR code (panier.html). Le QR code imprimé sur la fiche
      mène là, avec le matériel du maquillage :
-     panier.html?kits=A&planches=papillon&flacons=rouge,blanc. La page fabrique alors l'adresse
+     panier.html?kits=A&coffrets=noel&flacons=bleu&pinceaux=1. La page fabrique alors l'adresse
      du panier AVEC LES RÉGLAGES DU JOUR (BOUTIQUE, dans donnees.js) et y
      envoie aussitôt. Une fiche imprimée en octobre suit donc les réglages de
      novembre : plus de précommande quand elle s'arrête, nouveaux numéros si
@@ -15,9 +15,10 @@
 var Panier = (function () {
   'use strict';
 
-  /* Les numéros Shopify des kits, planches seules et flacons demandés, par
-     leurs noms courts : { kits: ['A'], planches: ['papillon'],
-     flacons: ['rouge'] }. Un nom inconnu est ignoré. */
+  /* Les numéros Shopify des kits, coffrets, planches seules, flacons et
+     pinceaux demandés, par leurs noms courts : { kits: ['A'],
+     coffrets: ['noel'], planches: ['papillon'], flacons: ['rouge'],
+     pinceaux: true }. Un nom inconnu est ignoré. */
   function variantes(demande) {
     function de(liste, ids) {
       return liste.filter(function (x) {
@@ -25,8 +26,10 @@ var Panier = (function () {
       }).map(function (x) { return x.variante; });
     }
     return de(KITS, demande.kits)
+      .concat(de(COFFRETS, demande.coffrets))
       .concat(de(POCHOIRS, demande.planches))
-      .concat(de(COULEURS, demande.flacons));
+      .concat(de(COULEURS, demande.flacons))
+      .concat(demande.pinceaux ? [PINCEAUX.variante] : []);
   }
 
   /* L'ajout au panier, puis la page panier, où la cliente voit la remise et
@@ -57,7 +60,9 @@ var Panier = (function () {
   function demandeDansAdresse() {
     var q = new URLSearchParams(window.location.search);
     function liste(nom) { return (q.get(nom) || '').split(',').filter(Boolean); }
-    return { kits: liste('kits'), planches: liste('planches'), flacons: liste('flacons') };
+    return { kits: liste('kits'), coffrets: liste('coffrets'),
+             planches: liste('planches'), flacons: liste('flacons'),
+             pinceaux: q.get('pinceaux') === '1' };
   }
 
   return { adresse: adresse, adresseAjout: adresseAjout, demandeDansAdresse: demandeDansAdresse };

@@ -21,18 +21,50 @@
    variante : le numéro de variante Shopify, celui que le QR code met au
               panier. ATTENTION : supprimer puis recréer un produit dans
               Shopify lui donne un nouveau numéro — il faut alors le reporter
-              ici. */
+              ici.
+   prix     : en euros, relevé sur la boutique le 08/11/2026. Il sert à
+              choisir le panier le moins cher (voir BOUTIQUE) : si un prix
+              change en boutique, change-le ici aussi.
+
+   Chaque kit contient ses 3 couleurs (celles qui le citent dans COULEURS),
+   sa planche (celle qui le cite dans POCHOIRS), 2 pinceaux et un tuto. */
 var KITS = [
   { id: 'A', nom: 'Dans la forêt enchantée',
     lien: 'https://labaguettemaquille.fr/products/kit-dans-la-foret-enchantee',
-    variante: '55449745817929' },
+    variante: '55449745817929', prix: 64.90 },
   { id: 'B', nom: 'Petits farceurs',
     lien: 'https://labaguettemaquille.fr/products/kit-petits-farceurs',
-    variante: '55453018095945' },
+    variante: '55453018095945', prix: 64.90 },
   { id: 'C', nom: 'Festival de couleurs',
     lien: 'https://labaguettemaquille.fr/products/kit-festival-de-couleurs',
-    variante: '55453018685769' }
+    variante: '55453018685769', prix: 64.90 }
 ];
+
+/* -------------------------------------------------------------- COFFRETS */
+/* Les offres qui mélangent les kits (ajoutées le 08/11/2026). Leur contenu
+   est écrit en toutes lettres : `couleurs` par les noms courts de COULEURS,
+   `planches` par ceux de POCHOIRS. Toutes contiennent 2 pinceaux.
+   lien, variante, prix : comme pour les kits. */
+var COFFRETS = [
+  { id: 'noel', nom: 'Palette de Noël',
+    lien: 'https://labaguettemaquille.fr/products/palette-de-noel',
+    variante: '55866772291913', prix: 54.90,
+    couleurs: ['rouge', 'vert', 'blanc', 'or'],
+    planches: ['papillon'] },
+  { id: 'integral', nom: 'Coffret magique intégral',
+    lien: 'https://labaguettemaquille.fr/products/coffret-magique-integral',
+    variante: '55866772324681', prix: 149.90,
+    couleurs: ['noir', 'blanc', 'rouge', 'jaune', 'bleu', 'violet', 'vert', 'bronze', 'or'],
+    planches: ['av2', 'bv2', 'cv2', 'papillon'] }
+];
+
+/* Le duo de pinceaux vendu seul : il part au panier quand rien d'autre n'en
+   apporte (ni kit, ni coffret). */
+var PINCEAUX = {
+  nom: 'Duo de pinceaux',
+  lien: 'https://labaguettemaquille.fr/products/duo-de-pinceaux-plat-fin',
+  variante: '55482065682761', prix: 6.90
+};
 
 /* ------------------------------------------------------------- BOUTIQUE */
 /* Les réglages du panier que remplit le QR code de la fiche.
@@ -52,15 +84,28 @@ var KITS = [
                  fais revérifier le numéro (il change si l'offre est
                  supprimée puis recréée).
 
-   CE QUI VA AU PANIER (choisi le 01/10/2026, Papillon ajouté le 07/11) :
-     1. le kit de chaque planche dont on a posé un motif ; une planche qui
-        n'est dans aucun kit (le Papillon) y va seule, par sa `variante` ;
-     2. pour les autres couleurs, le kit dès que `kitDes` de ses couleurs
-        sont employées (2 : deux couleurs du même kit valent bien le kit,
-        qui apporte en plus sa planche et ses pinceaux) ;
-     3. sinon, chaque couleur en flacon à l'unité.
-   Un maquillage fait sans aucun pochoir ne reçoit donc que des flacons, sauf
-   s'il emploie `kitDes` couleurs d'un même kit. */
+   CE QUI VA AU PANIER (choisi le 08/11/2026 : « le moins cher, à 2 €
+   près ») : tout ce que le maquillage emploie — ses couleurs et les
+   planches dont un motif est posé — plus de quoi peindre.
+     - Chaque chose peut venir à l'unité (planche seule, flacon) ou dans un
+       kit, la Palette de Noël ou le coffret intégral. On essaie toutes les
+       façons de tout réunir.
+     - Sans kit ni coffret, le duo de pinceaux (PINCEAUX) s'ajoute, et son
+       prix compte dans la comparaison.
+     - On cherche le panier le moins cher. Puis, parmi ceux qui coûtent au
+       plus `tolerance` euros de plus, on prend celui qui en donne le plus
+       (un kit plutôt que ses morceaux) ; à quantité égale, le moins cher.
+   Ainsi, la planche A + le bleu donnent planche + flacon + pinceaux
+   (41,70 € contre 79,80 € avec le kit) ; les 3 planches donnent le coffret
+   intégral ; rouge, vert, or + un 4e flacon donnent la Palette de Noël
+   (54,90 € contre 54,60 €, dans la tolérance).
+   Les prix sont dans KITS, COFFRETS, PINCEAUX, POCHOIRS et `flacon`
+   ci-dessous.
+
+   flacon    : prix d'un flacon à l'unité, mat ou nacré (08/11/2026).
+   tolerance : en euros, l'écart de prix accepté pour proposer un kit ou un
+               coffret plutôt que les produits à l'unité. 0 = toujours le
+               moins cher. */
 /* origines : les adresses où la boutique affiche l'appli dans son cadre, et
               seules autorisées à recevoir l'adresse mail donnée en échange
               de la fiche (voir app/inscription.js). Le jour où le .fr mène à
@@ -74,7 +119,8 @@ var BOUTIQUE = {
   ],
   relais: 'https://laurynebaguet.github.io/freebie-facechart/panier.html',
   precommande: '',
-  kitDes: 2
+  flacon: { mat: 14.90, nacre: 17.90 },
+  tolerance: 2
 };
 
 /* -------------------------------------------------------------- COULEURS */
@@ -313,6 +359,7 @@ var POCHOIRS = [
     kit: 'A',
     nom: 'Dans la forêt enchantée',
     lien: 'https://labaguettemaquille.fr/products/pochoir?variant=55281667080521',
+    variante: '55281667080521', prix: 19.90,
     planche: 'av2',
 
     /* Pas d'`echelle` ici : le tracé de cette planche est déjà recomposé à la
@@ -361,6 +408,7 @@ var POCHOIRS = [
     kit: 'B',
     nom: 'Petits farceurs',
     lien: 'https://labaguettemaquille.fr/products/pochoir?variant=55281667113289',
+    variante: '55281667113289', prix: 19.90,
     planche: 'bv2',
 
     /* Comme av2 : tracé déjà à la bonne taille, recomposé par
@@ -400,6 +448,7 @@ var POCHOIRS = [
     kit: 'C',
     nom: 'Festival de couleurs',
     lien: 'https://labaguettemaquille.fr/products/pochoir?variant=55281667146057',
+    variante: '55281667146057', prix: 19.90,
     planche: 'cv2',
 
     /* Comme av2 : tracé déjà à la bonne taille, recomposé par
@@ -438,11 +487,12 @@ var POCHOIRS = [
        pochoirs ». Pour la cacher à nouveau, ajoute la ligne `cachee: true` :
        elle quitte le tiroir, mais un maquillage déjà fait garde ses motifs.
 
-       Elle n'appartient à aucun kit : c'est la planche seule, `variante`,
-       qui va au panier quand un de ses motifs est posé (voir BOUTIQUE). */
+       Elle n'appartient à aucun kit : quand un de ses motifs est posé, elle
+       vient avec la Palette de Noël, le coffret intégral, ou seule par sa
+       `variante` et son `prix`, au moins cher (voir BOUTIQUE). */
     nom: 'Papillon',
     lien: 'https://labaguettemaquille.fr/products/pochoir?variant=55866771308873',
-    variante: '55866771308873',
+    variante: '55866771308873', prix: 9.90,
     planche: 'papillon',
     formes: [
       /* Une aile de chaque sorte, et son motif. Les motifs se découpent d'un
