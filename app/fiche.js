@@ -575,10 +575,55 @@ var Fiche = (function () {
     });
   }
 
+  /* LA PAGE DE LA BOUTIQUE TÉLÉCHARGE LA FICHE, PAS L'APPLI (08/11/2026).
+     Dans le cadre de la boutique, un téléchargement lancé par l'appli fait
+     dire à Safari (iPad, iPhone) : « Voulez-vous télécharger … sur
+     labaguettemaquille.fr et laurynebaguet.github.io ? ». Le second nom
+     inquiète. On confie donc le fichier à la page de la boutique (message
+     `lbm-telecharger-fiche`), qui le télécharge elle-même : seul le nom de la
+     boutique apparaît. Le code à ajouter à la page est dans
+     outils/shopify-atelier-telechargement.html.
+
+     La page accuse réception (`lbm-fiche-recue`). Sans réponse au bout de
+     1,5 s — page pas encore modifiée, ou appli ouverte hors de la boutique —
+     l'appli télécharge elle-même, comme avant : on ne reste jamais sans
+     fiche. */
+  var ATTENTE_PAGE = 1500;
+
+  function confierALaPage(octets, nomFichier) {
+    return new Promise(function (resolve) {
+      var fini = false;
+      function ecoute(ev) {
+        if (BOUTIQUE.origines.indexOf(ev.origin) < 0) return;
+        if (!ev.data || ev.data.type !== 'lbm-fiche-recue') return;
+        terminer(true);
+      }
+      function terminer(ok) {
+        if (fini) return;
+        fini = true;
+        window.removeEventListener('message', ecoute);
+        resolve(ok);
+      }
+      window.addEventListener('message', ecoute);
+      BOUTIQUE.origines.forEach(function (o) {
+        try {
+          window.parent.postMessage(
+            { type: 'lbm-telecharger-fiche', nom: nomFichier, pdf: octets }, o);
+        } catch (e) { /* adresse qui n'est pas celle de la page : ignorée */ }
+      });
+      setTimeout(function () { terminer(false); }, ATTENTE_PAGE);
+    });
+  }
+
   function generer(visage, image, dessin, nom) {
     return construire(visage, image, dessin, nom).then(function (doc) {
-      doc.save('maquillage-' + limace(nom || visage.nom) + '.pdf');
-      return true;
+      var nomFichier = 'maquillage-' + limace(nom || visage.nom) + '.pdf';
+      if (!Inscription.dansUnCadre()) { doc.save(nomFichier); return true; }
+      return confierALaPage(doc.output('arraybuffer'), nomFichier)
+        .then(function (pris) {
+          if (!pris) doc.save(nomFichier);
+          return true;
+        });
     });
   }
 
