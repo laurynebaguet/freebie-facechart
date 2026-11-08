@@ -580,6 +580,10 @@ button:disabled { cursor: default; }
   width: 18px; height: 18px; border-radius: 50%; flex: 0 0 18px;
   box-shadow: 0 0 0 1px var(--trait);
 }
+/* La petite icône d'un kit, d'une planche, d'un coffret ou des pinceaux :
+   même place et même taille que la pastille d'un flacon. */
+.recap-icone { width: 20px; height: 20px; flex: 0 0 20px; display: flex; }
+.recap-icone svg { width: 100%; height: 100%; }
 .recap-kit-nom { flex: 1 1 auto; min-width: 0; font-weight: 800; font-size: .9rem; color: var(--encre); }
 .recap-kit-voir { flex: 0 0 auto; font-size: .82rem; font-weight: 800; color: var(--violet); }
 .recap-panier { display: flex; width: 100%; margin-top: .7rem; text-decoration: none; box-sizing: border-box; }

@@ -571,7 +571,10 @@ var UI = (function () {
         ${articles.map(function (a) {
           return html`
             <div class="recap-kit" key=${a.cle}>
-              ${a.hex ? html`<span class="puce" style=${{ background: a.hex }}></span>` : null}
+              ${a.hex ? html`<span class="puce" style=${{ background: a.hex }}></span>`
+                : a.icone ? html`<span class="recap-icone"
+                    dangerouslySetInnerHTML=${{ __html: iconeSvg(a.icone) }}></span>`
+                : null}
               <span class="recap-kit-nom">${a.nom}</span>
               <a class="recap-kit-voir" href=${a.lien} target="_top">Découvrir</a>
             </div>`;

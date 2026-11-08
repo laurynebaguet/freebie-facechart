@@ -25,19 +25,20 @@
    prix     : en euros, relevé sur la boutique le 08/11/2026. Il sert à
               choisir le panier le moins cher (voir BOUTIQUE) : si un prix
               change en boutique, change-le ici aussi.
+   icone    : la petite icône de la liste d'achats (voir app/icones.js).
 
    Chaque kit contient ses 3 couleurs (celles qui le citent dans COULEURS),
    sa planche (celle qui le cite dans POCHOIRS), 2 pinceaux et un tuto. */
 var KITS = [
   { id: 'A', nom: 'Dans la forêt enchantée',
     lien: 'https://labaguettemaquille.fr/products/kit-dans-la-foret-enchantee',
-    variante: '55449745817929', prix: 64.90 },
+    variante: '55449745817929', prix: 64.90, icone: 'chapeau' },
   { id: 'B', nom: 'Petits farceurs',
     lien: 'https://labaguettemaquille.fr/products/kit-petits-farceurs',
-    variante: '55453018095945', prix: 64.90 },
+    variante: '55453018095945', prix: 64.90, icone: 'crane' },
   { id: 'C', nom: 'Festival de couleurs',
     lien: 'https://labaguettemaquille.fr/products/kit-festival-de-couleurs',
-    variante: '55453018685769', prix: 64.90 }
+    variante: '55453018685769', prix: 64.90, icone: 'etoile' }
 ];
 
 /* -------------------------------------------------------------- COFFRETS */
@@ -48,12 +49,12 @@ var KITS = [
 var COFFRETS = [
   { id: 'noel', nom: 'Palette de Noël',
     lien: 'https://labaguettemaquille.fr/products/palette-de-noel',
-    variante: '55866772291913', prix: 54.90,
+    variante: '55866772291913', prix: 54.90, icone: 'boule',
     couleurs: ['rouge', 'vert', 'blanc', 'or'],
     planches: ['papillon'] },
   { id: 'integral', nom: 'Coffret magique intégral',
     lien: 'https://labaguettemaquille.fr/products/coffret-magique-integral',
-    variante: '55866772324681', prix: 149.90,
+    variante: '55866772324681', prix: 149.90, icone: 'coffre',
     couleurs: ['noir', 'blanc', 'rouge', 'jaune', 'bleu', 'violet', 'vert', 'bronze', 'or'],
     planches: ['av2', 'bv2', 'cv2', 'papillon'] }
 ];
@@ -63,7 +64,7 @@ var COFFRETS = [
 var PINCEAUX = {
   nom: 'Duo de pinceaux',
   lien: 'https://labaguettemaquille.fr/products/duo-de-pinceaux-plat-fin',
-  variante: '55482065682761', prix: 6.90
+  variante: '55482065682761', prix: 6.90, icone: 'pinceau'
 };
 
 /* ------------------------------------------------------------- BOUTIQUE */
@@ -359,7 +360,7 @@ var POCHOIRS = [
     kit: 'A',
     nom: 'Dans la forêt enchantée',
     lien: 'https://labaguettemaquille.fr/products/pochoir?variant=55281667080521',
-    variante: '55281667080521', prix: 19.90,
+    variante: '55281667080521', prix: 19.90, icone: 'chapeau',
     planche: 'av2',
 
     /* Pas d'`echelle` ici : le tracé de cette planche est déjà recomposé à la
@@ -408,7 +409,7 @@ var POCHOIRS = [
     kit: 'B',
     nom: 'Petits farceurs',
     lien: 'https://labaguettemaquille.fr/products/pochoir?variant=55281667113289',
-    variante: '55281667113289', prix: 19.90,
+    variante: '55281667113289', prix: 19.90, icone: 'crane',
     planche: 'bv2',
 
     /* Comme av2 : tracé déjà à la bonne taille, recomposé par
@@ -448,7 +449,7 @@ var POCHOIRS = [
     kit: 'C',
     nom: 'Festival de couleurs',
     lien: 'https://labaguettemaquille.fr/products/pochoir?variant=55281667146057',
-    variante: '55281667146057', prix: 19.90,
+    variante: '55281667146057', prix: 19.90, icone: 'etoile',
     planche: 'cv2',
 
     /* Comme av2 : tracé déjà à la bonne taille, recomposé par
@@ -492,7 +493,7 @@ var POCHOIRS = [
        `variante` et son `prix`, au moins cher (voir BOUTIQUE). */
     nom: 'Papillon',
     lien: 'https://labaguettemaquille.fr/products/pochoir?variant=55866771308873',
-    variante: '55866771308873', prix: 9.90,
+    variante: '55866771308873', prix: 9.90, icone: 'papillon',
     planche: 'papillon',
     formes: [
       /* Une aile de chaque sorte, et son motif. Les motifs se découpent d'un

@@ -135,23 +135,46 @@ var Fiche = (function () {
 
   /* La liste d'achats, une ligne par article, dans l'ordre du panier :
      coffrets, kits, planches seules, flacons, pinceaux. Chaque ligne :
-     { cle, nom, lien, hex (flacons seulement) }. La même liste sert à
+     { cle, nom, lien, et soit hex (flacons : la pastille de la couleur),
+     soit icone (le reste : voir app/icones.js) }. La même liste sert à
      l'écran récap et à la fiche PDF : elles ne peuvent pas se contredire. */
   function achats(inv) {
     return inv.coffrets.map(function (c) {
-      return { cle: 'coffret-' + c.id, nom: c.nom, lien: c.lien };
+      return { cle: 'coffret-' + c.id, nom: c.nom, lien: c.lien, icone: c.icone };
     }).concat(inv.kits.map(function (k) {
-      return { cle: 'kit-' + k.id, nom: 'Kit « ' + k.nom + ' »', lien: k.lien };
+      return { cle: 'kit-' + k.id, nom: 'Kit « ' + k.nom + ' »', lien: k.lien, icone: k.icone };
     })).concat(inv.planches.map(function (s) {
-      return { cle: 'planche-' + s.id, nom: 'Planche « ' + s.nom + ' »', lien: s.lien };
+      return { cle: 'planche-' + s.id, nom: 'Planche « ' + s.nom + ' »', lien: s.lien, icone: s.icone };
     })).concat(inv.flacons.map(function (c) {
       return {
         cle: 'flacon-' + c.id, nom: 'Flacon « ' + c.nom + ' »', hex: c.hex,
         lien: FLACONS + '?variant=' + c.variante
       };
     })).concat(inv.pinceaux
-      ? [{ cle: 'pinceaux', nom: PINCEAUX.nom, lien: PINCEAUX.lien }]
+      ? [{ cle: 'pinceaux', nom: PINCEAUX.nom, lien: PINCEAUX.lien, icone: PINCEAUX.icone }]
       : []);
+  }
+
+  /* Les icônes de la liste en images pour le PDF, une fois pour toutes :
+     { nom: toile }. Dessinées à 160 px pour 4,5 mm, soit environ 900 points
+     par pouce : nettes à l'impression. */
+  function imagesIcones(liste) {
+    var noms = [];
+    liste.forEach(function (a) { if (a.icone && noms.indexOf(a.icone) < 0) noms.push(a.icone); });
+    return Promise.all(noms.map(function (nom) {
+      return chargerImage('data:image/svg+xml;charset=utf-8,' +
+                          encodeURIComponent(iconeSvg(nom, '#7B3FD3')))
+        .then(function (img) {
+          var c = document.createElement('canvas');
+          c.width = c.height = 160;
+          c.getContext('2d').drawImage(img, 0, 0, 160, 160);
+          return [nom, c];
+        }, function () { return [nom, null]; });
+    })).then(function (paires) {
+      var r = {};
+      paires.forEach(function (p) { if (p[1]) r[p[0]] = p[1]; });
+      return r;
+    });
   }
 
   /* Rend le facechart maquillé sur une toile haute définition. */
@@ -428,7 +451,11 @@ var Fiche = (function () {
     var doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
     var inv = inventaire(dessin);
 
-    return chargerImage('images/marque/logo-principal.png').then(function (logo) {
+    return Promise.all([
+      chargerImage('images/marque/logo-principal.png'),
+      imagesIcones(achats(inv))
+    ]).then(function (charges) {
+      var logo = charges[0], icones = charges[1];
       /* --- en-tête : le titre à gauche, le logo dans le coin en haut à droite.
 
          Le lettrage prenait toute la largeur au-dessus du titre et disait deux
@@ -493,8 +520,9 @@ var Fiche = (function () {
 
       /* La même liste d'achats que l'écran récap et que le QR code : une
          ligne par article, sur deux colonnes (la gauche d'abord). Une
-         pastille de la vraie couleur devant un flacon, un point devant le
-         reste. Chaque nom est un lien vers sa page en boutique. */
+         pastille de la vraie couleur devant un flacon, la petite icône
+         violette devant le reste (un point si elle manque). Chaque nom est
+         un lien vers sa page en boutique. */
       var liste = achats(inv);
       y += 1;
       doc.setFont('helvetica', 'normal');
@@ -512,6 +540,9 @@ var Fiche = (function () {
           doc.setFillColor(rgb[0], rgb[1], rgb[2]);
           doc.setDrawColor(200, 194, 208);
           doc.circle(x + 2, yc - 1.2, 2, 'FD');
+        } else if (icones[a.icone]) {
+          doc.addImage(icones[a.icone], 'PNG', x - 0.25, yc - 3.45, 4.5, 4.5,
+                       'icone-' + a.icone);
         } else {
           doc.setFillColor(217, 72, 126);
           doc.circle(x + 2, yc - 1.2, 0.9, 'F');
