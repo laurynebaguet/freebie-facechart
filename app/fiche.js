@@ -131,6 +131,7 @@ var Fiche = (function () {
     return {
       parKit: parKit, parPlanche: parPlanche,
       kits: KITS.filter(function (k) { return panier.kits.indexOf(k.id) >= 0; }),
+      planches: POCHOIRS.filter(function (s) { return panier.planches.indexOf(s.id) >= 0; }),
       flacons: COULEURS.filter(function (c) { return panier.flacons.indexOf(c.id) >= 0; })
     };
   }
@@ -224,20 +225,24 @@ var Fiche = (function () {
 
   /* Ce qu'il faut mettre au panier pour refaire ce maquillage, selon la règle
      écrite au-dessus de BOUTIQUE dans donnees.js :
-       { kits: ['A', ...], flacons: ['rouge', ...] }
-     Les kits dans l'ordre de KITS, les flacons dans celui de la palette. */
+       { kits: ['A', ...], planches: ['papillon'], flacons: ['rouge', ...] }
+     Les kits dans l'ordre de KITS, les planches dans celui de POCHOIRS, les
+     flacons dans celui de la palette. */
   function panierDe(dessin) {
     var kits = [];
+    var planches = [];
     var couleurs = [];
     var visibles = dessin.elements.filter(Rendu.resteVisible);
 
-    // 1. le kit de chaque planche employée
+    // 1. le kit de chaque planche employée, ou la planche seule si elle
+    //    n'est dans aucun kit (le Papillon)
     visibles.forEach(function (el) {
       if (el.type !== 'forme') return;
-      for (var i = 0; i < POCHOIRS.length; i++) {
-        var k = POCHOIRS[i].id === el.setId && POCHOIRS[i].kit;
-        if (k && kits.indexOf(k) < 0) kits.push(k);
-      }
+      POCHOIRS.forEach(function (s) {
+        if (s.id !== el.setId) return;
+        if (s.kit) { if (kits.indexOf(s.kit) < 0) kits.push(s.kit); }
+        else if (s.variante && planches.indexOf(s.id) < 0) planches.push(s.id);
+      });
     });
 
     // les couleurs employées que ces kits ne contiennent pas encore
@@ -264,6 +269,8 @@ var Fiche = (function () {
     return {
       kits: KITS.filter(function (k) { return kits.indexOf(k.id) >= 0; })
                 .map(function (k) { return k.id; }),
+      planches: POCHOIRS.filter(function (s) { return planches.indexOf(s.id) >= 0; })
+                        .map(function (s) { return s.id; }),
       flacons: COULEURS.filter(function (c) { return flacons.indexOf(c) >= 0; })
                        .map(function (c) { return c.id; })
     };
@@ -277,6 +284,7 @@ var Fiche = (function () {
     var p = panierDe(dessin);
     var morceaux = [];
     if (p.kits.length) morceaux.push('kits=' + p.kits.join(','));
+    if (p.planches.length) morceaux.push('planches=' + p.planches.join(','));
     if (p.flacons.length) morceaux.push('flacons=' + p.flacons.join(','));
     return BOUTIQUE.relais + (morceaux.length ? '?' + morceaux.join('&') : '');
   }

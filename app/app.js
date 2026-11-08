@@ -232,6 +232,26 @@
       return function () { window.removeEventListener('keydown', touche); };
     }, [selectionId, supprimer]);
 
+    /* La fiche s'obtient contre une adresse mail, demandée une seule fois,
+       et par la boutique elle-même (voir app/inscription.js). Le
+       récapitulatif, lui, reste libre. Hors de la boutique, personne ne peut
+       demander l'adresse : la fiche se télécharge directement. */
+    function demanderFiche() {
+      if (Inscription.faite() || !Inscription.dansUnCadre()) telecharger();
+      else Inscription.demander();
+    }
+
+    /* Au retour de l'inscription, la page s'est rechargée : l'appli repart de
+       l'accueil, mais le dessin est revenu. On rouvre l'atelier et on propose
+       la fiche, sans la lancer : un téléchargement qui part tout seul, sans
+       clic, peut être bloqué par le navigateur. */
+    useEffect(function () {
+      return Inscription.quandInscrite(function () {
+        setEcran('atelier');
+        setDialogue('merci');
+      });
+    }, []);
+
     function telecharger() {
       if (fabrique) return;
       setFabrique(true);
@@ -399,8 +419,23 @@
                         onClick=${partagerImage}>
                   ${envoie ? 'Un instant…' : (Partage.peutPartager() ? "Partager l'image" : "Enregistrer l'image")}
                 </button>
-                <button class="btn btn-primaire" disabled=${fabrique} onClick=${telecharger}>
+                <button class="btn btn-primaire" disabled=${fabrique} onClick=${demanderFiche}>
                   ${fabrique ? 'Préparation…' : 'Télécharger la fiche'}
+                </button>`}/>`
+          : null}
+
+        ${dialogue === 'merci'
+          ? html`
+            <${UI.Dialogue}
+              titre=${TEXTES.merciTitre}
+              texte=${TEXTES.merciTexte}
+              etroite=${true}
+              croix=${true}
+              onFermer=${function () { setDialogue(null); }}
+              actions=${html`
+                <button class="btn btn-primaire" disabled=${fabrique || !(pret && support)}
+                        onClick=${telecharger}>
+                  ${fabrique ? 'Préparation…' : TEXTES.merciBouton}
                 </button>`}/>`
           : null}
       </div>`;

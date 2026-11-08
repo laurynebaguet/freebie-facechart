@@ -582,7 +582,9 @@ var UI = (function () {
   function MaterielRecap(p) {
     var articles = p.kits.map(function (k) {
       return { cle: 'kit-' + k.id, nom: 'Kit « ' + k.nom + ' »', lien: k.lien };
-    }).concat(p.flacons.map(function (c) {
+    }).concat(p.planches.map(function (s) {
+      return { cle: 'planche-' + s.id, nom: 'Planche « ' + s.nom + ' »', lien: s.lien };
+    })).concat(p.flacons.map(function (c) {
       return {
         cle: 'flacon-' + c.id, nom: 'Flacon « ' + c.nom + ' »', hex: c.hex,
         lien: FLACONS + '?variant=' + c.variante
@@ -591,7 +593,8 @@ var UI = (function () {
     if (!articles.length) return null;
 
     var seul = articles.length === 1;
-    var quoi = !seul ? 'tout' : (p.kits.length ? 'ce kit' : 'ce flacon');
+    var quoi = !seul ? 'tout'
+      : (p.kits.length ? 'ce kit' : (p.planches.length ? 'cette planche' : 'ce flacon'));
     var verbe = BOUTIQUE.precommande
       ? 'Je précommande ' + quoi
       : (seul ? 'Ajouter au panier' : 'Tout ajouter au panier');
@@ -610,6 +613,7 @@ var UI = (function () {
         <a class="btn btn-rose recap-panier" target="_top"
            href=${Panier.adresseAjout({
              kits: p.kits.map(function (k) { return k.id; }),
+             planches: p.planches.map(function (s) { return s.id; }),
              flacons: p.flacons.map(function (c) { return c.id; })
            })}>${verbe}</a>
       </div>`;
@@ -642,7 +646,7 @@ var UI = (function () {
                 </li>`;
             }}/>` : null}
       </div>
-      <${MaterielRecap} kits=${inv.kits} flacons=${inv.flacons}/>`;
+      <${MaterielRecap} kits=${inv.kits} planches=${inv.planches} flacons=${inv.flacons}/>`;
   }
 
   return {

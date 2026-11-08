@@ -16,8 +16,8 @@
 
    lien     : la fiche du kit sur la boutique. Tant que la boutique est
               protégée par mot de passe, ces liens ouvrent la page de mot de
-              passe. Toujours en .store : le .fr mène encore à la page
-              d'attente systeme.io.
+              passe. En .fr depuis le 07/11/2026 : c'est devenu le domaine
+              principal de la boutique.
    variante : le numéro de variante Shopify, celui que le QR code met au
               panier. ATTENTION : supprimer puis recréer un produit dans
               Shopify lui donne un nouveau numéro — il faut alors le reporter
@@ -52,19 +52,26 @@ var KITS = [
                  fais revérifier le numéro (il change si l'offre est
                  supprimée puis recréée).
 
-   Le pochoir Papillon n'est plus mis au panier (01/10/2026) : il est glissé
-   en surprise dans le colis.
-
-   CE QUI VA AU PANIER (choisi le 01/10/2026) :
-     1. le kit de chaque planche dont on a posé un motif ;
+   CE QUI VA AU PANIER (choisi le 01/10/2026, Papillon ajouté le 07/11) :
+     1. le kit de chaque planche dont on a posé un motif ; une planche qui
+        n'est dans aucun kit (le Papillon) y va seule, par sa `variante` ;
      2. pour les autres couleurs, le kit dès que `kitDes` de ses couleurs
         sont employées (2 : deux couleurs du même kit valent bien le kit,
         qui apporte en plus sa planche et ses pinceaux) ;
      3. sinon, chaque couleur en flacon à l'unité.
    Un maquillage fait sans aucun pochoir ne reçoit donc que des flacons, sauf
    s'il emploie `kitDes` couleurs d'un même kit. */
+/* origines : les adresses où la boutique affiche l'appli dans son cadre, et
+              seules autorisées à recevoir l'adresse mail donnée en échange
+              de la fiche (voir app/inscription.js). Le jour où le .fr mène à
+              Shopify, il est déjà dans la liste ; un nouveau nom de domaine,
+              lui, doit y être ajouté, sinon les adresses se perdent. */
 var BOUTIQUE = {
   adresse: 'https://labaguettemaquille.fr',
+  origines: [
+    'https://labaguettemaquille.store', 'https://www.labaguettemaquille.store',
+    'https://labaguettemaquille.fr', 'https://www.labaguettemaquille.fr'
+  ],
   relais: 'https://laurynebaguet.github.io/freebie-facechart/panier.html',
   precommande: '',
   kitDes: 2
@@ -426,14 +433,16 @@ var POCHOIRS = [
     /* Sortie de bv2 le 13/09/2026 : le papillon a sa propre planche,
        rangée en dernier dans le tiroir.
 
-       CACHÉE depuis le 01/10/2026 : le Papillon n'est plus vendu, il est
-       glissé en surprise dans les colis. Pour la remettre dans le tiroir
-       quand les colis seront arrivés, retire la ligne `cachee: true`.
-       Cachée ne veut pas dire effacée : un maquillage déjà fait avec ses
-       motifs les garde. */
-    cachee: true,
+       Cachée du 01/10 au 07/11/2026 (glissée en surprise dans les colis),
+       elle est de nouveau vendue, comme 4e variante de « Planche de
+       pochoirs ». Pour la cacher à nouveau, ajoute la ligne `cachee: true` :
+       elle quitte le tiroir, mais un maquillage déjà fait garde ses motifs.
+
+       Elle n'appartient à aucun kit : c'est la planche seule, `variante`,
+       qui va au panier quand un de ses motifs est posé (voir BOUTIQUE). */
     nom: 'Papillon',
-    lien: null,
+    lien: 'https://labaguettemaquille.fr/products/pochoir?variant=55866771308873',
+    variante: '55866771308873',
     planche: 'papillon',
     formes: [
       /* Une aile de chaque sorte, et son motif. Les motifs se découpent d'un
@@ -495,6 +504,13 @@ var TEXTES = {
   /* Les visages sont son travail : le crédit apparaît sur l'accueil et sur la
      fiche imprimée. Ajoute son adresse si elle en veut une. */
   credit: 'Visages illustrés par Pauline Dussert',
+  /* La petite fenêtre qui s'ouvre au retour de l'inscription (faite dans la
+     fenêtre de la boutique, voir app/inscription.js). Le téléchargement
+     attend un clic : lancé tout seul après le rechargement de la page, il
+     pourrait être bloqué par le navigateur. */
+  merciTitre: 'Merci !',
+  merciTexte: 'Ta fiche est prête.',
+  merciBouton: 'Télécharger ma fiche',
   siteNom: 'labaguettemaquille.fr',
   siteLien: 'https://labaguettemaquille.fr',
   /* Gravé dans l'image à partager : c'est la seule chose qui voyage avec elle,
