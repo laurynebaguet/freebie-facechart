@@ -547,29 +547,6 @@ var UI = (function () {
       </div>`;
   }
 
-  /* Une colonne du récapitulatif : des groupes titrés, chacun suivi de ce
-     qu'il contient. Le titre porte le lien vers le kit ou la planche — c'est
-     lui qu'on va acheter, pas la couleur prise à part. */
-  function BlocRecap(p) {
-    return html`
-      <div class="recap-bloc">
-        <p class="tiroir-titre">${p.titre}</p>
-        ${p.groupes.map(function (g) {
-          return html`
-            <div class="recap-groupe" key=${g.titre}>
-              ${g.lien
-                ? html`<a class="ou" href=${g.lien} target="_top">${g.titre}</a>`
-                : html`<span class="ou">${g.titre}</span>`}
-              <ul>${g.articles.map(p.ligne)}</ul>
-            </div>`;
-        })}
-      </div>`;
-  }
-
-  /* Le récapitulatif du matériel, montré à l'écran avant le téléchargement.
-     Il est rangé comme la fiche imprimée, et pour la même raison : ce qu'on
-     achète ensemble se lit ensemble. */
-
   /* Ce qu'il faut acheter pour refaire ce maquillage — le même panier que
      celui du QR code de la fiche : chaque kit ou flacon avec de quoi le
      découvrir, puis UN seul bouton qui met tout au panier. Un bouton par
@@ -580,20 +557,7 @@ var UI = (function () {
      « L'atelier » de la boutique, l'appli vit dans un cadre, et la boutique
      ne doit pas s'ouvrir coincée à l'intérieur. */
   function MaterielRecap(p) {
-    var articles = p.coffrets.map(function (c) {
-      return { cle: 'coffret-' + c.id, nom: c.nom, lien: c.lien };
-    }).concat(p.kits.map(function (k) {
-      return { cle: 'kit-' + k.id, nom: 'Kit « ' + k.nom + ' »', lien: k.lien };
-    })).concat(p.planches.map(function (s) {
-      return { cle: 'planche-' + s.id, nom: 'Planche « ' + s.nom + ' »', lien: s.lien };
-    })).concat(p.flacons.map(function (c) {
-      return {
-        cle: 'flacon-' + c.id, nom: 'Flacon « ' + c.nom + ' »', hex: c.hex,
-        lien: FLACONS + '?variant=' + c.variante
-      };
-    })).concat(p.pinceaux
-      ? [{ cle: 'pinceaux', nom: PINCEAUX.nom, lien: PINCEAUX.lien }]
-      : []);
+    var articles = Fiche.achats(p);
     if (!articles.length) return null;
 
     var seul = articles.length === 1;
@@ -628,28 +592,10 @@ var UI = (function () {
     if (!inv.parKit.length && !inv.parPlanche.length) {
       return html`<p class="recap-vide">Tu n'as encore rien posé sur le visage.</p>`;
     }
+    // Retiré le 08/11/2026 : la liste « Les couleurs / Les pochoirs » rangée
+    // par kit. Le panier ne propose plus forcément les kits, et la liste
+    // d'achats ci-dessous dit déjà tout. La fiche PDF montre la même liste.
     return html`
-      <div class="recap">
-        ${inv.parKit.length ? html`
-          <${BlocRecap} titre="Les couleurs" groupes=${inv.parKit}
-            ligne=${function (c) {
-              return html`
-                <li key=${c.id}>
-                  <span class="puce" style=${{ background: c.hex }}></span>
-                  <span>${c.nom}</span>
-                </li>`;
-            }}/>` : null}
-
-        ${inv.parPlanche.length ? html`
-          <${BlocRecap} titre="Les pochoirs" groupes=${inv.parPlanche}
-            ligne=${function (f) {
-              return html`
-                <li key=${f.cle}>
-                  <span class="puce-forme"><${VignetteForme} forme=${f}/></span>
-                  <span>${f.nom}</span>
-                </li>`;
-            }}/>` : null}
-      </div>
       <${MaterielRecap} kits=${inv.kits} coffrets=${inv.coffrets} planches=${inv.planches}
                        flacons=${inv.flacons} pinceaux=${inv.pinceaux}/>`;
   }

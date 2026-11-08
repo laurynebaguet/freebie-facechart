@@ -1,5 +1,6 @@
 /* Fabrication de la fiche A4 à imprimer : le maquillage en grand, puis la
-   liste du matériel utilisé avec les kits où le trouver. */
+   liste d'achats pour le refaire (la même que l'écran récap) et le QR code
+   qui met tout au panier. */
 var Fiche = (function () {
   'use strict';
 
@@ -26,20 +27,14 @@ var Fiche = (function () {
      fois : à mesurer la liste avant de dessiner quoi que ce soit, puis à la
      tracer. Sans la mesure préalable, un maquillage qui emploie beaucoup de
      couleurs pousse le bloc d'appel hors de la page. */
-  var L_TITRE_COL = 5.5;   // « Les couleurs » / « Les pochoirs »
-  var L_GROUPE    = 5.4;   // le nom d'un kit ou d'une planche, et son air
-  var L_ENTREE    = 4.6;   // le nom d'une couleur ou d'un motif
-  var L_VIDE      = 5;     // « Aucune couleur utilisée. »
+  var L_ACHAT = 6;   // une ligne de la liste d'achats
+  var L_VIDE  = 5;   // « Aucun matériel utilisé. »
 
-  /* Hauteur qu'occupera la liste du matériel, colonne la plus haute. */
+  /* Hauteur qu'occupera la liste d'achats : deux colonnes, la gauche
+     remplie d'abord. */
   function hauteurMateriel(inv) {
-    function colonne(groupes) {
-      if (!groupes.length) return L_TITRE_COL + L_VIDE;
-      return groupes.reduce(function (h, g) {
-        return h + L_GROUPE + g.articles.length * L_ENTREE;
-      }, L_TITRE_COL);
-    }
-    return Math.max(colonne(inv.parKit), colonne(inv.parPlanche));
+    var n = achats(inv).length;
+    return n ? Math.ceil(n / 2) * L_ACHAT : L_VIDE;
   }
 
   function chargerImage(src) {
@@ -136,6 +131,27 @@ var Fiche = (function () {
       planches: POCHOIRS.filter(function (s) { return panier.planches.indexOf(s.id) >= 0; }),
       flacons: COULEURS.filter(function (c) { return panier.flacons.indexOf(c.id) >= 0; })
     };
+  }
+
+  /* La liste d'achats, une ligne par article, dans l'ordre du panier :
+     coffrets, kits, planches seules, flacons, pinceaux. Chaque ligne :
+     { cle, nom, lien, hex (flacons seulement) }. La même liste sert à
+     l'écran récap et à la fiche PDF : elles ne peuvent pas se contredire. */
+  function achats(inv) {
+    return inv.coffrets.map(function (c) {
+      return { cle: 'coffret-' + c.id, nom: c.nom, lien: c.lien };
+    }).concat(inv.kits.map(function (k) {
+      return { cle: 'kit-' + k.id, nom: 'Kit « ' + k.nom + ' »', lien: k.lien };
+    })).concat(inv.planches.map(function (s) {
+      return { cle: 'planche-' + s.id, nom: 'Planche « ' + s.nom + ' »', lien: s.lien };
+    })).concat(inv.flacons.map(function (c) {
+      return {
+        cle: 'flacon-' + c.id, nom: 'Flacon « ' + c.nom + ' »', hex: c.hex,
+        lien: FLACONS + '?variant=' + c.variante
+      };
+    })).concat(inv.pinceaux
+      ? [{ cle: 'pinceaux', nom: PINCEAUX.nom, lien: PINCEAUX.lien }]
+      : []);
   }
 
   /* Rend le facechart maquillé sur une toile haute définition. */
@@ -475,54 +491,33 @@ var Fiche = (function () {
       doc.text("Ce qu'il te faut", MARGE, y);
       y += 6;
 
-      var colL = MARGE;
-      var colR = PAGE_L / 2 + 2;
-
-      doc.setFontSize(10.5);
-      doc.setTextColor(217, 72, 126);
-      doc.text('Les couleurs', colL, y);
-      doc.text('Les pochoirs', colR, y);
-
-      /* Les deux colonnes se dessinent pareil : un titre de kit ou de planche,
-         puis ce qu'il contient, décalé sous lui. Seule la puce change — une
-         pastille de la vraie couleur à gauche, un point à droite. */
-      function colonne(groupes, x, motVide, puce) {
-        var yc = y + L_TITRE_COL;
-        if (!groupes.length) {
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(9.5);
-          doc.setTextColor(140, 134, 148);
-          doc.text(motVide, x, yc);
-          return;
-        }
-        groupes.forEach(function (g) {
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(8.5);
-          doc.setTextColor(123, 63, 211);
-          if (g.lien) doc.textWithLink(g.titre, x, yc, { url: g.lien });
-          else doc.text(g.titre, x, yc);
-          yc += L_GROUPE;
-
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(9.5);
-          doc.setTextColor(58, 52, 64);
-          g.articles.forEach(function (a) {
-            puce(a, x, yc);
-            doc.text(a.nom, x + 6, yc);
-            yc += L_ENTREE;
-          });
-        });
+      /* La même liste d'achats que l'écran récap et que le QR code : une
+         ligne par article, sur deux colonnes (la gauche d'abord). Une
+         pastille de la vraie couleur devant un flacon, un point devant le
+         reste. Chaque nom est un lien vers sa page en boutique. */
+      var liste = achats(inv);
+      y += 1;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      if (!liste.length) {
+        doc.setTextColor(140, 134, 148);
+        doc.text('Aucun matériel utilisé.', MARGE, y + 3);
       }
-
-      colonne(inv.parKit, colL, 'Aucune couleur utilisée.', function (c, x, yc) {
-        var rgb = hexVersRgb(c.hex);
-        doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-        doc.setDrawColor(200, 194, 208);
-        doc.circle(x + 2, yc - 1.2, 2, 'FD');
-      });
-
-      colonne(inv.parPlanche, colR, 'Aucun pochoir utilisé.', function (f, x, yc) {
-        doc.text('•', x + 1, yc);
+      var parColonne = Math.ceil(liste.length / 2);
+      liste.forEach(function (a, i) {
+        var x = i < parColonne ? MARGE : PAGE_L / 2 + 2;
+        var yc = y + 3 + (i % parColonne) * L_ACHAT;
+        if (a.hex) {
+          var rgb = hexVersRgb(a.hex);
+          doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+          doc.setDrawColor(200, 194, 208);
+          doc.circle(x + 2, yc - 1.2, 2, 'FD');
+        } else {
+          doc.setFillColor(217, 72, 126);
+          doc.circle(x + 2, yc - 1.2, 0.9, 'F');
+        }
+        doc.setTextColor(58, 52, 64);
+        doc.textWithLink(a.nom, x + 6, yc, { url: a.lien });
       });
 
       // --- le bloc d'appel, calé juste au-dessus du pied de page
@@ -559,7 +554,7 @@ var Fiche = (function () {
   return {
     generer: generer, construire: construire, inventaire: inventaire,
     rendre: rendre, chargerImage: chargerImage, limace: limace,
-    panierDe: panierDe, adresseQr: adresseQr,
+    panierDe: panierDe, adresseQr: adresseQr, achats: achats,
     titrePour: titrePour
   };
 })();

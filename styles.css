@@ -565,27 +565,9 @@ button:disabled { cursor: default; }
 .boutons-forme .btn-fantome { color: var(--rose); }
 .boutons-forme .btn-fantome:hover { color: var(--rose); background: #FCEAF1; }
 
-.recap { display: flex; gap: 1.2rem; flex-wrap: wrap; margin: 0 0 1.2rem; }
-.recap-bloc { flex: 1 1 160px; min-width: 0; }
-.recap ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .45rem; }
-.recap li { display: flex; align-items: flex-start; gap: .5rem; font-size: .88rem; font-weight: 700; line-height: 1.25; }
-.recap .puce {
-  width: 18px; height: 18px; border-radius: 50%; flex: 0 0 18px; margin-top: .1rem;
-  box-shadow: 0 0 0 1px var(--trait);
-}
-.recap .puce-forme { width: 22px; height: 22px; flex: 0 0 22px; color: var(--encre); }
-.recap .puce-forme svg { width: 100%; height: 100%; }
-/* Le kit ou la planche titre son groupe : il passe devant ce qu'il contient,
-   au lieu de se répéter en petit sous chaque ligne. */
-.recap-groupe + .recap-groupe { margin-top: .8rem; }
-.recap .ou {
-  display: block; font-size: .8rem; font-weight: 800; color: var(--violet);
-  text-decoration: none; margin-bottom: .35rem;
-}
-.recap .ou:hover { text-decoration: underline; }
 .recap-vide { font-style: italic; }
 
-/* Ce qu'il faut acheter pour refaire le maquillage, sous la liste : une ligne
+/* Ce qu'il faut acheter pour refaire le maquillage : une ligne
    par kit ou flacon, avec son lien « Découvrir », puis un seul bouton pour
    tout mettre au panier. */
 .recap-kits { margin: 0 0 1.2rem; }

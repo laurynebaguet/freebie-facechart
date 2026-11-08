@@ -330,9 +330,11 @@
           </span>
           ${/* Sans icône : elle était invisible faute de taille, et son écart
                 poussait le texte à droite du milieu. Le libellé se suffit. */''}
-          <button class="btn btn-primaire btn-petit fiche"
+          ${/* En rose, la couleur des boutons d'action : « Ma fiche récap »
+                en violet ne se lisait pas comme l'endroit où enregistrer. */''}
+          <button class="btn btn-rose btn-petit fiche"
                   onClick=${function () { setDialogue('recap'); }}>
-            Ma fiche récap
+            Enregistrer / Imprimer
           </button>
         </div>
 
