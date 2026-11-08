@@ -558,10 +558,14 @@ var TEXTES = {
   /* La petite fenêtre qui s'ouvre au retour de l'inscription (faite dans la
      fenêtre de la boutique, voir app/inscription.js). Le téléchargement
      attend un clic : lancé tout seul après le rechargement de la page, il
-     pourrait être bloqué par le navigateur. */
-  merciTitre: 'Merci !',
-  merciTexte: 'Ta fiche est prête.',
-  merciBouton: 'Télécharger ma fiche',
+     pourrait être bloqué par le navigateur.
+     « Merci ! » ne disait pas de quoi (08/11/2026) : on dit plutôt ce qui
+     vient de se passer, et ce que l'inscription apporte.
+     Avant le « ! », une espace INSÉCABLE ( ) : le point d'exclamation
+     ne peut pas se retrouver seul sur une ligne. */
+  merciTitre: 'Ton inscription à la newsletter est validée !',
+  merciTexte: 'Tu recevras tous nos bons plans, offres et nouveautés en avant-première 😉',
+  merciBouton: 'Télécharger ma fiche récap',
   siteNom: 'labaguettemaquille.fr',
   siteLien: 'https://labaguettemaquille.fr',
   /* Gravé dans l'image à partager : c'est la seule chose qui voyage avec elle,
