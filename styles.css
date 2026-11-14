@@ -83,7 +83,7 @@ button:disabled { cursor: default; }
   min-height: calc(100% - 2px); display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 1.4rem;
   text-align: center; padding: 2rem 1.4rem;
-  background: radial-gradient(1200px 600px at 50% -10%, #fff 0%, var(--fond) 60%);
+  background: var(--fond);
 }
 /* Le logo complet est bien plus haut que l'ancien lettrage (800 × 321 au lieu
    de 10:1) : à 440 px de large il mangeait la moitié de l'écran d'accueil. On
